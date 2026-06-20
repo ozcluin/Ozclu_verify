@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { usePortal } from "src/context/PortalContext";
+import { useAuth } from "src/context/AuthContext";
 import { 
   CheckCircle, 
   AlertCircle, 
@@ -16,12 +17,21 @@ import {
 
 export default function IdentityVerification() {
   const router = useRouter();
+  const { user, profile } = useAuth();
   const { addVerification, settings } = usePortal();
 
   const [candidateName, setCandidateName] = useState("");
   const [candidateEmail, setCandidateEmail] = useState("");
   const [orgName, setOrgName] = useState("");
   
+  const isAdmin = profile?.role === "admin" || profile?.org_name?.toLowerCase() === "cluso" || profile?.org_name?.toLowerCase() === "admin";
+
+  React.useEffect(() => {
+    if (!isAdmin && profile?.org_name) {
+      setOrgName(profile.org_name);
+    }
+  }, [profile, isAdmin]);
+
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [createdCredentials, setCreatedCredentials] = useState<{
@@ -60,7 +70,7 @@ export default function IdentityVerification() {
         });
         setCandidateName("");
         setCandidateEmail("");
-        setOrgName("");
+        setOrgName(isAdmin ? "" : (profile?.org_name || ""));
       } else {
         setErrorMsg("Failed to initiate verification request");
       }
@@ -85,7 +95,7 @@ export default function IdentityVerification() {
   const handleCancel = () => {
     setCandidateName("");
     setCandidateEmail("");
-    setOrgName("");
+    setOrgName(isAdmin ? "" : (profile?.org_name || ""));
   };
 
   return (
@@ -166,7 +176,7 @@ export default function IdentityVerification() {
           {/* Requesting ORG Name Field */}
           <div className="flex flex-col gap-2">
             <label className="font-label-caps text-[#475569] text-xs font-semibold uppercase tracking-wider" htmlFor="org-name">
-              Requesting ORG Name
+              {isAdmin ? "Target Client ORG Name" : "Requesting ORG Name"}
             </label>
             <input
               id="org-name"
@@ -174,8 +184,11 @@ export default function IdentityVerification() {
               value={orgName}
               onChange={(e) => setOrgName(e.target.value)}
               autoComplete="off"
-              className="border border-[#C6E7FF] rounded-xl p-3.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#C6E7FF] focus:border-[#0F172A] transition-all bg-[#FBFBFB]/50 placeholder-slate-400 font-semibold"
-              placeholder="Enter the organization name requiring the verification"
+              disabled={!isAdmin}
+              className={`border border-[#C6E7FF] rounded-xl p-3.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#C6E7FF] focus:border-[#0F172A] transition-all bg-[#FBFBFB]/50 placeholder-slate-400 font-semibold ${
+                !isAdmin ? "bg-slate-100/60 text-slate-500 cursor-not-allowed border-slate-200" : ""
+              }`}
+              placeholder={isAdmin ? "Enter target client organization name (e.g., TCS)" : "Enter the organization name requiring the verification"}
             />
           </div>
 

@@ -125,8 +125,10 @@ export async function POST(req: NextRequest) {
       case "addVerification": {
         const { id, name, email, orgName, date, status, verifier, notes } = payload;
 
-        // Security: force orgName to the session user's org (prevent cross-tenant creation)
-        const safeOrgName = sessionOrgName || orgName;
+        // Security: force orgName to the session user's org (prevent cross-tenant creation),
+        // unless it's an administrator session (Cluso/Admin).
+        const isAdminSession = sessionOrgName?.toLowerCase() === "cluso" || sessionOrgName?.toLowerCase() === "admin";
+        const safeOrgName = isAdminSession ? orgName : (sessionOrgName || orgName);
         
         const { randomBytes } = await import("crypto");
         const bcrypt = await import("bcryptjs");
