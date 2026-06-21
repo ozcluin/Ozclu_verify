@@ -254,7 +254,7 @@ function BillableSummaryContent() {
                       <td className="py-3 px-3">{settings.companyName || "Custent"}</td>
                       <td className="py-3 px-3">{v.verifier || "Prabir Kumar"}</td>
                       <td className="py-3 px-3 font-bold text-emerald-700">Verified</td>
-                      <td className="py-3 px-3">PAN Verification</td>
+                      <td className="py-3 px-3">Identity Verification</td>
                       <td className="py-3 px-3">India</td>
                       <td className="py-3 px-3">USD</td>
                       <td className="py-3 px-3 text-right font-mono">${perVerificationRate.toFixed(2)}</td>
