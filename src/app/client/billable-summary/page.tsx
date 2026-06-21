@@ -256,9 +256,9 @@ function BillableSummaryContent() {
                       <td className="py-3 px-3 font-bold text-emerald-700">Verified</td>
                       <td className="py-3 px-3">PAN Verification</td>
                       <td className="py-3 px-3">India</td>
-                      <td className="py-3 px-3">INR</td>
-                      <td className="py-3 px-3 text-right font-mono">₹{perVerificationRate.toFixed(2)}</td>
-                      <td className="py-3 px-3 text-right font-mono">₹{perVerificationRate.toFixed(2)}</td>
+                      <td className="py-3 px-3">USD</td>
+                      <td className="py-3 px-3 text-right font-mono">${perVerificationRate.toFixed(2)}</td>
+                      <td className="py-3 px-3 text-right font-mono">${perVerificationRate.toFixed(2)}</td>
                     </tr>
                   );
                 })
@@ -280,10 +280,10 @@ function BillableSummaryContent() {
             </thead>
             <tbody className="bg-white">
               <tr>
-                <td className="py-3.5 px-3 font-bold text-slate-900">INR</td>
-                <td className="py-3.5 px-3 text-right font-bold text-slate-900 font-mono">₹{subTotal.toFixed(2)}</td>
+                <td className="py-3.5 px-3 font-bold text-slate-900">USD</td>
+                <td className="py-3.5 px-3 text-right font-bold text-slate-900 font-mono">${subTotal.toFixed(2)}</td>
                 <td className="py-3.5 px-3 text-right font-semibold text-slate-400 font-mono">—</td>
-                <td className="py-3.5 px-3 text-right font-extrabold text-[#8C1D40] font-mono text-sm">₹{subTotal.toFixed(2)}</td>
+                <td className="py-3.5 px-3 text-right font-extrabold text-[#8C1D40] font-mono text-sm">${subTotal.toFixed(2)}</td>
               </tr>
             </tbody>
           </table>

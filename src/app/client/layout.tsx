@@ -54,7 +54,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       const mapped = clientInvoices.map((inv) => ({
         id: `inv-${inv.id}`,
         title: "New Invoice Generated",
-        message: `Invoice ${inv.id} for ₹${inv.amount.toLocaleString()} is now available. Due date: ${inv.dueDate}.`,
+        message: `Invoice ${inv.id} for $${inv.amount.toLocaleString()} is now available. Due date: ${inv.dueDate}.`,
         date: inv.date,
         read: readIds.includes(`inv-${inv.id}`)
       }));
