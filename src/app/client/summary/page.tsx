@@ -528,22 +528,15 @@ export default function OrderSummaryPage() {
               </div>
             ) : displayVerification && (
               <>
-                <div className="flex items-center gap-3 mb-6 animate-fade-in">
-                  <div className={`p-2.5 rounded-xl border ${
-                      displayVerification.status === "Completed"
-                        ? "bg-[#E6F8F3] text-[#00684A] border-[#A3EAD6]"
-                        : "bg-red-50 text-red-800 border-red-200"
-                    }`}
-                  >
-                    {displayVerification.status === "Completed" ? (
-                      <CheckCircle2 className="w-6 h-6 text-[#00684A]" />
-                    ) : (
-                      <AlertCircle className="w-6 h-6 text-red-700" />
-                    )}
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-lg text-[#0F172A]">Verification Report</h3>
-                    <p className="text-[11px] font-bold text-[#475569] font-mono">ID: {displayVerification.id}</p>
+                <div className="flex items-center gap-2 mb-6 animate-fade-in">
+                  {displayVerification.status === "Completed" ? (
+                    <CheckCircle2 className="w-6 h-6 text-[#00684A] shrink-0" />
+                  ) : (
+                    <AlertCircle className="w-6 h-6 text-red-700 shrink-0" />
+                  )}
+                  <div className="flex items-baseline gap-2">
+                    <h3 className="font-semibold text-lg text-[#0F172A]">Report</h3>
+                    <span className="text-[11px] font-bold text-[#475569] font-mono">ID: {displayVerification.id}</span>
                   </div>
                 </div>
 
