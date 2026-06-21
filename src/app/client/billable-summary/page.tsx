@@ -82,7 +82,7 @@ function BillableSummaryContent() {
   return (
     <div className="min-h-screen bg-white p-4 sm:p-8 font-sans text-slate-800 printable-area">
       {/* Outer Border Frame */}
-      <div className="border-[3px] border-double border-[#8C1D40] p-6 max-w-6xl mx-auto rounded-xs">
+      <div className="border-[3px] border-double border-[#8C1D40] p-6 max-w-6xl mx-auto rounded-xs outer-border-container">
         
         {/* Top Header Row */}
         <div className="flex flex-col md:flex-row justify-between items-start border-b border-[#D4F6FF]/60 pb-6 mb-6 gap-6">
@@ -96,15 +96,8 @@ function BillableSummaryContent() {
           </div>
           
           {/* Cluso Logo */}
-          <div className="flex items-center gap-3 self-center md:self-start bg-[#D4F6FF]/10 border border-[#C6E7FF]/40 px-4 py-2 rounded-2xl shrink-0">
-            {/* Mock Cluso Diamond Logo */}
-            <div className="relative w-8 h-8 flex items-center justify-center rotate-45 border-2 border-[#85F4FF] bg-gradient-to-br from-[#EFFFFD] via-[#B8FFF9] to-[#85F4FF] rounded-lg shadow-2xs shrink-0">
-              <div className="w-4 h-4 bg-[#0369a1] rounded-xs -rotate-45"></div>
-            </div>
-            <div className="text-left">
-              <span className="font-extrabold text-[#0F172A] text-lg leading-none block">Cluso</span>
-              <span className="text-[10px] uppercase tracking-widest text-[#475569] font-bold block leading-none mt-0.5">Infolink</span>
-            </div>
+          <div className="self-center md:self-start shrink-0">
+            <img src="/cluso-infolink.png" alt="Cluso Logo" className="h-10 object-contain" />
           </div>
         </div>
 
@@ -209,20 +202,20 @@ function BillableSummaryContent() {
 
         {/* Billable Table */}
         <div className="overflow-x-auto border border-slate-200 rounded-xl mb-4">
-          <table className="w-full text-left text-xs whitespace-nowrap font-medium text-slate-700">
+          <table className="w-full text-left text-[10px] font-medium text-slate-700">
             <thead>
               <tr className="bg-slate-50 text-slate-900 font-bold border-b border-slate-200">
-                <th className="py-3 px-3">Sr No.</th>
-                <th className="py-3 px-3">Requested Date</th>
-                <th className="py-3 px-3">Name of Candidate</th>
-                <th className="py-3 px-3">User Name</th>
-                <th className="py-3 px-3">Verifier Name</th>
-                <th className="py-3 px-3">Status</th>
-                <th className="py-3 px-3">Service</th>
-                <th className="py-3 px-3">Verification Origin</th>
-                <th className="py-3 px-3">Price Currency</th>
-                <th className="py-3 px-3 text-right">Price (Excl. GST)</th>
-                <th className="py-3 px-3 text-right">Price (Incl. GST)</th>
+                <th className="py-2 px-2 whitespace-nowrap">Sr No.</th>
+                <th className="py-2 px-2 whitespace-nowrap">Requested Date</th>
+                <th className="py-2 px-2">Name of Candidate</th>
+                <th className="py-2 px-2">User Name</th>
+                <th className="py-2 px-2">Verifier Name</th>
+                <th className="py-2 px-2 whitespace-nowrap">Status</th>
+                <th className="py-2 px-2">Service</th>
+                <th className="py-2 px-2">Verification Origin</th>
+                <th className="py-2 px-2 whitespace-nowrap">Price Currency</th>
+                <th className="py-2 px-2 text-right whitespace-nowrap">Price (Excl. GST)</th>
+                <th className="py-2 px-2 text-right whitespace-nowrap">Price (Incl. GST)</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 bg-white">
@@ -248,17 +241,17 @@ function BillableSummaryContent() {
 
                   return (
                     <tr key={v.id || idx} className="hover:bg-slate-50/50">
-                      <td className="py-3 px-3 font-semibold text-slate-900">{idx + 1}</td>
-                      <td className="py-3 px-3">{formattedDate}</td>
-                      <td className="py-3 px-3 font-bold text-slate-900">{v.name}</td>
-                      <td className="py-3 px-3">{settings.companyName || "Custent"}</td>
-                      <td className="py-3 px-3">{v.verifier || "Prabir Kumar"}</td>
-                      <td className="py-3 px-3 font-bold text-emerald-700">Verified</td>
-                      <td className="py-3 px-3">Identity Verification</td>
-                      <td className="py-3 px-3">India</td>
-                      <td className="py-3 px-3">USD</td>
-                      <td className="py-3 px-3 text-right font-mono">${perVerificationRate.toFixed(2)}</td>
-                      <td className="py-3 px-3 text-right font-mono">${perVerificationRate.toFixed(2)}</td>
+                      <td className="py-2 px-2 font-semibold text-slate-900 whitespace-nowrap">{idx + 1}</td>
+                      <td className="py-2 px-2 whitespace-nowrap">{formattedDate}</td>
+                      <td className="py-2 px-2 font-bold text-slate-900">{v.name}</td>
+                      <td className="py-2 px-2">{settings.companyName || "Custent"}</td>
+                      <td className="py-2 px-2">{v.verifier || "Prabir Kumar"}</td>
+                      <td className="py-2 px-2 font-bold text-emerald-700 whitespace-nowrap">Verified</td>
+                      <td className="py-2 px-2">Identity Verification</td>
+                      <td className="py-2 px-2">India</td>
+                      <td className="py-2 px-2 whitespace-nowrap">USD</td>
+                      <td className="py-2 px-2 text-right font-mono whitespace-nowrap">${perVerificationRate.toFixed(2)}</td>
+                      <td className="py-2 px-2 text-right font-mono whitespace-nowrap">${perVerificationRate.toFixed(2)}</td>
                     </tr>
                   );
                 })
@@ -318,13 +311,35 @@ function BillableSummaryContent() {
           .printable-area {
             padding: 0 !important;
             margin: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
           }
-          .print\\:hidden {
+          .outer-border-container {
+            width: 100% !important;
+            max-width: 100% !important;
+            padding: 15px !important;
+            margin: 0 !important;
+            box-sizing: border-box !important;
+            border-width: 2px !important;
+          }
+          table {
+            width: 100% !important;
+            font-size: 9px !important;
+          }
+          th, td {
+            padding: 4px 3px !important;
+            word-wrap: break-word !important;
+            white-space: normal !important;
+          }
+          .whitespace-nowrap {
+            white-space: nowrap !important;
+          }
+          .print\:hidden {
             display: none !important;
           }
           @page {
             size: A4 portrait;
-            margin: 15mm;
+            margin: 8mm;
           }
         }
       `}</style>
