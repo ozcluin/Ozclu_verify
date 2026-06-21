@@ -450,7 +450,7 @@ export default function OrderSummaryPage() {
             
             <div className="relative z-10">
               <p className="font-label-caps text-[#475569] text-[10px] font-bold tracking-wider uppercase mb-1">Current Dues</p>
-              <p className="font-display-lg text-[#0F172A] font-bold tracking-tight text-3xl">${unpaidBalance.toFixed(2)}</p>
+              <p className="font-display-lg text-[#0F172A] font-bold tracking-tight text-3xl">${(unpaidBalance + currentMonthRunningTotal).toFixed(2)}</p>
               <p className="text-slate-500 text-xs mt-1 font-medium">Due by next statement</p>
             </div>
 
