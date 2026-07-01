@@ -93,7 +93,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 
   const navItems = [
     {
-      name: "Identity Verification",
+      name: "Services",
       path: "/client/identity-verification",
       icon: ShieldCheck,
     },

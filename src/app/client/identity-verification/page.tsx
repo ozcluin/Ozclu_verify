@@ -176,7 +176,7 @@ export default function IdentityVerification() {
             <div className="p-2 bg-[#D4F6FF]/40 rounded-xl border border-[#C6E7FF]/60">
               <UserPlus className="w-5 h-5 text-[#1E3A5F]" />
             </div>
-            <h3 className="font-semibold text-[#0F172A] text-lg">Verify Details</h3>
+            <h3 className="font-semibold text-[#0F172A] text-lg">Identity Check</h3>
           </div>
 
           {/* Candidate Name Field */}

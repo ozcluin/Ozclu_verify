@@ -314,47 +314,47 @@ export default function SettingsPage() {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
               <div className="flex flex-col gap-2">
-                <label className="font-label-caps text-[#475569] text-[10px] font-bold uppercase tracking-wider">Company Registration Number (Optional)</label>
+                <label className="font-label-caps text-[#475569] text-[10px] font-bold uppercase tracking-wider">Employer Identification Number (EIN)</label>
                 <input
                   type="text"
-                  placeholder="Enter registration number"
+                  placeholder="e.g. 12-3456789"
                   value={cin}
                   onChange={(e) => setCin(e.target.value)}
                   className="w-full bg-[#FBFBFB]/50 border border-[#C6E7FF] rounded-xl px-4 py-2.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#C6E7FF] focus:border-[#0F172A] transition-all font-semibold"
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <label className="font-label-caps text-[#475569] text-[10px] font-bold uppercase tracking-wider">LUT Entry (Optional)</label>
+                <label className="font-label-caps text-[#475569] text-[10px] font-bold uppercase tracking-wider">State of Incorporation</label>
                 <input
                   type="text"
-                  placeholder="Enter LUT"
+                  placeholder="e.g. Delaware"
                   value={lut}
                   onChange={(e) => setLut(e.target.value)}
                   className="w-full bg-[#FBFBFB]/50 border border-[#C6E7FF] rounded-xl px-4 py-2.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#C6E7FF] focus:border-[#0F172A] transition-all font-semibold"
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <label className="font-label-caps text-[#475569] text-[10px] font-bold uppercase tracking-wider">Tax Identification Number (Optional)</label>
+                <label className="font-label-caps text-[#475569] text-[10px] font-bold uppercase tracking-wider">DUNS Number</label>
                 <input
                   type="text"
-                  placeholder="Enter TIN"
+                  placeholder="e.g. 12-345-6789"
                   value={tin}
                   onChange={(e) => setTin(e.target.value)}
                   className="w-full bg-[#FBFBFB]/50 border border-[#C6E7FF] rounded-xl px-4 py-2.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#C6E7FF] focus:border-[#0F172A] transition-all font-semibold"
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <label className="font-label-caps text-[#475569] text-[10px] font-bold uppercase tracking-wider">GSTIN (Optional)</label>
+                <label className="font-label-caps text-[#475569] text-[10px] font-bold uppercase tracking-wider">State Tax ID / Sales Tax ID</label>
                 <input
                   type="text"
-                  placeholder="Enter GSTIN"
+                  placeholder="e.g. 1234567-8"
                   value={gstin}
                   onChange={(e) => setGstin(e.target.value)}
                   className="w-full bg-[#FBFBFB]/50 border border-[#C6E7FF] rounded-xl px-4 py-2.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#C6E7FF] focus:border-[#0F172A] transition-all font-semibold"
                 />
               </div>
               <div className="flex flex-col gap-2 md:col-span-2">
-                <label className="font-label-caps text-[#475569] text-[10px] font-bold uppercase tracking-wider">Invoice Email (Optional)</label>
+                <label className="font-label-caps text-[#475569] text-[10px] font-bold uppercase tracking-wider">Invoice Email</label>
                 <input
                   type="email"
                   placeholder="Enter invoice billing email"
