@@ -48,6 +48,8 @@ export interface Invoice {
   paymentProof?: string;
   paymentProofDate?: string;
   generationType?: "Auto" | "Manual";
+  rejectionReason?: string;
+  clientNote?: string;
 }
 
 export interface Verifier {
