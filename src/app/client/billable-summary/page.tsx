@@ -6,7 +6,7 @@ import { usePortal } from "src/context/PortalContext";
 
 function BillableSummaryContent() {
   const searchParams = useSearchParams();
-  const { settings, verifications, organisation } = usePortal();
+  const { settings, verifications, organisation, clusoSettings } = usePortal();
   const [loaded, setLoaded] = useState(false);
 
   // Determine billing month and year
@@ -55,15 +55,7 @@ function BillableSummaryContent() {
     }
   }, [settings, organisation, verifications]);
 
-  useEffect(() => {
-    if (loaded) {
-      // Trigger print dialog automatically
-      const timer = setTimeout(() => {
-        window.print();
-      }, 800);
-      return () => clearTimeout(timer);
-    }
-  }, [loaded]);
+
 
   if (!loaded) {
     return (
@@ -78,6 +70,10 @@ function BillableSummaryContent() {
   const customerAddress = [settings.address, settings.city, settings.postalCode]
     .filter(Boolean)
     .join(", ");
+
+  const clusoAddress = clusoSettings
+    ? [clusoSettings.address, clusoSettings.city, clusoSettings.postalCode].filter(Boolean).join(", ")
+    : "Evoma #14, Old Madras Road, Near Garden City College,, Bhattarahalli, Binna Mangala, Krishnarajapuram,, Bengaluru, Karnataka, 560049";
 
   return (
     <div className="min-h-screen bg-white p-4 sm:p-8 font-sans text-slate-800 printable-area">
@@ -154,43 +150,45 @@ function BillableSummaryContent() {
               <tbody>
                 <tr>
                   <td className="w-1/3 py-1 font-bold">Company Name:</td>
-                  <td className="w-2/3 py-1 text-slate-900">Cluso Infolink Private Limited</td>
+                  <td className="w-2/3 py-1 text-slate-900">{clusoSettings?.companyName || "Cluso Infolink Private Limited"}</td>
                 </tr>
                 <tr>
                   <td className="py-1 font-bold">Login Email:</td>
-                  <td className="py-1 text-slate-900">indiaops@cluso.in</td>
+                  <td className="py-1 text-slate-900">{clusoSettings?.contactEmail || "indiaops@cluso.in"}</td>
                 </tr>
                 <tr>
                   <td className="py-1 font-bold">GSTIN:</td>
-                  <td className="py-1 text-slate-900">29AADCC1935C1ZZ</td>
+                  <td className="py-1 text-slate-900">{clusoSettings?.gstin || "29AADCC1935C1ZZ"}</td>
                 </tr>
                 <tr>
                   <td className="py-1 font-bold">CIN / Registration:</td>
-                  <td className="py-1 text-slate-900">U74140KA2007PTC042369</td>
+                  <td className="py-1 text-slate-900">{clusoSettings?.cin || "U74140KA2007PTC042369"}</td>
                 </tr>
                 <tr>
                   <td className="py-1 font-bold">SAC Code:</td>
-                  <td className="py-1 text-slate-900">U72900GJ2018PTC654321</td>
+                  <td className="py-1 text-slate-900">{clusoSettings?.sac || "U72900GJ2018PTC654321"}</td>
                 </tr>
                 <tr>
                   <td className="py-1 font-bold">LUT Code:</td>
-                  <td className="py-1 text-slate-900">LUT12345</td>
+                  <td className="py-1 text-slate-900">{clusoSettings?.lut || "LUT12345"}</td>
                 </tr>
                 <tr>
                   <td className="py-1 font-bold">Address:</td>
-                  <td className="py-1 text-slate-900 leading-tight">Evoma #14, Old Madras Road, Near Garden City College,, Bhattarahalli, Binna Mangala, Krishnarajapuram,, Bengaluru, Karnataka, 560049</td>
+                  <td className="py-1 text-slate-900 leading-tight">{clusoAddress}</td>
                 </tr>
                 <tr>
                   <td className="py-1 font-bold">Invoice Email:</td>
-                  <td className="py-1 text-slate-900">indiaops@cluso.in</td>
+                  <td className="py-1 text-slate-900">{clusoSettings?.invoiceEmail || clusoSettings?.contactEmail || "indiaops@cluso.in"}</td>
                 </tr>
                 <tr>
                   <td className="py-1 font-bold">Billing same as company:</td>
-                  <td className="py-1 text-slate-900">Yes</td>
+                  <td className="py-1 text-slate-950">{clusoSettings?.billingSameAsCompany ? "Yes" : "No"}</td>
                 </tr>
                 <tr>
                   <td className="py-1 font-bold">Billing Address:</td>
-                  <td className="py-1 text-slate-900 leading-tight">Evoma #14, Old Madras Road, Near Garden City College,, Bhattarahalli, Binna Mangala, Krishnarajapuram,, Bengaluru, Karnataka, 560049</td>
+                  <td className="py-1 text-slate-900 leading-tight">
+                    {clusoSettings?.billingSameAsCompany ? "-" : clusoSettings?.billingAddress || "-"}
+                  </td>
                 </tr>
               </tbody>
             </table>

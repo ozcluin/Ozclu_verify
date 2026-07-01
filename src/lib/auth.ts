@@ -68,7 +68,7 @@ export const authOptions: NextAuthOptions = {
           throw new Error("No user found with this email");
         }
 
-        if (user.role === "client") {
+        if (user.role === "client" || user.role === "org_owner") {
           const orgName = user.orgName || "";
           const org = await db.collection("organisations").findOne({
             name: orgName,
@@ -122,7 +122,7 @@ export const authOptions: NextAuthOptions = {
         }
 
         // Enforce client-only access — deny admin and candidate accounts
-        if (user.role !== "client") {
+        if (user.role !== "client" && user.role !== "org_owner") {
           await logAuthEvent(db, {
             email,
             portal: "client",

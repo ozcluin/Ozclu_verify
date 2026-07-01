@@ -41,6 +41,7 @@ export default function OrderSummaryPage() {
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [proofFile, setProofFile] = useState<string | null>(null);
   const [proofFileName, setProofFileName] = useState<string>("");
+  const [clientNote, setClientNote] = useState<string>("");
   const [revealStates, setRevealStates] = useState<Record<string, boolean>>({});
 
   const toggleReveal = (fieldKey: string) => {
@@ -54,6 +55,7 @@ export default function OrderSummaryPage() {
     setPaymentProcessing(false);
     setProofFile(null);
     setProofFileName("");
+    setClientNote("");
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -71,12 +73,42 @@ export default function OrderSummaryPage() {
     reader.readAsDataURL(file);
   };
 
+  const getInvoiceBillingPeriod = (inv: Invoice) => {
+    let month = inv.month || "";
+    let year = inv.year || new Date().getFullYear();
+    if (!month && inv.id) {
+      const parts = inv.id.split("-");
+      if (parts.length >= 4) {
+        const yearPart = parseInt(parts[2]);
+        if (!isNaN(yearPart)) year = yearPart;
+        const monthPart = parts[3].toLowerCase();
+        const monthsMap: Record<string, string> = {
+          jan: "January", feb: "February", mar: "March", apr: "April", may: "May", jun: "June",
+          jul: "July", aug: "August", sep: "September", oct: "October", nov: "November", dec: "December"
+        };
+        if (monthsMap[monthPart]) {
+          month = monthsMap[monthPart];
+        }
+      }
+    }
+    if (!month && inv.date) {
+      try {
+        const d = new Date(inv.date);
+        if (!isNaN(d.getTime())) {
+          month = d.toLocaleDateString("en-US", { month: "long" });
+          year = d.getFullYear();
+        }
+      } catch {}
+    }
+    return { month, year };
+  };
+
   const handleConfirmPayment = async () => {
     if (!activeInvoice || !proofFile) return;
     setPaymentProcessing(true);
     setTimeout(async () => {
       try {
-        await submitPaymentProof(activeInvoice.id, proofFile);
+        await submitPaymentProof(activeInvoice.id, proofFile, activeInvoice._id, clientNote);
         setPaymentProcessing(false);
         setPaymentSuccess(true);
         setTimeout(() => {
@@ -84,6 +116,7 @@ export default function OrderSummaryPage() {
           setPaymentSuccess(false);
           setProofFile(null);
           setProofFileName("");
+          setClientNote("");
         }, 2500);
       } catch (err) {
         console.error("Payment confirmation failed:", err);
@@ -238,7 +271,14 @@ export default function OrderSummaryPage() {
   const now = new Date();
   const currentMonthName = now.toLocaleDateString("en-US", { month: "long" });
   const currentYear = now.getFullYear();
-  const currentMonthCompleted = clientVerifications.filter((v) => {
+
+  // Only count live verifications if NO invoice exists for the current month
+  // (if an invoice exists, those verifications are already captured in its amount)
+  const hasCurrentMonthInvoice = clientInvoices.some(
+    (inv) => inv.month?.toLowerCase() === currentMonthName.toLowerCase() && inv.year === currentYear
+  );
+
+  const currentMonthCompleted = hasCurrentMonthInvoice ? 0 : clientVerifications.filter((v) => {
     if (v.status !== "Completed") return false;
     try {
       const d = new Date(v.completedAt || v.date);
@@ -288,7 +328,8 @@ export default function OrderSummaryPage() {
   });
 
   return (
-    <div className="flex flex-col gap-6 pt-4 animate-fade-in pb-12">
+    <>
+      <div className="flex flex-col gap-6 pt-4 animate-fade-in pb-12">
       <div className="flex flex-col gap-1 border-b border-[#D4F6FF] pb-5 mb-2">
         <div className="flex items-center gap-2 text-[10px] font-bold text-[#1E3A5F] bg-[#D4F6FF]/60 px-2.5 py-1 rounded-full w-fit uppercase tracking-wider font-label-caps border border-[#C6E7FF]/60">
           <Sparkles className="w-3.5 h-3.5 text-[#0F172A]" />
@@ -439,17 +480,17 @@ export default function OrderSummaryPage() {
 
         {/* Sidebar Cards Column */}
         <div className="flex flex-col gap-6">
-          {/* Invoice Summary */}
+          {/* Redesigned Invoices & Billing Panel */}
           <section className="bg-white border border-[#C6E7FF] rounded-3xl p-6 flex flex-col gap-5 relative overflow-hidden group shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-1">
             <div className="absolute -right-10 -top-10 w-32 h-32 bg-[#C6E7FF] opacity-25 rounded-full blur-2xl group-hover:opacity-35 transition-opacity pointer-events-none"></div>
             <div className="absolute top-0 left-0 right-0 h-1 bg-[#C6E7FF]"></div>
             <div className="flex justify-between items-start mb-1 relative z-10">
-              <h3 className="font-semibold text-lg text-[#0F172A]">Invoice Summary</h3>
+              <h3 className="font-semibold text-lg text-[#0F172A]">Invoices &amp; Billing</h3>
               <Receipt className="w-5 h-5 text-[#475569]" />
             </div>
             
             <div className="relative z-10">
-              <p className="font-label-caps text-[#475569] text-[10px] font-bold tracking-wider uppercase mb-1">Current Dues</p>
+              <p className="font-label-caps text-[#475569] text-[10px] font-bold tracking-wider uppercase mb-1">Total Outstanding</p>
               <p className="font-display-lg text-[#0F172A] font-bold tracking-tight text-3xl">${(unpaidBalance + currentMonthRunningTotal).toFixed(2)}</p>
               <p className="text-slate-500 text-xs mt-1 font-medium">Due by next statement</p>
             </div>
@@ -468,42 +509,46 @@ export default function OrderSummaryPage() {
               </div>
             )}
 
-            <div className="space-y-3 relative z-10 mt-2">
-              {clientInvoices.filter(inv => inv.status !== "Paid").slice(0, 3).map((inv) => (
-                <div key={inv._id || inv.id} className="flex justify-between items-center border-b border-[#D4F6FF]/40 pb-2">
-                  <div className="flex flex-col">
-                    <span className="font-semibold text-xs text-[#0F172A]">{inv.id}</span>
-                    <span className="text-[11px] text-[#475569] font-medium">Due {inv.dueDate}</span>
-                  </div>
-                  <div className="flex flex-col items-end">
-                    <span className="font-bold text-xs text-[#0F172A]">${inv.amount.toFixed(2)}</span>
-                    <div className="flex items-center gap-2 mt-1">
-                      {inv.status !== "Paid" && inv.status !== "Pending" && (
-                        <button
-                          type="button"
-                          onClick={() => handleInitiatePayment(inv)}
-                          className="text-[11px] text-[#0F172A] hover:text-[#1E293B] font-bold underline cursor-pointer hover:no-underline"
+            {/* Clickable Recent Invoices List */}
+            <div className="space-y-2 relative z-10 mt-2">
+              <p className="font-label-caps text-[#475569] text-[10px] font-bold tracking-wider uppercase mb-2">Recent Invoices</p>
+              {clientInvoices.length === 0 ? (
+                <p className="text-xs text-slate-500 font-medium italic text-center py-4">No statements issued.</p>
+              ) : (
+                clientInvoices.slice(0, 4).map((inv) => {
+                  const { month, year } = getInvoiceBillingPeriod(inv);
+                  const displayPeriod = month ? `${month.substring(0, 3)} ${year}` : inv.date;
+                  return (
+                    <button
+                      key={inv._id || inv.id}
+                      type="button"
+                      onClick={() => handleInitiatePayment(inv)}
+                      className="w-full text-left p-3 rounded-xl border border-[#D4F6FF]/40 bg-white hover:bg-[#D4F6FF]/15 transition-all flex justify-between items-center cursor-pointer shadow-3xs hover:shadow-2xs group/row"
+                    >
+                      <div className="flex flex-col gap-0.5">
+                        <span className="font-semibold text-xs text-[#0F172A] group-hover/row:text-[#1E3A5F] transition-colors">{inv.id}</span>
+                        <span className="text-[10px] text-[#475569] font-medium">{displayPeriod} · Due {inv.dueDate}</span>
+                      </div>
+                      <div className="flex flex-col items-end gap-1">
+                        <span className="font-bold text-xs text-[#0F172A]">${inv.amount.toFixed(2)}</span>
+                        <span
+                          className={`text-[9px] font-bold px-1.5 py-0.5 rounded border uppercase tracking-wider ${
+                            inv.status === "Paid"
+                              ? "bg-[#E6F8F3] text-[#00684A] border-[#A3EAD6]"
+                              : inv.status === "Pending"
+                              ? "bg-[#FFDDAE]/40 text-[#5C3A21] border-[#FFDDAE]"
+                              : inv.status === "Overdue"
+                              ? "bg-red-50 text-red-800 border border-red-200"
+                              : "bg-slate-50 text-slate-700 border border-slate-200"
+                          }`}
                         >
-                          Pay
-                        </button>
-                      )}
-                      <span
-                        className={`text-[9px] font-bold px-1.5 py-0.5 rounded border uppercase ${
-                          inv.status === "Paid"
-                            ? "bg-[#E6F8F3] text-[#00684A] border-[#A3EAD6]"
-                            : inv.status === "Pending"
-                            ? "bg-[#FFDDAE]/40 text-[#5C3A21] border border-[#FFDDAE]"
-                            : inv.status === "Overdue"
-                            ? "bg-red-50 text-red-800 border border-red-200"
-                            : "bg-surface-container-high text-[#475569] border border-outline-variant"
-                        }`}
-                      >
-                        {inv.status}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                          {inv.status}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })
+              )}
             </div>
 
             <button
@@ -514,34 +559,14 @@ export default function OrderSummaryPage() {
               <ArrowRight className="w-4 h-4 text-[#0F172A]" />
             </button>
           </section>
-
-          {/* Quick Action Card */}
-          <section className="bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#134074] text-white rounded-3xl p-6 flex flex-col gap-4 relative overflow-hidden shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-1">
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[#C6E7FF]/10 via-transparent to-transparent pointer-events-none"></div>
-            <div className="relative z-10 flex flex-col gap-1">
-              <h3 className="font-semibold text-base text-white flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-[#FFDDAE]" />
-                <span>Billable Requests Summary</span>
-              </h3>
-              <p className="text-xs text-slate-300 leading-relaxed mt-1.5 font-medium">
-                Download a comprehensive PDF summary of all billable requests for compliance records.
-              </p>
-            </div>
-            <button
-              onClick={() => window.open("/client/billable-summary", "_blank")}
-              className="mt-2 w-full py-2.5 bg-[#C6E7FF] text-[#0F172A] font-bold text-sm rounded-xl hover:bg-white active:scale-95 transition-all shadow-sm relative z-10 flex justify-center items-center gap-2 group cursor-pointer"
-            >
-              <span>Download Billable Summary</span>
-              <Download className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" />
-            </button>
-          </section>
         </div>
       </div>
+    </div>
 
       {/* View Report Detail Modal */}
       {selectedVerification && (
-        <div className="fixed inset-0 bg-slate-400/10 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in">
-          <div className={`bg-white border border-[#C6E7FF] rounded-3xl p-8 w-full shadow-2xl relative max-h-[85vh] overflow-y-auto ${displayVerification?.digilockerStatus === "Verified" ? "max-w-3xl" : "max-w-lg"}`}>
+        <div className="fixed inset-0 bg-slate-900/15 backdrop-blur-xs overflow-y-auto flex justify-center p-4 z-[99999] animate-fade-in">
+          <div className={`bg-white border border-[#C6E7FF] rounded-3xl p-8 w-full shadow-2xl relative my-auto ${displayVerification?.digilockerStatus === "Verified" ? "max-w-3xl animate-fade-in" : "max-w-lg animate-fade-in"}`}>
             <button
               onClick={() => {
                 setSelectedVerification(null);
@@ -831,8 +856,8 @@ export default function OrderSummaryPage() {
  
       {/* View Billing History Modal */}
       {billingHistoryOpen && (
-        <div className="fixed inset-0 bg-slate-400/10 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in">
-          <div className="bg-white border border-[#C6E7FF] rounded-3xl p-8 max-w-2xl w-full shadow-2xl relative max-h-[80vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-slate-900/15 backdrop-blur-xs overflow-y-auto flex justify-center p-4 z-[99999] animate-fade-in">
+          <div className="bg-white border border-[#C6E7FF] rounded-3xl p-8 max-w-2xl w-full shadow-2xl relative my-auto animate-fade-in">
             <button
               onClick={() => setBillingHistoryOpen(false)}
               className="absolute right-4 top-4 p-2 hover:bg-[#D4F6FF]/40 transition-colors rounded-xl text-[#0F172A] cursor-pointer"
@@ -858,38 +883,34 @@ export default function OrderSummaryPage() {
                 </thead>
                 <tbody className="divide-y divide-[#D4F6FF]/40 bg-white">
                   {clientInvoices.map((inv) => (
-                    <tr key={inv._id || inv.id} className="hover:bg-[#D4F6FF]/10 transition-colors">
-                      <td className="py-3 px-4 font-bold text-[#0F172A] text-xs">{inv.id}</td>
+                    <tr
+                      key={inv._id || inv.id}
+                      onClick={() => {
+                        setBillingHistoryOpen(false);
+                        handleInitiatePayment(inv);
+                      }}
+                      className="hover:bg-[#D4F6FF]/15 transition-all cursor-pointer group/row"
+                    >
+                      <td className="py-3 px-4 font-bold text-[#0F172A] text-xs group-hover/row:text-[#1E3A5F] group-hover/row:underline transition-colors">{inv.id}</td>
                       <td className="py-3 px-4 text-[#475569] text-xs font-semibold">{inv.date}</td>
                       <td className="py-3 px-4 text-[#475569] text-xs font-semibold">{inv.dueDate}</td>
                       <td className="py-3 px-4 text-[#0F172A] font-bold text-xs">${inv.amount.toFixed(2)}</td>
                       <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end gap-3">
                           <span
-                            className={`inline-block font-bold px-2 py-0.5 rounded border text-[9px] uppercase ${
+                            className={`inline-block font-bold px-2 py-0.5 rounded border text-[9px] uppercase tracking-wider ${
                               inv.status === "Paid"
                                 ? "bg-[#E6F8F3] text-[#00684A] border-[#A3EAD6]"
                                 : inv.status === "Pending"
-                                ? "bg-[#FFDDAE]/40 text-[#5C3A21] border border-[#FFDDAE]"
+                                ? "bg-[#FFDDAE]/40 text-[#5C3A21] border-[#FFDDAE]"
                                 : inv.status === "Overdue"
                                 ? "bg-red-50 text-red-800 border border-red-200"
-                                : "bg-surface-container-high text-[#475569] border border-outline-variant"
+                                : "bg-slate-50 text-slate-700 border border-slate-200"
                             }`}
                           >
                             {inv.status}
                           </span>
-                          {inv.status !== "Paid" && inv.status !== "Pending" && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setBillingHistoryOpen(false);
-                                handleInitiatePayment(inv);
-                              }}
-                              className="text-xs px-3 py-1.5 bg-[#0F172A] text-white rounded-lg font-semibold hover:bg-[#1E293B] transition-all cursor-pointer shadow-2xs"
-                            >
-                              Pay
-                            </button>
-                          )}
+                          <span className="text-[10px] font-bold text-[#0ea5e9] opacity-0 group-hover/row:opacity-100 transition-opacity">View Details &rarr;</span>
                         </div>
                       </td>
                     </tr>
@@ -901,7 +922,7 @@ export default function OrderSummaryPage() {
             <div className="mt-8 flex justify-end border-t border-[#D4F6FF]/40 pt-5">
               <button
                 onClick={() => setBillingHistoryOpen(false)}
-                className="px-5 py-2.5 bg-[#0F172A] text-white hover:bg-[#1E293B] rounded-xl font-semibold cursor-pointer text-xs shadow-xs"
+                className="px-5 py-2.5 bg-[#0F172A] text-white hover:bg-[#1E293B] rounded-xl font-semibold cursor-pointer text-xs shadow-xs border-none"
               >
                 Close
               </button>
@@ -909,11 +930,9 @@ export default function OrderSummaryPage() {
           </div>
         </div>
       )}
- 
-      {/* Payment Modal */}
       {activeInvoice && (
-        <div className="fixed inset-0 bg-slate-400/10 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in">
-          <div className="bg-white border border-[#C6E7FF] rounded-3xl p-8 max-w-lg w-full shadow-2xl relative max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-slate-900/15 backdrop-blur-xs overflow-y-auto flex justify-center p-4 z-[99999] animate-fade-in">
+          <div className="bg-white border border-[#C6E7FF] rounded-3xl p-8 max-w-2xl w-full shadow-2xl relative my-auto animate-fade-in">
             <button
               onClick={() => {
                 if (!paymentProcessing && !paymentSuccess) {
@@ -936,238 +955,370 @@ export default function OrderSummaryPage() {
                   Your payment proof has been uploaded.
                 </p>
                 <p className="text-secondary text-xs mt-1 font-semibold">
-                  Invoice <strong className="text-[#0F172A] font-bold">{activeInvoice.id}</strong> is now <strong className="text-[#5C3A21] font-bold">Pending</strong> approval from the administrator.
+                  Invoice <strong className="text-[#0F172A] font-bold">{activeInvoice.id}</strong> is now <strong className="text-[#5C3A21] font-bold">Pending</strong> approval from our administrator.
                 </p>
               </div>
             ) : (
-              <div className="flex flex-col gap-6">
-                <div className="text-left">
-                  <h3 className="font-semibold text-lg text-[#0F172A]">Pay Invoice</h3>
+              <div className="flex flex-col gap-5">
+                <div className="text-left border-b border-[#D4F6FF]/40 pb-3">
+                  <h3 className="font-semibold text-lg text-[#0F172A]">Invoice Statement</h3>
                   <p className="text-secondary text-xs mt-1 font-medium text-slate-500">
-                    Select a payment method to settle your outstanding balance.
+                    Detailed billing information and payment options.
                   </p>
                 </div>
  
-                {/* Invoice Summary Row */}
-                <div className="flex justify-between items-center bg-[#D4F6FF]/15 px-4 py-3 rounded-xl border border-[#C6E7FF]/60">
-                  <div className="flex flex-col text-left">
-                    <span className="text-xs font-bold text-[#0F172A]">{activeInvoice.id}</span>
-                    <span className="text-[10px] text-[#475569] font-medium">Due by {activeInvoice.dueDate}</span>
+                {/* Detailed Invoice Info */}
+                <div className="grid grid-cols-2 gap-x-4 gap-y-3 bg-[#D4F6FF]/10 p-4 rounded-2xl border border-[#C6E7FF]/60 text-xs text-left">
+                  <div>
+                    <span className="text-[#475569] font-label-caps text-[9px] font-bold tracking-wider block">INVOICE ID</span>
+                    <span className="text-[#0F172A] font-bold font-mono">{activeInvoice.id}</span>
                   </div>
-                  <div className="text-right">
-                    <span className="text-[9px] text-[#475569] uppercase font-label-caps block font-bold tracking-wider">Amount Due</span>
-                    <span className="text-base font-bold text-[#0F172A] font-mono">${activeInvoice.amount.toFixed(2)}</span>
-                  </div>
-                </div>
- 
-                {/* Payment Method Tabs */}
-                <div className="flex border-b border-[#D4F6FF]">
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod("wire")}
-                    className={`flex-1 py-2.5 font-bold text-xs transition-all border-b-2 text-center flex justify-center items-center gap-1.5 cursor-pointer ${
-                      paymentMethod === "wire"
-                        ? "border-[#0F172A] text-[#0F172A]"
-                        : "border-transparent text-secondary hover:text-primary"
-                    }`}
-                  >
-                    <CreditCard className="w-4 h-4" />
-                    <span>Wire Transfer</span>
-                  </button>
-                  <button
-                    type="button"
-                    disabled
-                    className="flex-1 py-2.5 font-bold text-xs border-transparent text-[#94A3B8] flex justify-center items-center gap-1.5 cursor-not-allowed select-none"
-                  >
-                    <Lock className="w-4 h-4 text-[#94A3B8]/60" />
-                    <span className="flex items-center gap-1">
-                      <span>PayPal</span>
-                      <span className="bg-[#D4F6FF]/50 text-[#0F172A] text-[8px] uppercase px-1.5 py-0.5 rounded font-extrabold">Soon</span>
+                  <div>
+                    <span className="text-[#475569] font-label-caps text-[9px] font-bold tracking-wider block">BILLING PERIOD</span>
+                    <span className="text-[#0F172A] font-bold">
+                      {(() => {
+                        const { month, year } = getInvoiceBillingPeriod(activeInvoice);
+                        return month ? `${month} ${year}` : "N/A";
+                      })()}
                     </span>
-                  </button>
+                  </div>
+                  <div className="border-t border-[#D4F6FF]/40 pt-2 mt-1">
+                    <span className="text-[#475569] font-label-caps text-[9px] font-bold tracking-wider block">DATE ISSUED</span>
+                    <span className="text-[#0F172A] font-semibold">{activeInvoice.date}</span>
+                  </div>
+                  <div className="border-t border-[#D4F6FF]/40 pt-2 mt-1">
+                    <span className="text-[#475569] font-label-caps text-[9px] font-bold tracking-wider block">DUE DATE</span>
+                    <span className="text-[#0F172A] font-semibold">{activeInvoice.dueDate}</span>
+                  </div>
+                  <div className="col-span-2 border-t border-[#D4F6FF]/40 pt-2 mt-1 flex justify-between items-baseline">
+                    <div>
+                      <span className="text-[#475569] font-label-caps text-[9px] font-bold tracking-wider block">AMOUNT DUE</span>
+                      <span className="text-xl font-extrabold text-[#0F172A] font-mono">${activeInvoice.amount.toFixed(2)}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[#475569] font-label-caps text-[9px] font-bold tracking-wider block">STATUS</span>
+                      <span
+                        className={`inline-block font-bold px-2 py-0.5 rounded border text-[10px] uppercase tracking-wider ${
+                          activeInvoice.status === "Paid"
+                            ? "bg-[#E6F8F3] text-[#00684A] border-[#A3EAD6]"
+                            : activeInvoice.status === "Pending"
+                            ? "bg-[#FFDDAE]/40 text-[#5C3A21] border-[#FFDDAE]"
+                            : activeInvoice.status === "Overdue"
+                            ? "bg-red-50 text-red-800 border border-red-200"
+                            : "bg-slate-50 text-slate-700 border border-slate-200"
+                        }`}
+                      >
+                        {activeInvoice.status}
+                      </span>
+                    </div>
+                  </div>
                 </div>
  
-                {/* Tab Contents */}
-                {paymentMethod === "wire" && (
-                  <div className="flex flex-col gap-4 animate-fade-in text-left">
-                    <p className="text-secondary text-xs leading-relaxed font-medium text-slate-500">
-                      Please transfer the exact amount due to the bank details below. Use the copy buttons for quick transfer input.
-                    </p>
+                {/* Per-Invoice Billable Summary Button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const { month, year } = getInvoiceBillingPeriod(activeInvoice);
+                    window.open(`/client/billable-summary?month=${encodeURIComponent(month)}&year=${year}`, "_blank");
+                  }}
+                  className="w-full py-2.5 bg-[#C6E7FF]/40 text-[#0F172A] hover:bg-[#C6E7FF]/70 font-bold text-xs rounded-xl border border-[#C6E7FF] transition-all flex justify-center items-center gap-2 cursor-pointer shadow-3xs"
+                >
+                  <Download className="w-4 h-4 text-[#0F172A]" />
+                  <span>Download Billable Requests Summary</span>
+                </button>
  
-                    {organisation && organisation.bankName ? (
-                      <div className="flex flex-col gap-3 bg-[#D4F6FF]/10 p-4 rounded-2xl border border-[#C6E7FF]">
-                        {/* Bank Name */}
-                        <div className="flex justify-between items-center text-xs">
-                          <div>
-                            <span className="text-[#475569] font-label-caps text-[9px] font-bold tracking-wider block">BANK NAME</span>
-                            <span className="text-[#0F172A] font-bold">{organisation.bankName}</span>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => handleCopyText(organisation.bankName || "", "bankName")}
-                            className="text-[10px] text-[#0F172A] hover:underline font-bold flex items-center gap-1 cursor-pointer"
-                          >
-                            {copiedField === "bankName" ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
-                            <span>{copiedField === "bankName" ? "Copied" : "Copy"}</span>
-                          </button>
-                        </div>
- 
-                        {/* Account Number */}
-                        {organisation.accountNumber && (
-                          <div className="flex justify-between items-center text-xs border-t border-[#D4F6FF]/65 pt-2.5">
-                            <div>
-                              <span className="text-[#475569] font-label-caps text-[9px] font-bold tracking-wider block">ACCOUNT NUMBER</span>
-                              <span className="text-[#0F172A] font-mono font-bold">{organisation.accountNumber}</span>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => handleCopyText(organisation.accountNumber || "", "accountNumber")}
-                              className="text-[10px] text-[#0F172A] hover:underline font-bold flex items-center gap-1 cursor-pointer"
-                            >
-                              {copiedField === "accountNumber" ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
-                              <span>{copiedField === "accountNumber" ? "Copied" : "Copy"}</span>
-                            </button>
-                          </div>
-                        )}
- 
-                        {/* IFSC Code */}
-                        {organisation.ifscCode && (
-                          <div className="flex justify-between items-center text-xs border-t border-[#D4F6FF]/65 pt-2.5">
-                            <div>
-                              <span className="text-[#475569] font-label-caps text-[9px] font-bold tracking-wider block">IFSC CODE</span>
-                              <span className="text-[#0F172A] font-mono font-bold">{organisation.ifscCode}</span>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => handleCopyText(organisation.ifscCode || "", "ifscCode")}
-                              className="text-[10px] text-[#0F172A] hover:underline font-bold flex items-center gap-1 cursor-pointer"
-                            >
-                              {copiedField === "ifscCode" ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
-                              <span>{copiedField === "ifscCode" ? "Copied" : "Copy"}</span>
-                            </button>
-                          </div>
-                        )}
- 
-                        {/* UPI ID */}
-                        {organisation.upiId && (
-                          <div className="flex justify-between items-center text-xs border-t border-[#D4F6FF]/65 pt-2.5">
-                            <div>
-                              <span className="text-[#475569] font-label-caps text-[9px] font-bold tracking-wider block">UPI ID</span>
-                              <span className="text-[#0F172A] font-mono font-bold">{organisation.upiId}</span>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => handleCopyText(organisation.upiId || "", "upiId")}
-                              className="text-[10px] text-[#0F172A] hover:underline font-bold flex items-center gap-1 cursor-pointer"
-                            >
-                              {copiedField === "upiId" ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
-                              <span>{copiedField === "upiId" ? "Copied" : "Copy"}</span>
-                            </button>
-                          </div>
-                        )}
- 
-                        {/* Payment Notes */}
-                        {organisation.paymentNotes && (
-                          <div className="border-t border-[#D4F6FF]/65 pt-2.5">
-                            <span className="text-[#475569] font-label-caps text-[9px] font-bold tracking-wider block mb-0.5">PAYMENT NOTES</span>
-                            <p className="text-[10px] text-[#475569] italic leading-relaxed">
-                              {organisation.paymentNotes}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="bg-[#FBFBFB] p-4 rounded-xl border border-[#D4F6FF] text-center flex flex-col gap-2 justify-center py-6 text-secondary">
-                        <Lock className="w-6 h-6 text-slate-400 mx-auto" />
-                        <p className="text-xs font-semibold">No bank details have been configured for your organisation.</p>
-                        <p className="text-[10px] opacity-80 font-medium">Please contact the system administrator to set up payment options.</p>
+                {/* Unpaid / Overdue workflow: show payment transfer options and upload form */}
+                {(activeInvoice.status === "Unpaid" || activeInvoice.status === "Overdue") && (
+                  <>
+                    {activeInvoice.rejectionReason && (
+                      <div className="bg-red-50 border border-red-200 p-3.5 rounded-2xl text-left flex flex-col gap-1.5 animate-fade-in">
+                        <span className="font-bold text-red-750 text-xs flex items-center gap-1.5">
+                          <AlertCircle className="w-4 h-4 text-red-650" />
+                          <span>Payment Disapproved by Our Administrator</span>
+                        </span>
+                        <p className="text-[11px] text-red-700 font-semibold leading-relaxed">
+                          Reason: <span className="italic">"{activeInvoice.rejectionReason}"</span>
+                        </p>
+                        <p className="text-[10px] text-slate-500 font-medium">
+                          Please review the comment above and upload another payment proof screenshot below.
+                        </p>
                       </div>
                     )}
-                    {/* Payment Proof Upload Section */}
-                    <div className="mt-3 border-t border-[#D4F6FF]/60 pt-3 flex flex-col gap-2">
-                      <span className="text-[#475569] font-label-caps text-[9px] font-bold tracking-wider block">UPLOAD PAYMENT PROOF SCREENSHOT</span>
-                      
-                      {!proofFile ? (
-                        <label className="border-2 border-dashed border-[#D4F6FF] hover:border-[#0F172A]/50 bg-[#FBFBFB] hover:bg-[#D4F6FF]/20 rounded-2xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all">
-                          <UploadCloud className="w-8 h-8 text-slate-400 animate-pulse" />
-                          <span className="text-xs text-[#0F172A] font-bold">Click to upload payment proof</span>
-                          <span className="text-[10px] text-secondary">PNG, JPG or PDF up to 2MB</span>
-                          <input
-                            type="file"
-                            accept="image/*,application/pdf"
-                            onChange={handleFileUpload}
-                            className="hidden"
-                          />
-                        </label>
-                      ) : (
-                        <div className="bg-[#D4F6FF]/10 border border-[#D4F6FF] rounded-2xl p-4 flex flex-col gap-3">
-                          <div className="flex justify-between items-center">
-                            <div className="flex items-center gap-2 max-w-[80%]">
-                              <CheckCircle className="w-4 h-4 text-green-600" />
-                              <span className="text-xs text-[#0F172A] font-bold truncate" title={proofFileName}>
-                                {proofFileName}
-                              </span>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setProofFile(null);
-                                setProofFileName("");
-                              }}
-                              className="text-[11px] text-red-600 hover:underline cursor-pointer flex items-center gap-1 font-bold"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                              <span>Remove</span>
-                            </button>
-                          </div>
+                    {/* Payment Method Tabs */}
+                    <div className="flex border-b border-[#D4F6FF]">
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod("wire")}
+                        className={`flex-1 py-2.5 font-bold text-xs transition-all border-b-2 text-center flex justify-center items-center gap-1.5 cursor-pointer ${
+                          paymentMethod === "wire"
+                            ? "border-[#0F172A] text-[#0F172A]"
+                            : "border-transparent text-secondary hover:text-primary"
+                        }`}
+                      >
+                        <CreditCard className="w-4 h-4" />
+                        <span>Wire Transfer</span>
+                      </button>
+                      <button
+                        type="button"
+                        disabled
+                        className="flex-1 py-2.5 font-bold text-xs border-transparent text-[#94A3B8] flex justify-center items-center gap-1.5 cursor-not-allowed select-none"
+                      >
+                        <Lock className="w-4 h-4 text-[#94A3B8]/60" />
+                        <span className="flex items-center gap-1">
+                          <span>PayPal</span>
+                          <span className="bg-[#D4F6FF]/50 text-[#0F172A] text-[8px] uppercase px-1.5 py-0.5 rounded font-extrabold">Soon</span>
+                        </span>
+                      </button>
+                    </div>
  
-                          {proofFile.startsWith("data:image/") && (
-                            <div className="w-full h-40 rounded-xl overflow-hidden border border-[#D4F6FF]/50 flex items-center justify-center bg-black/5 animate-fade-in">
-                              <img src={proofFile} alt="Payment proof preview" className="w-full h-full object-contain" />
+                    {/* Tab Contents */}
+                    {paymentMethod === "wire" && (
+                      <div className="flex flex-col gap-4 animate-fade-in text-left">
+                        <p className="text-secondary text-[11px] leading-relaxed font-medium text-slate-500">
+                          Please transfer the exact amount due to the bank details below. Use the copy buttons for quick transfer input.
+                        </p>
+
+                        {organisation && organisation.bankName ? (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 bg-[#D4F6FF]/10 p-4 rounded-2xl border border-[#C6E7FF]">
+                            {/* Bank Name */}
+                            <div className="flex justify-between items-center text-xs">
+                              <div>
+                                <span className="text-[#475569] font-label-caps text-[9px] font-bold tracking-wider block">BANK NAME</span>
+                                <span className="text-[#0F172A] font-bold">{organisation.bankName}</span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleCopyText(organisation.bankName || "", "bankName")}
+                                className="text-[10px] text-[#0F172A] hover:underline font-bold flex items-center gap-1 cursor-pointer"
+                              >
+                                {copiedField === "bankName" ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
+                                <span>{copiedField === "bankName" ? "Copied" : "Copy"}</span>
+                              </button>
+                            </div>
+
+                            {/* Account Number */}
+                            {organisation.accountNumber && (
+                              <div className="flex justify-between items-center text-xs">
+                                <div>
+                                  <span className="text-[#475569] font-label-caps text-[9px] font-bold tracking-wider block">ACCOUNT NUMBER</span>
+                                  <span className="text-[#0F172A] font-mono font-bold">{organisation.accountNumber}</span>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => handleCopyText(organisation.accountNumber || "", "accountNumber")}
+                                  className="text-[10px] text-[#0F172A] hover:underline font-bold flex items-center gap-1 cursor-pointer"
+                                >
+                                  {copiedField === "accountNumber" ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
+                                  <span>{copiedField === "accountNumber" ? "Copied" : "Copy"}</span>
+                                </button>
+                              </div>
+                            )}
+
+                            {/* IFSC Code */}
+                            {organisation.ifscCode && (
+                              <div className="flex justify-between items-center text-xs border-t sm:border-t-0 border-[#D4F6FF]/65 pt-2.5 sm:pt-0">
+                                <div>
+                                  <span className="text-[#475569] font-label-caps text-[9px] font-bold tracking-wider block">IFSC CODE</span>
+                                  <span className="text-[#0F172A] font-mono font-bold">{organisation.ifscCode}</span>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => handleCopyText(organisation.ifscCode || "", "ifscCode")}
+                                  className="text-[10px] text-[#0F172A] hover:underline font-bold flex items-center gap-1 cursor-pointer"
+                                >
+                                  {copiedField === "ifscCode" ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
+                                  <span>{copiedField === "ifscCode" ? "Copied" : "Copy"}</span>
+                                </button>
+                              </div>
+                            )}
+
+                            {/* UPI ID */}
+                            {organisation.upiId && (
+                              <div className="flex justify-between items-center text-xs border-t sm:border-t-0 border-[#D4F6FF]/65 pt-2.5 sm:pt-0">
+                                <div>
+                                  <span className="text-[#475569] font-label-caps text-[9px] font-bold tracking-wider block">UPI ID</span>
+                                  <span className="text-[#0F172A] font-mono font-bold">{organisation.upiId}</span>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => handleCopyText(organisation.upiId || "", "upiId")}
+                                  className="text-[10px] text-[#0F172A] hover:underline font-bold flex items-center gap-1 cursor-pointer"
+                                >
+                                  {copiedField === "upiId" ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
+                                  <span>{copiedField === "upiId" ? "Copied" : "Copy"}</span>
+                                </button>
+                              </div>
+                            )}
+
+                            {/* Payment Notes */}
+                            {organisation.paymentNotes && (
+                              <div className="col-span-1 sm:col-span-2 border-t border-[#D4F6FF]/65 pt-2.5">
+                                <span className="text-[#475569] font-label-caps text-[9px] font-bold tracking-wider block mb-0.5">PAYMENT NOTES</span>
+                                <p className="text-[10px] text-[#475569] italic leading-relaxed">
+                                  {organisation.paymentNotes}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="bg-[#FBFBFB] p-4 rounded-xl border border-[#D4F6FF] text-center flex flex-col gap-2 justify-center py-6 text-secondary">
+                            <Lock className="w-6 h-6 text-slate-400 mx-auto" />
+                            <p className="text-xs font-semibold">No bank details have been configured for your organisation.</p>
+                            <p className="text-[10px] opacity-80 font-medium">Please contact the system administrator to set up payment options.</p>
+                          </div>
+                        )}
+ 
+                        {/* Payment Proof Upload Section */}
+                        <div className="mt-3 border-t border-[#D4F6FF]/60 pt-3 flex flex-col gap-2">
+                          <span className="text-[#475569] font-label-caps text-[9px] font-bold tracking-wider block">UPLOAD PAYMENT PROOF SCREENSHOT</span>
+                          
+                          {!proofFile ? (
+                            <label className="border-2 border-dashed border-[#D4F6FF] hover:border-[#0F172A]/50 bg-[#FBFBFB] hover:bg-[#D4F6FF]/20 rounded-2xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all">
+                              <UploadCloud className="w-8 h-8 text-slate-400 animate-pulse" />
+                              <span className="text-xs text-[#0F172A] font-bold">Click to upload payment proof</span>
+                              <span className="text-[10px] text-secondary">PNG, JPG or PDF up to 2MB</span>
+                              <input
+                                type="file"
+                                accept="image/*,application/pdf"
+                                onChange={handleFileUpload}
+                                className="hidden"
+                              />
+                            </label>
+                          ) : (
+                            <div className="bg-[#D4F6FF]/10 border border-[#D4F6FF] rounded-2xl p-4 flex flex-col gap-3">
+                              <div className="flex justify-between items-center">
+                                <div className="flex items-center gap-2 max-w-[80%]">
+                                  <CheckCircle className="w-4 h-4 text-green-600" />
+                                  <span className="text-xs text-[#0F172A] font-bold truncate" title={proofFileName}>
+                                    {proofFileName}
+                                  </span>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setProofFile(null);
+                                    setProofFileName("");
+                                  }}
+                                  className="text-[11px] text-red-650 hover:underline cursor-pointer flex items-center gap-1 font-bold"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                  <span>Remove</span>
+                                </button>
+                              </div>
+ 
+                              {proofFile.startsWith("data:image/") && (
+                                <div className="w-full h-40 rounded-xl overflow-hidden border border-[#D4F6FF]/50 flex items-center justify-center bg-black/5 animate-fade-in">
+                                  <img src={proofFile} alt="Payment proof preview" className="w-full h-full object-contain" />
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Optional Client Note input (only shown once proofFile is uploaded) */}
+                          {proofFile && (
+                            <div className="flex flex-col gap-1.5 mt-2 animate-fade-in text-left">
+                              <span className="text-[#475569] font-label-caps text-[9px] font-bold tracking-wider block">ADD A NOTE FOR OUR ADMINISTRATOR (OPTIONAL)</span>
+                              <textarea
+                                value={clientNote}
+                                onChange={(e) => setClientNote(e.target.value)}
+                                placeholder="e.g. Transaction Reference, Bank branch, or transfer notes..."
+                                rows={2}
+                                className="w-full border border-[#C6E7FF]/70 rounded-xl p-3 text-xs text-slate-800 bg-white focus:outline-none focus:ring-4 focus:ring-[#D4F6FF]/10 focus:border-[#C6E7FF] transition-all resize-none"
+                              />
                             </div>
                           )}
                         </div>
+                      </div>
+                    )}
+ 
+                    {/* Actions */}
+                    <div className="mt-4 flex justify-end gap-3 border-t border-[#D4F6FF]/60 pt-4">
+                      <button
+                        type="button"
+                        onClick={() => setActiveInvoice(null)}
+                        disabled={paymentProcessing}
+                        className="px-5 py-2.5 border border-[#D4F6FF] hover:bg-[#FBFBFB] rounded-xl font-semibold text-[#334155] cursor-pointer text-xs disabled:opacity-50 bg-white"
+                      >
+                        Cancel
+                      </button>
+                      {paymentMethod === "wire" && organisation && organisation.bankName && (
+                        <button
+                          type="button"
+                          onClick={handleConfirmPayment}
+                          disabled={paymentProcessing || !proofFile}
+                          className="px-5 py-2.5 bg-[#0F172A] text-[#ffffff] rounded-xl font-semibold flex items-center gap-1.5 cursor-pointer text-xs disabled:opacity-50 min-w-[130px] justify-center shadow-xs border-none"
+                        >
+                          {paymentProcessing ? (
+                            <span className="flex items-center gap-2">
+                              <span className="animate-spin text-sm">⏳</span>
+                              <span>Processing...</span>
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-1.5">
+                              <Check className="w-4 h-4" />
+                              <span>Confirm Payment</span>
+                            </span>
+                          )}
+                        </button>
                       )}
+                    </div>
+                  </>
+                )}
+ 
+                {/* Pending State Banner */}
+                {activeInvoice.status === "Pending" && (
+                  <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl text-left flex flex-col gap-2 mt-2">
+                    <span className="font-bold text-[#E65100] text-xs flex items-center gap-1.5">
+                      <AlertCircle className="w-4 h-4 text-[#F57C00]" />
+                      <span>Payment Proof Under Review</span>
+                    </span>
+                    <p className="text-[11px] text-[#BF360C] leading-relaxed font-semibold">
+                      We have received your transaction proof. Our administrator will verify the receipt details. Once verified, your status will update to Paid.
+                    </p>
+                    {activeInvoice.clientNote && (
+                      <div className="mt-2 bg-amber-500/10 p-3 rounded-xl border border-amber-500/15 text-xs text-left">
+                        <span className="font-label-caps text-[#E65100] text-[9px] uppercase tracking-wider font-bold block mb-1">Your Note to Admin</span>
+                        <p className="text-slate-800 font-medium italic">{activeInvoice.clientNote}</p>
+                      </div>
+                    )}
+                    <div className="mt-2 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => setActiveInvoice(null)}
+                        className="px-5 py-2 bg-[#0F172A] hover:bg-[#1E293B] text-white rounded-xl font-semibold text-xs cursor-pointer border-none"
+                      >
+                        Close
+                      </button>
                     </div>
                   </div>
                 )}
  
-                {/* Actions */}
-                <div className="mt-4 flex justify-end gap-3 border-t border-[#D4F6FF]/60 pt-4">
-                  <button
-                    type="button"
-                    onClick={() => setActiveInvoice(null)}
-                    disabled={paymentProcessing}
-                    className="px-5 py-2.5 border border-[#D4F6FF] hover:bg-[#FBFBFB] rounded-xl font-semibold text-[#334155] cursor-pointer text-xs disabled:opacity-50 bg-white"
-                  >
-                    Cancel
-                  </button>
-                  {paymentMethod === "wire" && organisation && organisation.bankName && (
-                    <button
-                      type="button"
-                      onClick={handleConfirmPayment}
-                      disabled={paymentProcessing || !proofFile}
-                      className="px-5 py-2.5 bg-[#0F172A] text-white rounded-xl font-semibold flex items-center gap-1.5 cursor-pointer text-xs disabled:opacity-50 min-w-[130px] justify-center shadow-xs"
-                    >
-                      {paymentProcessing ? (
-                        <span className="flex items-center gap-2">
-                          <span className="animate-spin text-sm">⏳</span>
-                          <span>Processing...</span>
-                        </span>
-                      ) : (
-                        <span className="flex items-center gap-1.5">
-                          <Check className="w-4 h-4" />
-                          <span>Confirm Payment</span>
-                        </span>
-                      )}
-                    </button>
-                  )}
-                </div>
+                {/* Paid State Banner */}
+                {activeInvoice.status === "Paid" && (
+                  <div className="p-4 bg-[#E6F8F3] border border-[#A3EAD6] rounded-2xl text-left flex flex-col gap-2 mt-2">
+                    <span className="font-bold text-[#00684A] text-xs flex items-center gap-1.5">
+                      <CheckCircle className="w-4 h-4 text-[#00a877]" />
+                      <span>Invoice Settled</span>
+                    </span>
+                    <p className="text-[11px] text-[#00684A]/90 leading-relaxed font-semibold">
+                      This invoice statement has been fully paid and closed. Thank you!
+                    </p>
+                    <div className="mt-2 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => setActiveInvoice(null)}
+                        className="px-5 py-2 bg-[#0F172A] hover:bg-[#1E293B] text-white rounded-xl font-semibold text-xs cursor-pointer border-none"
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

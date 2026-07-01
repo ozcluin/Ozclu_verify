@@ -9,7 +9,7 @@ import { connectToDatabase } from "./mongodb";
 export interface SessionUser {
   id: string;
   email: string;
-  role: "client" | "admin" | "candidate";
+  role: "client" | "admin" | "org_owner" | "candidate";
   orgName: string;
   fullName: string;
 }
@@ -43,7 +43,7 @@ export async function requireAuth(): Promise<AuthResult | NextResponse> {
     return NextResponse.json({ error: "Unauthorized: User account has been deactivated or deleted." }, { status: 401 });
   }
 
-  if (dbUser.role === "client") {
+  if (dbUser.role === "client" || dbUser.role === "org_owner") {
     const org = await db.collection("organisations").findOne({
       name: dbUser.orgName,
       isDeleted: { $ne: true }
@@ -196,7 +196,7 @@ export function sanitizeInvoice(doc: any): any {
   // Strip large base64 paymentProof from list responses
   if (clean.paymentProof) {
     clean.hasPaymentProof = true;
-    delete clean.paymentProof;
+    // Keep paymentProof in client portal for details preview
   }
   if (clean._id) {
     clean._id = clean._id.toString ? clean._id.toString() : String(clean._id);

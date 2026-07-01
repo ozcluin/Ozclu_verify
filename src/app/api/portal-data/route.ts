@@ -9,6 +9,7 @@ import {
   sanitizeVerifier,
 } from "src/lib/apiAuth";
 import { connectToDatabase } from "src/lib/mongodb";
+import { ObjectId } from "mongodb";
 import { getClientIp, getUserAgent, logAuditEvent } from "shared/audit";
 
 export async function GET(req: NextRequest) {
@@ -48,9 +49,9 @@ export async function GET(req: NextRequest) {
       { projection: { password: 0 } }
     ).toArray();
 
-    // Verifiers: return all verifiers not soft-deleted
+    // Verifiers: return only verifiers belonging to this client's organisation and not soft-deleted
     const verifiers = await db.collection("verifiers").find(
-      { isDeleted: { $ne: true } },
+      { org: orgName, isDeleted: { $ne: true } },
       { projection: { password: 0 } }
     ).toArray();
 
@@ -64,6 +65,11 @@ export async function GET(req: NextRequest) {
     );
 
     // ── Sanitize responses ──
+    const clusoSettings = await db.collection("settings").findOne(
+      { id: "acme" },
+      { projection: { password: 0 } }
+    );
+
     const cleanSettings = settings
       ? { ...settings, _id: settings._id.toString() }
       : {
@@ -87,6 +93,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       settings: cleanSettings,
+      clusoSettings: clusoSettings ? { ...clusoSettings, _id: clusoSettings._id.toString() } : null,
       verifications: cleanVerifications,
       invoices: cleanInvoices,
       verifiers: cleanVerifiers,
@@ -229,9 +236,32 @@ export async function POST(req: NextRequest) {
         break;
       }
       case "inviteVerifier": {
+        if (user.role !== "org_owner") {
+          return NextResponse.json({ error: "Access denied. Only organisation owners can invite verifiers." }, { status: 403 });
+        }
+
         const { id, name, email, org, status, password } = payload;
+        
+        // Force organization to session organisation for security
+        const targetOrgName = sessionOrgName || org;
+
+        // Count verifiers and check limit
+        const organisation = await db.collection("organisations").findOne({
+          name: targetOrgName,
+          isDeleted: { $ne: true }
+        });
+        const maxV = organisation?.maxVerifiers ?? 5;
+        const currentCount = await db.collection("verifiers").countDocuments({
+          org: targetOrgName,
+          isDeleted: { $ne: true }
+        });
+
+        if (currentCount >= maxV) {
+          return NextResponse.json({ error: `Cannot invite verifier. Limit of ${maxV} verifier accounts reached.` }, { status: 400 });
+        }
+
         await db.collection("verifiers").insertOne({
-          id, name, email, org, status
+          id, name, email, org: targetOrgName, status, createdBy: user.email, ratePerVerification: 0
         });
         
         if (password) {
@@ -245,7 +275,7 @@ export async function POST(req: NextRequest) {
               password: hashedPassword,
               fullName: name,
               role: "client",
-              orgName: org,
+              orgName: targetOrgName,
               createdAt: new Date()
             });
           }
@@ -265,18 +295,25 @@ export async function POST(req: NextRequest) {
         break;
       }
       case "updateInvoiceStatus": {
-        const { id, status, paymentProof, paymentProofDate } = payload;
+        const { id, _id, status, paymentProof, paymentProofDate } = payload;
         // Security: only update invoice if it belongs to this org
-        const existingInvoice = await db.collection("invoices").findOne({ id, orgName: sessionOrgName });
+        const query: any = { orgName: sessionOrgName };
+        if (_id) {
+          query._id = new ObjectId(String(_id));
+        } else {
+          query.id = id;
+        }
+
+        const existingInvoice = await db.collection("invoices").findOne(query);
         if (!existingInvoice) {
-          console.warn(`[AUTH] Client ${user.email} attempted to update invoice ${id} not belonging to org ${sessionOrgName}`);
+          console.warn(`[AUTH] Client ${user.email} attempted to update invoice ${id || _id} not belonging to org ${sessionOrgName}`);
           return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
         }
         const updateFields: any = { status };
         if (paymentProof !== undefined) updateFields.paymentProof = paymentProof;
         if (paymentProofDate !== undefined) updateFields.paymentProofDate = paymentProofDate;
         await db.collection("invoices").updateOne(
-          { id, orgName: sessionOrgName },
+          { _id: existingInvoice._id },
           { $set: updateFields }
         );
         await logAuditEvent(db, {
@@ -286,7 +323,7 @@ export async function POST(req: NextRequest) {
           portal: "client",
           action: "invoice_updated",
           targetType: "invoice",
-          targetId: id,
+          targetId: existingInvoice.id,
           ip,
           userAgent,
           outcome: "success",
@@ -295,16 +332,23 @@ export async function POST(req: NextRequest) {
         break;
       }
       case "submitPaymentProof": {
-        const { id, paymentProof, paymentProofDate } = payload;
+        const { id, _id, paymentProof, paymentProofDate, clientNote } = payload;
         // Security: only update invoice if it belongs to this org
-        const existingInvoice = await db.collection("invoices").findOne({ id, orgName: sessionOrgName });
+        const query: any = { orgName: sessionOrgName };
+        if (_id) {
+          query._id = new ObjectId(String(_id));
+        } else {
+          query.id = id;
+        }
+
+        const existingInvoice = await db.collection("invoices").findOne(query);
         if (!existingInvoice) {
-          console.warn(`[AUTH] Client ${user.email} attempted to submit proof for invoice ${id} not belonging to org ${sessionOrgName}`);
+          console.warn(`[AUTH] Client ${user.email} attempted to submit proof for invoice ${id || _id} not belonging to org ${sessionOrgName}`);
           return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
         }
         await db.collection("invoices").updateOne(
-          { id, orgName: sessionOrgName },
-          { $set: { status: "Pending", paymentProof, paymentProofDate } }
+          { _id: existingInvoice._id },
+          { $set: { status: "Pending", paymentProof, paymentProofDate, clientNote: clientNote || "", rejectionReason: "" } }
         );
         await logAuditEvent(db, {
           actorUserId: user.id,
@@ -313,7 +357,7 @@ export async function POST(req: NextRequest) {
           portal: "client",
           action: "payment_proof_submitted",
           targetType: "invoice",
-          targetId: id,
+          targetId: existingInvoice.id,
           ip,
           userAgent,
           outcome: "success"
@@ -321,10 +365,10 @@ export async function POST(req: NextRequest) {
         break;
       }
       case "addInvoice": {
-        const { id, orgName, date, dueDate, amount, status } = payload;
+        const { id, orgName, date, dueDate, amount, status, generationType } = payload;
         // Security: force orgName to session org
         await db.collection("invoices").insertOne({
-          id, orgName: sessionOrgName || orgName, date, dueDate, amount, status
+          id, orgName: sessionOrgName || orgName, date, dueDate, amount, status, generationType: generationType || "Manual"
         });
         await logAuditEvent(db, {
           actorUserId: user.id,

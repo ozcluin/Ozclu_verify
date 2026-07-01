@@ -15,7 +15,8 @@ import {
   X, 
   User, 
   ArrowRight,
-  Sparkles
+  Sparkles,
+  Users
 } from "lucide-react";
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
@@ -106,6 +107,15 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       path: "/client/summary",
       icon: Receipt,
     },
+    ...(profile?.role === "org_owner"
+      ? [
+          {
+            name: "Manage Verifiers",
+            path: "/client/verifiers",
+            icon: Users,
+          }
+        ]
+      : []),
   ];
 
   const handleLogout = async () => {

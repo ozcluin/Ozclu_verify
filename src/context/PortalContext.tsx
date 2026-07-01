@@ -38,12 +38,16 @@ export interface Invoice {
   _id?: string;
   id: string;
   orgName: string;
+  organisationId?: string;
   date: string;
   dueDate: string;
   amount: number;
   status: "Paid" | "Unpaid" | "Overdue" | "Pending";
+  month?: string;
+  year?: number;
   paymentProof?: string;
   paymentProofDate?: string;
+  generationType?: "Auto" | "Manual";
 }
 
 export interface Verifier {
@@ -52,6 +56,7 @@ export interface Verifier {
   email: string;
   org: string;
   status: "Active" | "Pending" | "Inactive";
+  designation?: string;
 }
 
 export interface CompanySettings {
@@ -70,6 +75,7 @@ export interface CompanySettings {
   invoiceEmail: string;
   billingSameAsCompany: boolean;
   billingAddress: string;
+  sac?: string;
 }
 
 export interface Organisation {
@@ -84,6 +90,7 @@ export interface Organisation {
   upiId?: string;
   paymentNotes?: string;
   createdAt: string;
+  maxVerifiers?: number;
 }
 
 interface PortalContextType {
@@ -92,11 +99,12 @@ interface PortalContextType {
   verifiers: Verifier[];
   settings: CompanySettings;
   organisation: Organisation | null;
+  clusoSettings: CompanySettings | null;
   addVerification: (name: string, email: string, orgName: string) => Promise<any>;
   updateSettings: (newSettings: CompanySettings) => Promise<void>;
-  inviteVerifier: (name: string, email: string, org: string) => Promise<void>;
-  updateInvoiceStatus: (id: string, status: "Paid" | "Unpaid" | "Overdue" | "Pending") => Promise<void>;
-  submitPaymentProof: (invoiceId: string, proofBase64: string) => Promise<void>;
+  inviteVerifier: (name: string, email: string, org: string, password?: string, designation?: string) => Promise<void>;
+  updateInvoiceStatus: (id: string, status: "Paid" | "Unpaid" | "Overdue" | "Pending", dbId?: string) => Promise<void>;
+  submitPaymentProof: (invoiceId: string, proofBase64: string, invoiceDbId?: string, clientNote?: string) => Promise<void>;
   addInvoice: (orgName: string, amount: number, dueDate: string) => Promise<void>;
   assignVerifier: (verificationId: string, verifierName: string | null) => Promise<void>;
   updateVerificationStatus: (verificationId: string, status: "Completed" | "Processing" | "Needs Attention", notes?: string) => Promise<void>;
@@ -121,7 +129,8 @@ const defaultSettings: CompanySettings = {
   gstin: "",
   invoiceEmail: "",
   billingSameAsCompany: true,
-  billingAddress: ""
+  billingAddress: "",
+  sac: ""
 };
 
 export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -131,6 +140,7 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [verifiers, setVerifiers] = useState<Verifier[]>([]);
   const [settings, setSettings] = useState<CompanySettings>(defaultSettings);
   const [organisation, setOrganisation] = useState<Organisation | null>(null);
+  const [clusoSettings, setClusoSettings] = useState<CompanySettings | null>(null);
   const [loaded, setLoaded] = useState(false);
 
   // Sync / Fetch function from MongoDB API route
@@ -162,8 +172,15 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           gstin: data.settings.gstin || "",
           invoiceEmail: data.settings.invoiceEmail || "",
           billingSameAsCompany: data.settings.billingSameAsCompany !== undefined ? data.settings.billingSameAsCompany : true,
-          billingAddress: data.settings.billingAddress || ""
+          billingAddress: data.settings.billingAddress || "",
+          sac: data.settings.sac || ""
         });
+      }
+
+      if (data.clusoSettings) {
+        setClusoSettings(data.clusoSettings);
+      } else {
+        setClusoSettings(null);
       }
 
       if (data.organisation) {
@@ -203,6 +220,7 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setVerifiers([]);
       setSettings(defaultSettings);
       setOrganisation(null);
+      setClusoSettings(null);
     }
   }, [isAuthenticated]);
 
@@ -259,31 +277,37 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     fetchAllData();
   };
 
-  const inviteVerifier = async (name: string, email: string, org: string, password?: string) => {
+  const inviteVerifier = async (name: string, email: string, org: string, password?: string, designation?: string) => {
     const newId = `V-${Math.floor(100 + Math.random() * 900)}`;
     const newVerifier: Verifier = {
       id: newId,
       name,
       email,
       org,
+      designation: designation || undefined,
       status: "Pending"
     };
 
     setVerifiers((prev) => [...prev, newVerifier]);
 
     try {
-      await fetch("/api/portal-data", {
+      const res = await fetch("/api/portal-data", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "inviteVerifier", payload: { ...newVerifier, password } })
       });
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || "Failed to invite verifier");
+      }
     } catch (err) {
       console.error("Failed inviting verifier:", err);
+      throw err;
     }
     fetchAllData();
   };
 
-  const updateInvoiceStatus = async (id: string, status: "Paid" | "Unpaid" | "Overdue" | "Pending") => {
+  const updateInvoiceStatus = async (id: string, status: "Paid" | "Unpaid" | "Overdue" | "Pending", dbId?: string) => {
     setInvoices((prev) =>
       prev.map((inv) => (inv.id === id ? { ...inv, status } : inv))
     );
@@ -292,18 +316,18 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       await fetch("/api/portal-data", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "updateInvoiceStatus", payload: { id, status } })
+        body: JSON.stringify({ action: "updateInvoiceStatus", payload: { id, _id: dbId, status } })
       });
     } catch (err) {
       console.error("Failed updating invoice status:", err);
     }
-    fetchAllData();
+    await fetchAllData();
   };
 
-  const submitPaymentProof = async (invoiceId: string, proofBase64: string) => {
+  const submitPaymentProof = async (invoiceId: string, proofBase64: string, invoiceDbId?: string, clientNote?: string) => {
     const proofDate = new Date().toISOString();
     setInvoices((prev) =>
-      prev.map((inv) => (inv.id === invoiceId ? { ...inv, status: "Pending" as const, paymentProof: proofBase64, paymentProofDate: proofDate } : inv))
+      prev.map((inv) => (inv.id === invoiceId ? { ...inv, status: "Pending" as const, paymentProof: proofBase64, paymentProofDate: proofDate, clientNote } : inv))
     );
 
     try {
@@ -312,13 +336,13 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "submitPaymentProof",
-          payload: { id: invoiceId, paymentProof: proofBase64, paymentProofDate: proofDate }
+          payload: { id: invoiceId, _id: invoiceDbId, paymentProof: proofBase64, paymentProofDate: proofDate, clientNote }
         })
       });
     } catch (err) {
       console.error("Failed submitting payment proof:", err);
     }
-    fetchAllData();
+    await fetchAllData();
   };
 
   const addInvoice = async (orgName: string, amount: number, dueDate: string) => {
@@ -329,7 +353,8 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       date: new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }),
       dueDate,
       amount,
-      status: "Unpaid"
+      status: "Unpaid",
+      generationType: "Manual"
     };
 
     setInvoices((prev) => [newInvoice, ...prev]);
@@ -421,6 +446,7 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         verifiers,
         settings,
         organisation,
+        clusoSettings,
         addVerification,
         updateSettings,
         inviteVerifier,
