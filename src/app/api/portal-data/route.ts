@@ -139,8 +139,8 @@ export async function POST(req: NextRequest) {
         const { name, email, orgName, requestingOrgName, date, status, verifier, notes } = payload;
 
         // Security: force orgName to the session user's org (prevent cross-tenant creation),
-        // unless it's an administrator session (Cluso/Admin).
-        const isAdminSession = sessionOrgName?.toLowerCase() === "cluso" || sessionOrgName?.toLowerCase() === "admin";
+        // unless it's an administrator session (Ozclu/Admin).
+        const isAdminSession = sessionOrgName?.toLowerCase() === "ozclu" || sessionOrgName?.toLowerCase() === "admin";
         const safeOrgName = isAdminSession ? orgName : (sessionOrgName || orgName);
         
         const cleanOrg = safeOrgName.replace(/[^a-zA-Z]/g, "").slice(0, 3).padEnd(3, "X").toUpperCase();
@@ -160,14 +160,14 @@ export async function POST(req: NextRequest) {
         const { randomBytes } = await import("crypto");
         const bcrypt = await import("bcryptjs");
 
-        // Generate a temporary password matching Cluso@<random8chars>
+        // Generate a temporary password matching Ozclu@<random8chars>
         const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         let randStr = "";
         const randomBytesArr = randomBytes(8);
         for (let i = 0; i < 8; i++) {
           randStr += charset.charAt(randomBytesArr[i] % charset.length);
         }
-        const tempPassword = `Cluso@${randStr}`;
+        const tempPassword = `Ozclu@${randStr}`;
         const hashedTempPassword = bcrypt.hashSync(tempPassword, 10);
         
         const existingUser = await db.collection("users").findOne({ email: email.toLowerCase().trim() });
@@ -195,7 +195,7 @@ export async function POST(req: NextRequest) {
         };
  
         // Build the direct login URL (with email and password query parameters)
-        const candidatePortalUrl = process.env.CANDIDATE_PORTAL_URL || "https://candidate.verify.cluso.in";
+        const candidatePortalUrl = process.env.CANDIDATE_PORTAL_URL || "https://candidate.verify.ozclu.in";
         const setupUrl = `${candidatePortalUrl}/?email=${encodeURIComponent(email.toLowerCase().trim())}&password=${encodeURIComponent(tempPassword)}`;
  
         await db.collection("verifications").insertOne({

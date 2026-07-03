@@ -109,7 +109,7 @@ function BillableSummaryContent() {
           </div>
         </div>
 
-        {/* Customer Details vs Cluso Details Box */}
+        {/* Customer Details vs Ozclu Details Box */}
         <div className="grid grid-cols-1 md:grid-cols-2 border border-slate-200 rounded-xl overflow-hidden mb-8 shadow-3xs">
           
           {/* Customer Details */}
