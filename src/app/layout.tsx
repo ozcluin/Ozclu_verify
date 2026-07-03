@@ -23,8 +23,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Verify with Cluso Infolink — Client Portal",
-  description: "Cluso Infolink Identity Verification Portal for clients to initiate and monitor candidate identity checks.",
+  title: "Verify with Ozclu — Client Portal",
+  description: "Ozclu Identity Verification Portal for clients to initiate and monitor candidate identity checks.",
 };
 
 export default function RootLayout({
@@ -40,6 +40,10 @@ export default function RootLayout({
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap"
+          rel="stylesheet"
+        />
       </head>
       <body className="min-h-full flex flex-col bg-background text-on-background">
         <AuthProvider>

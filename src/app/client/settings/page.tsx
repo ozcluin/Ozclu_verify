@@ -206,12 +206,12 @@ export default function SettingsPage() {
 
   return (
     <div className="flex flex-col gap-6 pt-4 animate-fade-in pb-12">
-      <div className="flex flex-col gap-1 border-b border-[#D4F6FF] pb-5 mb-2">
-        <div className="flex items-center gap-2 text-[10px] font-bold text-[#1E3A5F] bg-[#D4F6FF]/60 px-2.5 py-1 rounded-full w-fit uppercase tracking-wider font-label-caps border border-[#C6E7FF]/60">
-          <Sparkles className="w-3.5 h-3.5 text-[#0F172A]" />
+      <div className="flex flex-col gap-1 border-b border-[#f0f5ea] pb-5 mb-2">
+        <div className="flex items-center gap-2 text-[10px] font-bold text-[#00450e] bg-[#f0f5ea]/60 px-2.5 py-1 rounded-full w-fit uppercase tracking-wider font-label-caps border border-[#eaf0e4]/60">
+          <Sparkles className="w-3.5 h-3.5 text-[#181d16]" />
           <span>PORTAL CONFIGURATION</span>
         </div>
-        <h2 className="font-display-lg text-[#0F172A] font-bold tracking-tight text-3xl mt-2">Settings &amp; Profile</h2>
+        <h2 className="font-display-lg text-[#181d16] font-bold tracking-tight text-3xl mt-2">Settings &amp; Profile</h2>
         <p className="text-secondary mt-1 text-sm text-slate-500">Manage your company details and portal preferences.</p>
       </div>
 
@@ -235,22 +235,22 @@ export default function SettingsPage() {
         <div className="xl:col-span-2 flex flex-col gap-6">
           
           {/* Company Profile Card */}
-          <div className="bg-white border border-[#C6E7FF] rounded-3xl p-8 shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1">
-            <div className="absolute top-0 left-0 right-0 h-1.5 bg-[#C6E7FF]"></div>
+          <div className="bg-white border border-[#eaf0e4] rounded-3xl p-8 shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+            <div className="absolute top-0 left-0 right-0 h-1.5 bg-[#eaf0e4]"></div>
             <div className="flex items-center gap-3 mb-6">
-              <div className="p-2.5 bg-[#D4F6FF]/40 border border-[#C6E7FF]/60 rounded-2xl">
-                <Building className="w-5 h-5 text-[#1E3A5F]" />
+              <div className="p-2.5 bg-[#f0f5ea]/40 border border-[#eaf0e4]/60 rounded-2xl">
+                <Building className="w-5 h-5 text-[#00450e]" />
               </div>
-              <h3 className="font-semibold text-lg text-[#0F172A]">Company Profile</h3>
+              <h3 className="font-semibold text-lg text-[#181d16]">Company Profile</h3>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
               {/* Company Logo Upload Section */}
-              <div className="flex flex-col gap-2 md:col-span-2 border-b border-dashed border-[#C6E7FF]/60 pb-6 mb-2">
+              <div className="flex flex-col gap-2 md:col-span-2 border-b border-dashed border-[#eaf0e4]/60 pb-6 mb-2">
                 <label className="font-label-caps text-[#475569] text-[10px] font-bold uppercase tracking-wider">Company Logo</label>
                 <div className="flex flex-col sm:flex-row items-center gap-6 mt-1">
                   {/* Logo Preview box */}
-                  <div className="w-28 h-28 border border-[#C6E7FF] rounded-2xl bg-[#F8FAFC] flex items-center justify-center overflow-hidden shrink-0 relative group">
+                  <div className="w-28 h-28 border border-[#eaf0e4] rounded-2xl bg-[#F8FAFC] flex items-center justify-center overflow-hidden shrink-0 relative group">
                     {logo ? (
                       <img src={logo} alt="Company Logo Preview" className="object-contain w-full h-full p-2" />
                     ) : (
@@ -264,7 +264,7 @@ export default function SettingsPage() {
                   {/* Actions / Info */}
                   <div className="flex-1 flex flex-col gap-2 text-left w-full">
                     <div className="flex flex-wrap gap-2">
-                      <label className="cursor-pointer bg-[#D4F6FF]/60 hover:bg-[#D4F6FF] border border-[#C6E7FF]/80 text-[#1E3A5F] font-bold text-xs px-4 py-2.5 rounded-xl transition-all inline-flex items-center gap-1.5 shadow-2xs">
+                      <label className="cursor-pointer bg-[#f0f5ea]/60 hover:bg-[#f0f5ea] border border-[#eaf0e4]/80 text-[#00450e] font-bold text-xs px-4 py-2.5 rounded-xl transition-all inline-flex items-center gap-1.5 shadow-2xs">
                         <UploadCloud className="w-4 h-4" />
                         <span>Upload Logo</span>
                         <input
@@ -299,7 +299,7 @@ export default function SettingsPage() {
                   type="text"
                   value={companyName}
                   disabled
-                  className="w-full bg-[#F1F5F9]/80 border border-[#C6E7FF] rounded-xl px-4 py-2.5 font-body-sm text-slate-500 cursor-not-allowed transition-all font-semibold opacity-75"
+                  className="w-full bg-[#F1F5F9]/80 border border-[#eaf0e4] rounded-xl px-4 py-2.5 font-body-sm text-slate-500 cursor-not-allowed transition-all font-semibold opacity-75"
                 />
               </div>
               <div className="flex flex-col gap-2 md:col-span-2">
@@ -308,7 +308,7 @@ export default function SettingsPage() {
                   type="text"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
-                  className="w-full bg-[#FBFBFB]/50 border border-[#C6E7FF] rounded-xl px-4 py-2.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#C6E7FF] focus:border-[#0F172A] transition-all font-semibold"
+                  className="w-full bg-[#f6fbf0]/50 border border-[#eaf0e4] rounded-xl px-4 py-2.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] focus:border-[#181d16] transition-all font-semibold"
                 />
               </div>
               <div className="flex flex-col gap-2">
@@ -317,7 +317,7 @@ export default function SettingsPage() {
                   type="text"
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
-                  className="w-full bg-[#FBFBFB]/50 border border-[#C6E7FF] rounded-xl px-4 py-2.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#C6E7FF] focus:border-[#0F172A] transition-all font-semibold"
+                  className="w-full bg-[#f6fbf0]/50 border border-[#eaf0e4] rounded-xl px-4 py-2.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] focus:border-[#181d16] transition-all font-semibold"
                 />
               </div>
               <div className="flex flex-col gap-2">
@@ -326,20 +326,20 @@ export default function SettingsPage() {
                   type="text"
                   value={postalCode}
                   onChange={(e) => setPostalCode(e.target.value)}
-                  className="w-full bg-[#FBFBFB]/50 border border-[#C6E7FF] rounded-xl px-4 py-2.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#C6E7FF] focus:border-[#0F172A] transition-all font-semibold"
+                  className="w-full bg-[#f6fbf0]/50 border border-[#eaf0e4] rounded-xl px-4 py-2.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] focus:border-[#181d16] transition-all font-semibold"
                 />
               </div>
             </div>
           </div>
 
           {/* Contact Person Card */}
-          <div className="bg-white border border-[#C6E7FF] rounded-3xl p-8 shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1">
-            <div className="absolute top-0 left-0 right-0 h-1.5 bg-[#C6E7FF]"></div>
+          <div className="bg-white border border-[#eaf0e4] rounded-3xl p-8 shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+            <div className="absolute top-0 left-0 right-0 h-1.5 bg-[#eaf0e4]"></div>
             <div className="flex items-center gap-3 mb-6">
-              <div className="p-2.5 bg-[#D4F6FF]/40 border border-[#C6E7FF]/60 rounded-2xl">
-                <User className="w-5 h-5 text-[#1E3A5F]" />
+              <div className="p-2.5 bg-[#f0f5ea]/40 border border-[#eaf0e4]/60 rounded-2xl">
+                <User className="w-5 h-5 text-[#00450e]" />
               </div>
-              <h3 className="font-semibold text-lg text-[#0F172A]">Contact Person</h3>
+              <h3 className="font-semibold text-lg text-[#181d16]">Contact Person</h3>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
@@ -349,7 +349,7 @@ export default function SettingsPage() {
                   type="text"
                   value={contactFirstName}
                   onChange={(e) => setContactFirstName(e.target.value)}
-                  className="w-full bg-[#FBFBFB]/50 border border-[#C6E7FF] rounded-xl px-4 py-2.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#C6E7FF] focus:border-[#0F172A] transition-all font-semibold"
+                  className="w-full bg-[#f6fbf0]/50 border border-[#eaf0e4] rounded-xl px-4 py-2.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] focus:border-[#181d16] transition-all font-semibold"
                 />
               </div>
               <div className="flex flex-col gap-2">
@@ -358,7 +358,7 @@ export default function SettingsPage() {
                   type="text"
                   value={contactLastName}
                   onChange={(e) => setContactLastName(e.target.value)}
-                  className="w-full bg-[#FBFBFB]/50 border border-[#C6E7FF] rounded-xl px-4 py-2.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#C6E7FF] focus:border-[#0F172A] transition-all font-semibold"
+                  className="w-full bg-[#f6fbf0]/50 border border-[#eaf0e4] rounded-xl px-4 py-2.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] focus:border-[#181d16] transition-all font-semibold"
                 />
               </div>
               <div className="flex flex-col gap-2 md:col-span-2">
@@ -367,20 +367,20 @@ export default function SettingsPage() {
                   type="email"
                   value={contactEmail}
                   disabled
-                  className="w-full bg-[#F1F5F9]/80 border border-[#C6E7FF] rounded-xl px-4 py-2.5 font-body-sm text-slate-500 cursor-not-allowed transition-all font-semibold opacity-75"
+                  className="w-full bg-[#F1F5F9]/80 border border-[#eaf0e4] rounded-xl px-4 py-2.5 font-body-sm text-slate-500 cursor-not-allowed transition-all font-semibold opacity-75"
                 />
               </div>
             </div>
           </div>
 
           {/* Legal Details Card */}
-          <div className="bg-white border border-[#C6E7FF] rounded-3xl p-8 shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1">
-            <div className="absolute top-0 left-0 right-0 h-1.5 bg-[#C6E7FF]"></div>
+          <div className="bg-white border border-[#eaf0e4] rounded-3xl p-8 shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+            <div className="absolute top-0 left-0 right-0 h-1.5 bg-[#eaf0e4]"></div>
             <div className="flex items-center gap-3 mb-6">
-              <div className="p-2.5 bg-[#D4F6FF]/40 border border-[#C6E7FF]/60 rounded-2xl">
-                <Scale className="w-5 h-5 text-[#1E3A5F]" />
+              <div className="p-2.5 bg-[#f0f5ea]/40 border border-[#eaf0e4]/60 rounded-2xl">
+                <Scale className="w-5 h-5 text-[#00450e]" />
               </div>
-              <h3 className="font-semibold text-lg text-[#0F172A]">Legal Details</h3>
+              <h3 className="font-semibold text-lg text-[#181d16]">Legal Details</h3>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
@@ -391,7 +391,7 @@ export default function SettingsPage() {
                   placeholder="e.g. 12-3456789"
                   value={cin}
                   onChange={(e) => setCin(e.target.value)}
-                  className="w-full bg-[#FBFBFB]/50 border border-[#C6E7FF] rounded-xl px-4 py-2.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#C6E7FF] focus:border-[#0F172A] transition-all font-semibold"
+                  className="w-full bg-[#f6fbf0]/50 border border-[#eaf0e4] rounded-xl px-4 py-2.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] focus:border-[#181d16] transition-all font-semibold"
                 />
               </div>
               <div className="flex flex-col gap-2">
@@ -401,7 +401,7 @@ export default function SettingsPage() {
                   placeholder="e.g. Delaware"
                   value={lut}
                   onChange={(e) => setLut(e.target.value)}
-                  className="w-full bg-[#FBFBFB]/50 border border-[#C6E7FF] rounded-xl px-4 py-2.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#C6E7FF] focus:border-[#0F172A] transition-all font-semibold"
+                  className="w-full bg-[#f6fbf0]/50 border border-[#eaf0e4] rounded-xl px-4 py-2.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] focus:border-[#181d16] transition-all font-semibold"
                 />
               </div>
               <div className="flex flex-col gap-2">
@@ -411,7 +411,7 @@ export default function SettingsPage() {
                   placeholder="e.g. 12-345-6789"
                   value={tin}
                   onChange={(e) => setTin(e.target.value)}
-                  className="w-full bg-[#FBFBFB]/50 border border-[#C6E7FF] rounded-xl px-4 py-2.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#C6E7FF] focus:border-[#0F172A] transition-all font-semibold"
+                  className="w-full bg-[#f6fbf0]/50 border border-[#eaf0e4] rounded-xl px-4 py-2.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] focus:border-[#181d16] transition-all font-semibold"
                 />
               </div>
               <div className="flex flex-col gap-2">
@@ -421,7 +421,7 @@ export default function SettingsPage() {
                   placeholder="e.g. 1234567-8"
                   value={gstin}
                   onChange={(e) => setGstin(e.target.value)}
-                  className="w-full bg-[#FBFBFB]/50 border border-[#C6E7FF] rounded-xl px-4 py-2.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#C6E7FF] focus:border-[#0F172A] transition-all font-semibold"
+                  className="w-full bg-[#f6fbf0]/50 border border-[#eaf0e4] rounded-xl px-4 py-2.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] focus:border-[#181d16] transition-all font-semibold"
                 />
               </div>
               <div className="flex flex-col gap-2 md:col-span-2">
@@ -431,7 +431,7 @@ export default function SettingsPage() {
                   placeholder="Enter invoice billing email"
                   value={invoiceEmail}
                   onChange={(e) => setInvoiceEmail(e.target.value)}
-                  className="w-full bg-[#FBFBFB]/50 border border-[#C6E7FF] rounded-xl px-4 py-2.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#C6E7FF] focus:border-[#0F172A] transition-all font-semibold"
+                  className="w-full bg-[#f6fbf0]/50 border border-[#eaf0e4] rounded-xl px-4 py-2.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] focus:border-[#181d16] transition-all font-semibold"
                 />
               </div>
               <div className="flex flex-col gap-2 md:col-span-2">
@@ -439,7 +439,7 @@ export default function SettingsPage() {
                 <select
                   value={billingSameAsCompany ? "yes" : "no"}
                   onChange={(e) => setBillingSameAsCompany(e.target.value === "yes")}
-                  className="w-full bg-[#FBFBFB]/50 border border-[#C6E7FF] rounded-xl px-4 py-2.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#C6E7FF] focus:border-[#0F172A] transition-all font-semibold cursor-pointer"
+                  className="w-full bg-[#f6fbf0]/50 border border-[#eaf0e4] rounded-xl px-4 py-2.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] focus:border-[#181d16] transition-all font-semibold cursor-pointer"
                 >
                   <option value="yes">Yes</option>
                   <option value="no">No</option>
@@ -453,7 +453,7 @@ export default function SettingsPage() {
                     value={billingAddress}
                     onChange={(e) => setBillingAddress(e.target.value)}
                     rows={2}
-                    className="w-full bg-[#FBFBFB]/50 border border-[#C6E7FF] rounded-xl px-4 py-2.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#C6E7FF] focus:border-[#0F172A] transition-all font-semibold resize-none font-sans"
+                    className="w-full bg-[#f6fbf0]/50 border border-[#eaf0e4] rounded-xl px-4 py-2.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] focus:border-[#181d16] transition-all font-semibold resize-none font-sans"
                   />
                 </div>
               )}
@@ -466,29 +466,29 @@ export default function SettingsPage() {
         <div className="flex flex-col gap-6">
           
           {/* Billing Options Card */}
-          <div className="bg-white border border-[#C6E7FF] rounded-3xl p-8 shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1">
-            <div className="absolute top-0 left-0 right-0 h-1.5 bg-[#C6E7FF]"></div>
+          <div className="bg-white border border-[#eaf0e4] rounded-3xl p-8 shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+            <div className="absolute top-0 left-0 right-0 h-1.5 bg-[#eaf0e4]"></div>
             <div className="flex items-center gap-3 mb-6">
-              <div className="p-2.5 bg-[#D4F6FF]/40 border border-[#C6E7FF]/60 rounded-2xl">
-                <CreditCard className="w-5 h-5 text-[#1E3A5F]" />
+              <div className="p-2.5 bg-[#f0f5ea]/40 border border-[#eaf0e4]/60 rounded-2xl">
+                <CreditCard className="w-5 h-5 text-[#00450e]" />
               </div>
-              <h3 className="font-semibold text-lg text-[#0F172A]">Billing Options</h3>
+              <h3 className="font-semibold text-lg text-[#181d16]">Billing Options</h3>
             </div>
             
             <div className="flex flex-col gap-4 relative z-10">
               {billingOption === "invoice" ? (
-                <div className="border border-[#C6E7FF] bg-[#D4F6FF]/20 rounded-2xl p-5 flex items-start gap-3 shadow-2xs">
-                  <FileText className="w-5 h-5 text-[#0F172A] shrink-0 mt-0.5" />
+                <div className="border border-[#eaf0e4] bg-[#f0f5ea]/20 rounded-2xl p-5 flex items-start gap-3 shadow-2xs">
+                  <FileText className="w-5 h-5 text-[#181d16] shrink-0 mt-0.5" />
                   <div>
-                    <span className="font-body-sm font-bold text-[#0F172A] block">Monthly Invoicing</span>
+                    <span className="font-body-sm font-bold text-[#181d16] block">Monthly Invoicing</span>
                     <span className="text-[#475569] text-xs mt-1 block leading-relaxed font-semibold">Receive a consolidated invoice at the end of each month.</span>
                   </div>
                 </div>
               ) : (
-                <div className="border border-[#C6E7FF] bg-[#D4F6FF]/20 rounded-2xl p-5 flex items-start gap-3 shadow-2xs">
-                  <CreditCard className="w-5 h-5 text-[#0F172A] shrink-0 mt-0.5" />
+                <div className="border border-[#eaf0e4] bg-[#f0f5ea]/20 rounded-2xl p-5 flex items-start gap-3 shadow-2xs">
+                  <CreditCard className="w-5 h-5 text-[#181d16] shrink-0 mt-0.5" />
                   <div>
-                    <span className="font-body-sm font-bold text-[#0F172A] block">Credit Card</span>
+                    <span className="font-body-sm font-bold text-[#181d16] block">Credit Card</span>
                     <span className="text-[#475569] text-xs mt-1 block leading-relaxed font-semibold">Pay per transaction or auto-charge monthly.</span>
                   </div>
                 </div>
@@ -497,13 +497,13 @@ export default function SettingsPage() {
           </div>
 
           {/* Password Change Card */}
-          <div className="bg-white border border-[#C6E7FF] rounded-3xl p-8 shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1">
-            <div className="absolute top-0 left-0 right-0 h-1.5 bg-[#C6E7FF]"></div>
+          <div className="bg-white border border-[#eaf0e4] rounded-3xl p-8 shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+            <div className="absolute top-0 left-0 right-0 h-1.5 bg-[#eaf0e4]"></div>
             <div className="flex items-center gap-3 mb-6">
-              <div className="p-2.5 bg-[#D4F6FF]/40 border border-[#C6E7FF]/60 rounded-2xl">
-                <Lock className="w-5 h-5 text-[#1E3A5F]" />
+              <div className="p-2.5 bg-[#f0f5ea]/40 border border-[#eaf0e4]/60 rounded-2xl">
+                <Lock className="w-5 h-5 text-[#00450e]" />
               </div>
-              <h3 className="font-semibold text-lg text-[#0F172A]">Security</h3>
+              <h3 className="font-semibold text-lg text-[#181d16]">Security</h3>
             </div>
             
             {passwordAlert && (
@@ -527,7 +527,7 @@ export default function SettingsPage() {
                   type="password"
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
-                  className="w-full bg-[#FBFBFB]/50 border border-[#C6E7FF] rounded-xl px-4 py-2.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#C6E7FF] focus:border-[#0F172A] transition-all font-semibold"
+                  className="w-full bg-[#f6fbf0]/50 border border-[#eaf0e4] rounded-xl px-4 py-2.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] focus:border-[#181d16] transition-all font-semibold"
                 />
               </div>
               <div className="flex flex-col gap-2">
@@ -536,7 +536,7 @@ export default function SettingsPage() {
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full bg-[#FBFBFB]/50 border border-[#C6E7FF] rounded-xl px-4 py-2.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#C6E7FF] focus:border-[#0F172A] transition-all font-semibold"
+                  className="w-full bg-[#f6fbf0]/50 border border-[#eaf0e4] rounded-xl px-4 py-2.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] focus:border-[#181d16] transition-all font-semibold"
                 />
               </div>
               <div className="flex flex-col gap-2">
@@ -545,12 +545,12 @@ export default function SettingsPage() {
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full bg-[#FBFBFB]/50 border border-[#C6E7FF] rounded-xl px-4 py-2.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#C6E7FF] focus:border-[#0F172A] transition-all font-semibold"
+                  className="w-full bg-[#f6fbf0]/50 border border-[#eaf0e4] rounded-xl px-4 py-2.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] focus:border-[#181d16] transition-all font-semibold"
                 />
               </div>
               <button
                 type="submit"
-                className="mt-4 w-full bg-[#0F172A] text-white font-bold text-xs py-3 px-4 rounded-xl hover:bg-[#1E293B] active:scale-95 transition-all cursor-pointer shadow-xs"
+                className="mt-4 w-full bg-[#181d16] text-white font-bold text-xs py-3 px-4 rounded-xl hover:bg-[#1E293B] active:scale-95 transition-all cursor-pointer shadow-xs"
               >
                 Update Password
               </button>
@@ -563,17 +563,17 @@ export default function SettingsPage() {
       </div>
 
       {/* Global Save Action Footer */}
-      <div className="mt-8 flex justify-end gap-3 border-t border-[#D4F6FF] pt-6 max-w-6xl">
+      <div className="mt-8 flex justify-end gap-3 border-t border-[#f0f5ea] pt-6 max-w-6xl">
         <button
           onClick={handleDiscard}
-          className="bg-white text-[#334155] border border-[#C6E7FF] hover:bg-[#FBFBFB] font-bold text-xs py-3 px-6 rounded-xl transition-all cursor-pointer shadow-2xs flex items-center gap-1.5"
+          className="bg-white text-[#334155] border border-[#eaf0e4] hover:bg-[#f6fbf0] font-bold text-xs py-3 px-6 rounded-xl transition-all cursor-pointer shadow-2xs flex items-center gap-1.5"
         >
           <RotateCcw className="w-3.5 h-3.5" />
           <span>Discard Changes</span>
         </button>
         <button
           onClick={handleSaveAll}
-          className="bg-[#0F172A] text-white font-bold text-xs py-3 px-6 rounded-xl hover:bg-[#1E293B] active:scale-95 transition-all cursor-pointer shadow-xs flex items-center gap-1.5"
+          className="bg-[#181d16] text-white font-bold text-xs py-3 px-6 rounded-xl hover:bg-[#1E293B] active:scale-95 transition-all cursor-pointer shadow-xs flex items-center gap-1.5"
         >
           <Save className="w-3.5 h-3.5" />
           <span>Save All Settings</span>

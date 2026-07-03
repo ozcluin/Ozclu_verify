@@ -20,6 +20,7 @@ import {
   History,
   FileText
 } from "lucide-react";
+import OzcluLogo from "../components/OzcluLogo";
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -155,17 +156,13 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   }
 
   return (
-    <div className="flex min-h-screen bg-[#FBFBFB] text-[#0F172A]">
+    <div className="flex min-h-screen bg-[#f6fbf0] text-[#181d16]">
       {/* Sidebar - Desktop */}
-      <aside className="w-sidebar-width h-screen fixed left-0 top-0 bg-gradient-to-b from-[#C6E7FF] to-[#D4F6FF] border-r border-[#C6E7FF] flex flex-col py-stack-lg z-30 hidden md:flex">
+      <aside className="w-sidebar-width h-screen fixed left-0 top-0 bg-gradient-to-b from-[#eaf0e4] to-[#f0f5ea] border-r border-[#eaf0e4] flex flex-col py-stack-lg z-30 hidden md:flex">
         <div className="px-6 mb-stack-lg">
           <div className="flex items-center gap-3 mb-4">
             <Link href="/client/identity-verification" className="block transition-transform duration-300 hover:scale-[1.03] select-none">
-              <img 
-                src="/cluso-infolink.png" 
-                alt="Cluso Infolink Logo" 
-                className="h-18 w-auto max-w-full object-contain rounded-2xl shadow-xs hover:shadow-sm transition-shadow duration-300"
-              />
+              <OzcluLogo size="lg" />
             </Link>
           </div>
         </div>
@@ -179,11 +176,11 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
                 href={item.path}
                 className={`flex items-center gap-3 mx-4 px-4 py-3 rounded-2xl transition-all duration-300 relative group font-semibold text-sm hover:translate-x-1.5 ${
                   isActive
-                    ? "bg-white/85 text-[#0F172A] shadow-md border-r-4 border-[#FFDDAE] translate-x-1.5"
-                    : "text-[#1E3A5F] hover:bg-white/50 hover:text-[#0F172A] hover:shadow-xs"
+                    ? "bg-white/85 text-[#181d16] shadow-md border-r-4 border-[#FFF4CC] translate-x-1.5"
+                    : "text-[#00450e] hover:bg-white/50 hover:text-[#181d16] hover:shadow-xs"
                 }`}
               >
-                <item.icon className={`w-4 h-4 transition-transform duration-300 group-hover:scale-110 ${isActive ? "text-[#0F172A]" : "text-[#1E3A5F]"}`} />
+                <item.icon className={`w-4 h-4 transition-transform duration-300 group-hover:scale-110 ${isActive ? "text-[#181d16]" : "text-[#00450e]"}`} />
                 <span className="tracking-wide">{item.name}</span>
               </Link>
             );
@@ -193,17 +190,17 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         {/* User info + Footer actions inside sidebar */}
         <div className="mt-auto mx-4 mb-6 p-4 bg-white/50 border border-white/80 rounded-2xl flex flex-col gap-3 shadow-xs">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-gradient-to-tr from-[#FFDDAE] to-[#C6E7FF] rounded-xl flex items-center justify-center text-[#0F172A] font-bold shadow-xs">
+            <div className="w-9 h-9 bg-gradient-to-tr from-[#FFF4CC] to-[#eaf0e4] rounded-xl flex items-center justify-center text-[#181d16] font-bold shadow-xs">
               {displayName.charAt(0).toUpperCase()}
             </div>
             <div className="flex flex-col min-w-0">
-              <span className="font-body-sm font-bold text-[#0F172A] truncate">{displayName}</span>
-              <span className="text-[10px] text-[#1E3A5F] truncate font-medium">{user?.email}</span>
+              <span className="font-body-sm font-bold text-[#181d16] truncate">{displayName}</span>
+              <span className="text-[10px] text-[#00450e] truncate font-medium">{user?.email}</span>
             </div>
           </div>
           <button
             onClick={handleLogout}
-            className="flex items-center gap-2 px-3 py-2 bg-white/70 hover:bg-red-50 text-[#1E3A5F] hover:text-red-600 border border-white/60 rounded-xl transition-all duration-200 w-full text-left font-body-sm cursor-pointer shadow-2xs font-semibold"
+            className="flex items-center gap-2 px-3 py-2 bg-white/70 hover:bg-red-50 text-[#00450e] hover:text-red-600 border border-white/60 rounded-xl transition-all duration-200 w-full text-left font-body-sm cursor-pointer shadow-2xs font-semibold"
           >
             <LogOut className="w-4 h-4" />
             <span>Sign Out</span>
@@ -215,20 +212,16 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       {mobileMenuOpen && (
         <div className="fixed inset-0 bg-slate-400/10 backdrop-blur-xs z-40 md:hidden" onClick={() => setMobileMenuOpen(false)}>
           <aside
-            className="w-64 h-full bg-gradient-to-b from-[#C6E7FF] to-[#D4F6FF] border-r border-[#C6E7FF] flex flex-col py-stack-lg animate-slide-right"
+            className="w-64 h-full bg-gradient-to-b from-[#eaf0e4] to-[#f0f5ea] border-r border-[#eaf0e4] flex flex-col py-stack-lg animate-slide-right"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="px-6 mb-6 flex justify-between items-center">
               <div className="flex items-center gap-3">
                 <Link href="/client/identity-verification" className="block transition-transform duration-300 hover:scale-[1.03] select-none" onClick={() => setMobileMenuOpen(false)}>
-                  <img 
-                    src="/cluso-infolink.png" 
-                    alt="Cluso Infolink Logo" 
-                    className="h-16 w-auto max-w-full object-contain rounded-2xl shadow-xs hover:shadow-sm transition-shadow duration-300"
-                  />
+                  <OzcluLogo size="md" />
                 </Link>
               </div>
-              <button onClick={() => setMobileMenuOpen(false)} className="text-[#0F172A] p-2 rounded-xl hover:bg-white/40 transition-colors">
+              <button onClick={() => setMobileMenuOpen(false)} className="text-[#181d16] p-2 rounded-xl hover:bg-white/40 transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -243,11 +236,11 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
                     onClick={() => setMobileMenuOpen(false)}
                     className={`flex items-center gap-3 mx-4 px-4 py-3 rounded-2xl transition-all duration-300 relative group font-semibold text-sm hover:translate-x-1.5 ${
                       isActive
-                        ? "bg-white/85 text-[#0F172A] shadow-md border-r-4 border-[#FFDDAE] translate-x-1.5"
-                        : "text-[#1E3A5F] hover:bg-white/50 hover:text-[#0F172A]"
+                        ? "bg-white/85 text-[#181d16] shadow-md border-r-4 border-[#FFF4CC] translate-x-1.5"
+                        : "text-[#00450e] hover:bg-white/50 hover:text-[#181d16]"
                     }`}
                   >
-                    <item.icon className={`w-4 h-4 ${isActive ? "text-[#0F172A]" : "text-[#1E3A5F]"}`} />
+                    <item.icon className={`w-4 h-4 ${isActive ? "text-[#181d16]" : "text-[#00450e]"}`} />
                     <span className="tracking-wide">{item.name}</span>
                   </Link>
                 );
@@ -256,17 +249,17 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 
             <div className="mx-4 mb-6 p-4 bg-white/50 border border-white/80 rounded-2xl flex flex-col gap-3 shadow-xs">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 bg-gradient-to-tr from-[#FFDDAE] to-[#C6E7FF] rounded-xl flex items-center justify-center text-[#0F172A] font-bold shadow-xs">
+                <div className="w-9 h-9 bg-gradient-to-tr from-[#FFF4CC] to-[#eaf0e4] rounded-xl flex items-center justify-center text-[#181d16] font-bold shadow-xs">
                   {displayName.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex flex-col min-w-0">
-                  <span className="font-body-sm font-bold text-[#0F172A] truncate">{displayName}</span>
-                  <span className="text-[10px] text-[#1E3A5F] truncate font-medium">{user?.email}</span>
+                  <span className="font-body-sm font-bold text-[#181d16] truncate">{displayName}</span>
+                  <span className="text-[10px] text-[#00450e] truncate font-medium">{user?.email}</span>
                 </div>
               </div>
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-2 px-3 py-2 bg-white/70 hover:bg-red-50 text-[#1E3A5F] hover:text-red-600 border border-white/60 rounded-xl transition-all duration-200 w-full text-left font-body-sm cursor-pointer shadow-2xs font-semibold"
+                className="flex items-center gap-2 px-3 py-2 bg-white/70 hover:bg-red-50 text-[#00450e] hover:text-red-600 border border-white/60 rounded-xl transition-all duration-200 w-full text-left font-body-sm cursor-pointer shadow-2xs font-semibold"
               >
                 <LogOut className="w-4 h-4" />
                 <span>Sign Out</span>
@@ -279,25 +272,21 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       {/* Page Canvas Container */}
       <div className="flex-1 md:ml-sidebar-width flex flex-col min-h-screen">
         {/* Floating Top AppBar */}
-        <header className="h-16 fixed top-0 right-0 w-[calc(100%-32px)] md:w-[calc(100%-292px)] mx-4 my-3 bg-white/85 backdrop-blur-md border border-[#C6E7FF] rounded-2xl z-20 flex justify-between items-center px-6 transition-all duration-200 shadow-sm">
+        <header className="h-16 fixed top-0 right-0 w-[calc(100%-32px)] md:w-[calc(100%-292px)] mx-4 my-3 bg-white/85 backdrop-blur-md border border-[#eaf0e4] rounded-2xl z-20 flex justify-between items-center px-6 transition-all duration-200 shadow-sm">
           <div className="flex items-center gap-4">
             {/* Mobile menu toggle */}
             <button
               onClick={() => setMobileMenuOpen(true)}
-              className="p-2 -ml-2 text-primary hover:bg-[#D4F6FF]/40 rounded-xl md:hidden transition-colors"
+              className="p-2 -ml-2 text-primary hover:bg-[#f0f5ea]/40 rounded-xl md:hidden transition-colors"
             >
-              <Menu className="w-5 h-5 text-[#0F172A]" />
+              <Menu className="w-5 h-5 text-[#181d16]" />
             </button>
             <div className="flex items-center gap-2">
               <Link href="/client/identity-verification" className="block transition-transform duration-300 hover:scale-[1.05] hover:rotate-1 select-none">
-                <img 
-                  src="/cluso-infolink-short.png" 
-                  alt="Cluso Infolink Short Logo" 
-                  className="h-9 w-auto object-contain rounded-lg shadow-2xs"
-                />
+                <OzcluLogo size="sm" />
               </Link>
-              <span className="font-headline-md font-bold text-[#0F172A] tracking-tight hidden sm:inline">Verify with Cluso Infolink</span>
-              <span className="font-headline-md font-bold text-[#0F172A] tracking-tight sm:hidden">Verify</span>
+              <span className="font-headline-md font-bold text-[#181d16] tracking-tight hidden sm:inline">Verify with Ozclu</span>
+              <span className="font-headline-md font-bold text-[#181d16] tracking-tight sm:hidden">Verify</span>
             </div>
           </div>
 
@@ -307,18 +296,18 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
               <button
                 onClick={() => setShowNotifications(!showNotifications)}
                 aria-label="notifications"
-                className={`text-[#334155] hover:text-[#0F172A] hover:bg-[#D4F6FF]/40 p-2 rounded-xl transition-all duration-200 relative flex items-center justify-center border border-transparent ${showNotifications ? 'bg-[#D4F6FF]/40 border-[#C6E7FF]/60 text-[#0F172A]' : ''}`}
+                className={`text-[#334155] hover:text-[#181d16] hover:bg-[#f0f5ea]/40 p-2 rounded-xl transition-all duration-200 relative flex items-center justify-center border border-transparent ${showNotifications ? 'bg-[#f0f5ea]/40 border-[#eaf0e4]/60 text-[#181d16]' : ''}`}
               >
                 <Bell className="w-5 h-5" />
                 {unreadCount > 0 && (
-                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#FFDDAE] rounded-full ring-2 ring-white animate-pulse shadow-sm"></span>
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#FFF4CC] rounded-full ring-2 ring-white animate-pulse shadow-sm"></span>
                 )}
               </button>
 
               {showNotifications && (
-                <div className="absolute right-0 mt-3 w-80 bg-white border border-[#C6E7FF] rounded-2xl shadow-xl z-50 overflow-hidden animate-fade-in text-on-surface">
+                <div className="absolute right-0 mt-3 w-80 bg-white border border-[#eaf0e4] rounded-2xl shadow-xl z-50 overflow-hidden animate-fade-in text-on-surface">
                   {/* Dropdown Header */}
-                  <div className="px-4 py-3 border-b border-[#D4F6FF] flex justify-between items-center bg-[#D4F6FF]/20">
+                  <div className="px-4 py-3 border-b border-[#f0f5ea] flex justify-between items-center bg-[#f0f5ea]/20">
                     <span className="font-body-sm font-bold text-primary">Notifications</span>
                     {unreadCount > 0 && (
                       <button
@@ -330,7 +319,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
                     )}
                   </div>
                   {/* Dropdown Content */}
-                  <div className="max-h-72 overflow-y-auto divide-y divide-[#D4F6FF]/50">
+                  <div className="max-h-72 overflow-y-auto divide-y divide-[#f0f5ea]/50">
                     {notifications.length === 0 ? (
                       <div className="px-4 py-8 text-center text-secondary font-body-sm flex flex-col items-center gap-2">
                         <Bell className="w-8 h-8 text-slate-300" />
@@ -340,12 +329,12 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
                       notifications.map((notif) => (
                         <div
                           key={notif.id}
-                          className={`px-4 py-3 hover:bg-[#D4F6FF]/10 transition-colors flex gap-3 ${
-                            !notif.read ? "bg-[#C6E7FF]/10" : ""
+                          className={`px-4 py-3 hover:bg-[#f0f5ea]/10 transition-colors flex gap-3 ${
+                            !notif.read ? "bg-[#eaf0e4]/10" : ""
                           }`}
                         >
                           <div className="mt-0.5 text-primary">
-                            <Receipt className="w-4 h-4 text-[#0F172A]" />
+                            <Receipt className="w-4 h-4 text-[#181d16]" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex justify-between items-start mb-0.5">
@@ -381,7 +370,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
             </div>
             
             {/* User info badge */}
-            <div className="hidden sm:flex items-center gap-3 px-3 py-1 bg-[#D4F6FF]/30 border border-[#C6E7FF]/60 rounded-xl mr-1">
+            <div className="hidden sm:flex items-center gap-3 px-3 py-1 bg-[#f0f5ea]/30 border border-[#eaf0e4]/60 rounded-xl mr-1">
               <div className="flex flex-col text-right">
                 <span className="font-body-sm font-bold text-primary leading-tight">{displayOrg}</span>
                 <span className="text-[9px] text-[#334155] font-bold tracking-wider font-label-caps uppercase">Client Account</span>
@@ -392,9 +381,9 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
             <Link
               href="/client/settings"
               aria-label="Settings & Profile"
-              className="text-[#334155] hover:text-[#0F172A] hover:bg-[#D4F6FF]/40 p-2 rounded-xl transition-all duration-200 flex items-center gap-1 group animate-fade-in"
+              className="text-[#334155] hover:text-[#181d16] hover:bg-[#f0f5ea]/40 p-2 rounded-xl transition-all duration-200 flex items-center gap-1 group animate-fade-in"
             >
-              <User className="w-5 h-5 text-[#0F172A]" />
+              <User className="w-5 h-5 text-[#181d16]" />
             </Link>
           </div>
         </header>

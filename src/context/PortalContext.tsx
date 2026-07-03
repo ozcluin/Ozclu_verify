@@ -122,7 +122,7 @@ interface PortalContextType {
   verifiers: Verifier[];
   settings: CompanySettings;
   organisation: Organisation | null;
-  clusoSettings: CompanySettings | null;
+  ozcluSettings: CompanySettings | null;
   addVerification: (name: string, email: string, orgName: string, requestingOrgName?: string) => Promise<any>;
   updateSettings: (newSettings: CompanySettings) => Promise<void>;
   inviteVerifier: (name: string, email: string, org: string, password?: string, designation?: string) => Promise<void>;
@@ -166,7 +166,7 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [verifiers, setVerifiers] = useState<Verifier[]>([]);
   const [settings, setSettings] = useState<CompanySettings>(defaultSettings);
   const [organisation, setOrganisation] = useState<Organisation | null>(null);
-  const [clusoSettings, setClusoSettings] = useState<CompanySettings | null>(null);
+  const [ozcluSettings, setOzcluSettings] = useState<CompanySettings | null>(null);
   const [loaded, setLoaded] = useState(false);
 
   // Sync / Fetch function from MongoDB API route
@@ -205,10 +205,10 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         });
       }
 
-      if (data.clusoSettings) {
-        setClusoSettings(data.clusoSettings);
+      if (data.ozcluSettings) {
+        setOzcluSettings(data.ozcluSettings);
       } else {
-        setClusoSettings(null);
+        setOzcluSettings(null);
       }
 
       if (data.organisation) {
@@ -248,7 +248,7 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setVerifiers([]);
       setSettings(defaultSettings);
       setOrganisation(null);
-      setClusoSettings(null);
+      setOzcluSettings(null);
     }
   }, [isAuthenticated]);
 
@@ -544,7 +544,7 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         verifiers,
         settings,
         organisation,
-        clusoSettings,
+        ozcluSettings,
         addVerification,
         updateSettings,
         inviteVerifier,

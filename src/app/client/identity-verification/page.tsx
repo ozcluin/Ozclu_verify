@@ -27,7 +27,7 @@ export default function IdentityVerification() {
   const [requestingOrgName, setRequestingOrgName] = useState("");
   const [showOrgDropdown, setShowOrgDropdown] = useState(false);
   
-  const isAdmin = profile?.role === "admin" || profile?.org_name?.toLowerCase() === "cluso" || profile?.org_name?.toLowerCase() === "admin";
+  const isAdmin = profile?.role === "admin" || profile?.org_name?.toLowerCase() === "ozclu" || profile?.org_name?.toLowerCase() === "admin";
 
   React.useEffect(() => {
     if (!isAdmin && profile?.org_name) {
@@ -132,12 +132,12 @@ export default function IdentityVerification() {
 
   return (
     <div className="flex flex-col gap-6 pt-4 animate-fade-in pb-12">
-      <div className="flex flex-col gap-1 border-b border-[#D4F6FF] pb-5 mb-2">
-        <div className="flex items-center gap-2 text-[10px] font-bold text-[#1E3A5F] bg-[#D4F6FF]/60 px-2.5 py-1 rounded-full w-fit uppercase tracking-wider font-label-caps border border-[#C6E7FF]/60">
-          <Sparkles className="w-3.5 h-3.5 text-[#0F172A]" />
+      <div className="flex flex-col gap-1 border-b border-[#f0f5ea] pb-5 mb-2">
+        <div className="flex items-center gap-2 text-[10px] font-bold text-[#00450e] bg-[#f0f5ea]/60 px-2.5 py-1 rounded-full w-fit uppercase tracking-wider font-label-caps border border-[#eaf0e4]/60">
+          <Sparkles className="w-3.5 h-3.5 text-[#181d16]" />
           <span>Quick verification</span>
         </div>
-        <h2 className="font-display-lg text-primary font-bold tracking-tight text-3xl mt-2 text-[#0F172A]">Candidate Verification</h2>
+        <h2 className="font-display-lg text-primary font-bold tracking-tight text-3xl mt-2 text-[#181d16]">Candidate Verification</h2>
         <p className="text-secondary mt-1 text-sm">Initiate a new identity verification request for a candidate.</p>
       </div>
 
@@ -152,7 +152,7 @@ export default function IdentityVerification() {
             </p>
             <button
               onClick={() => router.push("/client/settings")}
-              className="mt-2 text-xs font-bold text-[#0F172A] hover:underline flex items-center gap-1 w-fit"
+              className="mt-2 text-xs font-bold text-[#181d16] hover:underline flex items-center gap-1 w-fit"
             >
               Go to Settings <ExternalLink className="w-3 h-3" />
             </button>
@@ -176,20 +176,20 @@ export default function IdentityVerification() {
       )}
 
       {/* Form Card */}
-      <div className="bg-white border border-[#C6E7FF] rounded-3xl p-8 max-w-2xl shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+      <div className="bg-white border border-[#eaf0e4] rounded-3xl p-8 max-w-2xl shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1">
         {/* Top gradient line */}
-        <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#C6E7FF] via-[#FFDDAE] to-[#D4F6FF]"></div>
+        <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#eaf0e4] via-[#FFF4CC] to-[#f0f5ea]"></div>
         
         {/* Subtle decorative background shapes */}
-        <div className="absolute -right-12 -bottom-12 w-32 h-32 bg-[#D4F6FF]/35 rounded-full blur-2xl pointer-events-none"></div>
-        <div className="absolute -left-12 -top-12 w-32 h-32 bg-[#FFDDAE]/20 rounded-full blur-2xl pointer-events-none"></div>
+        <div className="absolute -right-12 -bottom-12 w-32 h-32 bg-[#f0f5ea]/35 rounded-full blur-2xl pointer-events-none"></div>
+        <div className="absolute -left-12 -top-12 w-32 h-32 bg-[#FFF4CC]/20 rounded-full blur-2xl pointer-events-none"></div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-6 mt-2 relative z-10">
           <div className="flex items-center gap-2 mb-2">
-            <div className="p-2 bg-[#D4F6FF]/40 rounded-xl border border-[#C6E7FF]/60">
-              <UserPlus className="w-5 h-5 text-[#1E3A5F]" />
+            <div className="p-2 bg-[#f0f5ea]/40 rounded-xl border border-[#eaf0e4]/60">
+              <UserPlus className="w-5 h-5 text-[#00450e]" />
             </div>
-            <h3 className="font-semibold text-[#0F172A] text-lg">Identity Check</h3>
+            <h3 className="font-semibold text-[#181d16] text-lg">Identity Check</h3>
           </div>
 
           {/* Candidate Name Field */}
@@ -204,7 +204,7 @@ export default function IdentityVerification() {
               onChange={(e) => setCandidateName(e.target.value)}
               autoComplete="off"
               disabled={isSettingsIncomplete}
-              className={`border border-[#C6E7FF] rounded-xl p-3.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#C6E7FF] focus:border-[#0F172A] transition-all bg-[#FBFBFB]/50 placeholder-slate-400 font-semibold ${
+              className={`border border-[#eaf0e4] rounded-xl p-3.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] focus:border-[#181d16] transition-all bg-[#f6fbf0]/50 placeholder-slate-400 font-semibold ${
                 isSettingsIncomplete ? "bg-slate-100/60 text-slate-500 cursor-not-allowed border-slate-200 opacity-80" : ""
               }`}
               placeholder="Enter the candidate name"
@@ -223,7 +223,7 @@ export default function IdentityVerification() {
               onChange={(e) => setCandidateEmail(e.target.value)}
               autoComplete="off"
               disabled={isSettingsIncomplete}
-              className={`border border-[#C6E7FF] rounded-xl p-3.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#C6E7FF] focus:border-[#0F172A] transition-all bg-[#FBFBFB]/50 placeholder-slate-400 font-semibold ${
+              className={`border border-[#eaf0e4] rounded-xl p-3.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] focus:border-[#181d16] transition-all bg-[#f6fbf0]/50 placeholder-slate-400 font-semibold ${
                 isSettingsIncomplete ? "bg-slate-100/60 text-slate-500 cursor-not-allowed border-slate-200 opacity-80" : ""
               }`}
               placeholder="Enter the candidate email ID"
@@ -250,19 +250,19 @@ export default function IdentityVerification() {
                 }}
                 autoComplete="off"
                 disabled={isSettingsIncomplete}
-                className={`w-full border border-[#C6E7FF] rounded-xl p-3.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#C6E7FF] focus:border-[#0F172A] transition-all bg-[#FBFBFB]/50 placeholder-slate-400 font-semibold ${
+                className={`w-full border border-[#eaf0e4] rounded-xl p-3.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] focus:border-[#181d16] transition-all bg-[#f6fbf0]/50 placeholder-slate-400 font-semibold ${
                   isSettingsIncomplete ? "bg-slate-100/60 text-slate-500 cursor-not-allowed border-slate-200 opacity-80" : ""
                 }`}
                 placeholder={isAdmin ? "Enter target client organization name (e.g., TCS)" : "Enter the organization name requiring the verification"}
               />
 
               {showOrgDropdown && filteredOrgs.length > 0 && (
-                <div className="absolute left-0 right-0 mt-1 bg-white border border-[#C6E7FF] rounded-xl shadow-lg z-30 overflow-hidden max-h-48 overflow-y-auto animate-fade-in">
+                <div className="absolute left-0 right-0 mt-1 bg-white border border-[#eaf0e4] rounded-xl shadow-lg z-30 overflow-hidden max-h-48 overflow-y-auto animate-fade-in">
                   <div className="p-1 flex flex-col gap-1 font-body-sm">
                     {filteredOrgs.map((org) => (
                       <div
                         key={org}
-                        className="flex items-center justify-between px-3 py-2 rounded-lg text-xs hover:bg-[#D4F6FF]/35 text-[#0F172A] font-semibold cursor-pointer group/item"
+                        className="flex items-center justify-between px-3 py-2 rounded-lg text-xs hover:bg-[#f0f5ea]/35 text-[#181d16] font-semibold cursor-pointer group/item"
                         onMouseDown={() => {
                           // use onMouseDown instead of onClick to prevent onBlur from closing dropdown first
                           setRequestingOrgName(org);
@@ -297,7 +297,7 @@ export default function IdentityVerification() {
               type="button"
               onClick={handleCancel}
               disabled={isSettingsIncomplete}
-              className={`px-6 py-3 border border-[#C6E7FF] rounded-xl font-semibold text-sm text-[#334155] hover:bg-[#FBFBFB] hover:text-[#0F172A] transition-all bg-white ${
+              className={`px-6 py-3 border border-[#eaf0e4] rounded-xl font-semibold text-sm text-[#334155] hover:bg-[#f6fbf0] hover:text-[#181d16] transition-all bg-white ${
                 isSettingsIncomplete ? "opacity-50 cursor-not-allowed hover:bg-white hover:text-[#334155]" : "cursor-pointer"
               }`}
             >
@@ -306,8 +306,8 @@ export default function IdentityVerification() {
             <button
               type="submit"
               disabled={isSettingsIncomplete}
-              className={`px-6 py-3 bg-[#0F172A] text-white hover:bg-[#1E293B] active:scale-95 rounded-xl font-semibold text-sm transition-all flex items-center gap-2 shadow-sm group ${
-                isSettingsIncomplete ? "opacity-50 cursor-not-allowed hover:bg-[#0F172A] active:scale-100" : "cursor-pointer"
+              className={`px-6 py-3 bg-[#181d16] text-white hover:bg-[#1E293B] active:scale-95 rounded-xl font-semibold text-sm transition-all flex items-center gap-2 shadow-sm group ${
+                isSettingsIncomplete ? "opacity-50 cursor-not-allowed hover:bg-[#181d16] active:scale-100" : "cursor-pointer"
               }`}
             >
               <span>Create Request</span>
@@ -320,20 +320,20 @@ export default function IdentityVerification() {
       {/* Credentials Modal */}
       {createdCredentials && (
         <div className="fixed inset-0 bg-slate-400/10 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fade-in">
-          <div className="bg-white border border-[#C6E7FF] rounded-3xl p-8 max-w-lg w-full shadow-2xl relative animate-scale-up">
+          <div className="bg-white border border-[#eaf0e4] rounded-3xl p-8 max-w-lg w-full shadow-2xl relative animate-scale-up">
             <div className="flex flex-col items-center text-center gap-4">
               <div className="w-16 h-16 bg-[#E6F8F3] border border-[#A3EAD6] rounded-full flex items-center justify-center text-[#00684A] mb-2 animate-bounce-subtle">
                 <CheckCircle className="w-8 h-8 text-[#00a877]" />
               </div>
-              <h3 className="font-headline-md text-[#0F172A] font-bold text-xl">Request Initiated!</h3>
+              <h3 className="font-headline-md text-[#181d16] font-bold text-xl">Request Initiated!</h3>
               <p className="font-body-sm text-[#475569] leading-relaxed">
-                A verification request has been successfully created for <strong className="text-[#0F172A] font-bold">{createdCredentials.name}</strong>.
+                A verification request has been successfully created for <strong className="text-[#181d16] font-bold">{createdCredentials.name}</strong>.
               </p>
 
               {/* Credentials Box */}
-              <div className="w-full mt-4 p-5 bg-[#D4F6FF]/25 border border-[#C6E7FF] rounded-2xl text-left flex flex-col gap-3 relative overflow-hidden shadow-2xs">
+              <div className="w-full mt-4 p-5 bg-[#f0f5ea]/25 border border-[#eaf0e4] rounded-2xl text-left flex flex-col gap-3 relative overflow-hidden shadow-2xs">
                 <div className="absolute right-3 top-3">
-                  <span className="text-[9px] uppercase font-bold tracking-wider text-[#0F172A] bg-white border border-[#C6E7FF] px-2 py-0.5 rounded">
+                  <span className="text-[9px] uppercase font-bold tracking-wider text-[#181d16] bg-white border border-[#eaf0e4] px-2 py-0.5 rounded">
                     Direct Login Link
                   </span>
                 </div>
@@ -344,8 +344,8 @@ export default function IdentityVerification() {
                     <p className="text-[11px] text-[#475569] leading-relaxed mb-2">
                       Share this direct login link with the candidate. Credentials are embedded and will pre-fill automatically.
                     </p>
-                    <div className="flex items-center justify-between bg-white px-3 py-2.5 rounded-xl border border-[#C6E7FF]/60 gap-3 mt-1 shadow-2xs">
-                      <span className="font-mono text-xs text-[#0F172A] truncate max-w-[65%]" title={createdCredentials.setupUrl}>
+                    <div className="flex items-center justify-between bg-white px-3 py-2.5 rounded-xl border border-[#eaf0e4]/60 gap-3 mt-1 shadow-2xs">
+                      <span className="font-mono text-xs text-[#181d16] truncate max-w-[65%]" title={createdCredentials.setupUrl}>
                         {createdCredentials.setupUrl}
                       </span>
                       <div className="flex items-center gap-2 shrink-0">
@@ -356,7 +356,7 @@ export default function IdentityVerification() {
                             setCopiedUrl(true);
                             setTimeout(() => setCopiedUrl(false), 2000);
                           }}
-                          className="text-xs px-3 py-1.5 bg-[#0F172A] text-white rounded-lg font-semibold hover:bg-[#1E293B] transition-all flex items-center gap-1.5 cursor-pointer"
+                          className="text-xs px-3 py-1.5 bg-[#181d16] text-white rounded-lg font-semibold hover:bg-[#1E293B] transition-all flex items-center gap-1.5 cursor-pointer"
                         >
                           {copiedUrl ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                           <span>{copiedUrl ? "Copied" : "Copy"}</span>
@@ -368,21 +368,21 @@ export default function IdentityVerification() {
                     {(() => {
                       const params = getUrlParams(createdCredentials.setupUrl);
                       return (
-                        <div className="mt-3 p-4 bg-white/70 border border-[#C6E7FF]/40 rounded-2xl text-xs flex flex-col gap-2.5 shadow-2xs">
+                        <div className="mt-3 p-4 bg-white/70 border border-[#eaf0e4]/40 rounded-2xl text-xs flex flex-col gap-2.5 shadow-2xs">
                           <div className="flex justify-between items-center">
                             <span className="text-[#475569] font-semibold uppercase tracking-wider text-[10px] font-label-caps">Candidate Email ID</span>
-                            <span className="font-mono text-[#0F172A] font-bold text-xs select-all">{params.email}</span>
+                            <span className="font-mono text-[#181d16] font-bold text-xs select-all">{params.email}</span>
                           </div>
-                          <div className="flex justify-between items-center border-t border-[#D4F6FF]/30 pt-2">
+                          <div className="flex justify-between items-center border-t border-[#f0f5ea]/30 pt-2">
                             <span className="text-[#475569] font-semibold uppercase tracking-wider text-[10px] font-label-caps">Temporary Password</span>
-                            <span className="font-mono text-[#0F172A] font-bold text-xs select-all">{params.password}</span>
+                            <span className="font-mono text-[#181d16] font-bold text-xs select-all">{params.password}</span>
                           </div>
                         </div>
                       );
                     })()}
 
                     <div className="flex items-center gap-1.5 mt-2.5 text-[10px] text-[#64748B]">
-                      <Sparkles className="w-3 h-3 text-[#1E3A5F]" />
+                      <Sparkles className="w-3 h-3 text-[#00450e]" />
                       <span>The candidate can log in directly using this link without setting a password.</span>
                     </div>
                   </div>
@@ -399,7 +399,7 @@ export default function IdentityVerification() {
                     setCreatedCredentials(null);
                     setSuccessMsg("");
                   }}
-                  className="flex-1 py-3 border border-[#C6E7FF] rounded-xl font-semibold text-xs text-[#334155] hover:bg-[#FBFBFB] transition-colors cursor-pointer bg-white"
+                  className="flex-1 py-3 border border-[#eaf0e4] rounded-xl font-semibold text-xs text-[#334155] hover:bg-[#f6fbf0] transition-colors cursor-pointer bg-white"
                 >
                   Create Another
                 </button>
@@ -409,7 +409,7 @@ export default function IdentityVerification() {
                     setCreatedCredentials(null);
                     router.push("/client/summary");
                   }}
-                  className="flex-1 py-3 bg-[#0F172A] text-white rounded-xl font-semibold text-xs hover:bg-[#1E293B] transition-all cursor-pointer shadow-sm"
+                  className="flex-1 py-3 bg-[#181d16] text-white rounded-xl font-semibold text-xs hover:bg-[#1E293B] transition-all cursor-pointer shadow-sm"
                 >
                   Go to Summary
                 </button>

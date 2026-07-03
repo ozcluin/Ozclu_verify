@@ -10,6 +10,7 @@ import {
   LogIn, 
   AlertCircle 
 } from "lucide-react";
+import OzcluLogo from "./components/OzcluLogo";
 
 export default function ClientLoginPage() {
   const router = useRouter();
@@ -53,32 +54,28 @@ export default function ClientLoginPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#FBFBFB] text-[#0F172A]">
+    <div className="flex flex-col min-h-screen bg-[#f6fbf0] text-[#181d16]">
       {/* Top Header */}
-      <header className="h-16 border-b border-[#D4F6FF] bg-white flex justify-between items-center px-8 z-10 shadow-2xs">
+      <header className="h-16 border-b border-[#f0f5ea] bg-white flex justify-between items-center px-8 z-10 shadow-2xs">
         <div className="flex items-center gap-2">
           <Link href="/" className="block transition-transform duration-300 hover:scale-[1.03] select-none">
-            <img 
-              src="/cluso-infolink.png" 
-              alt="Cluso Infolink Logo" 
-              className="h-14 w-auto object-contain rounded-xl shadow-2xs hover:shadow-sm transition-shadow duration-300"
-            />
+            <OzcluLogo size="md" />
           </Link>
         </div>
         <div>
-          <span className="font-label-caps text-[#1E3A5F] uppercase tracking-wider text-xs font-bold">Client Link</span>
+          <span className="font-label-caps text-[#00450e] uppercase tracking-wider text-xs font-bold">Client Link</span>
         </div>
       </header>
 
       {/* Main Container */}
       <main className="flex-1 flex flex-col justify-center items-center px-4 py-12 relative overflow-hidden">
         {/* Background Decorative Blur */}
-        <div className="absolute -right-32 top-10 w-96 h-96 bg-[#C6E7FF]/20 opacity-40 rounded-full blur-3xl pointer-events-none"></div>
-        <div className="absolute -left-32 bottom-10 w-96 h-96 bg-[#D4F6FF]/30 opacity-40 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="absolute -right-32 top-10 w-96 h-96 bg-[#eaf0e4]/20 opacity-40 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="absolute -left-32 bottom-10 w-96 h-96 bg-[#f0f5ea]/30 opacity-40 rounded-full blur-3xl pointer-events-none"></div>
 
-        <div className="w-full max-w-md bg-white border border-[#C6E7FF] rounded-3xl p-8 shadow-sm z-10 transition-all duration-300 relative overflow-hidden">
+        <div className="w-full max-w-md bg-white border border-[#eaf0e4] rounded-3xl p-8 shadow-sm z-10 transition-all duration-300 relative overflow-hidden">
           {/* Top accent line */}
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#C6E7FF] to-[#D4F6FF]"></div>
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#eaf0e4] to-[#f0f5ea]"></div>
 
           <div className="text-center mb-8 relative z-10">
             <h2 className="font-display-lg text-primary text-2xl font-bold mb-2">Client Portal</h2>
@@ -107,7 +104,7 @@ export default function ClientLoginPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="border border-[#C6E7FF] rounded-xl p-3 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#C6E7FF] focus:border-[#0F172A] transition-shadow bg-[#FBFBFB]/50 placeholder-slate-400 font-semibold"
+                className="border border-[#eaf0e4] rounded-xl p-3 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] focus:border-[#181d16] transition-shadow bg-[#f6fbf0]/50 placeholder-slate-400 font-semibold"
                 placeholder="Enter your email address"
               />
             </div>
@@ -124,13 +121,13 @@ export default function ClientLoginPage() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full border border-[#C6E7FF] rounded-xl p-3 pr-10 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#C6E7FF] focus:border-[#0F172A] transition-shadow bg-[#FBFBFB]/50 placeholder-slate-400 font-semibold"
+                  className="w-full border border-[#eaf0e4] rounded-xl p-3 pr-10 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] focus:border-[#181d16] transition-shadow bg-[#f6fbf0]/50 placeholder-slate-400 font-semibold"
                   placeholder="Enter your password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 text-[#475569] hover:text-[#0F172A] transition-colors flex items-center justify-center p-1 cursor-pointer focus:outline-none"
+                  className="absolute right-3 text-[#475569] hover:text-[#181d16] transition-colors flex items-center justify-center p-1 cursor-pointer focus:outline-none"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -142,7 +139,7 @@ export default function ClientLoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="mt-4 py-3 bg-[#0F172A] text-white rounded-xl font-semibold text-sm hover:bg-[#1E293B] active:scale-95 transition-all duration-200 flex justify-center items-center gap-2 cursor-pointer shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+              className="mt-4 py-3 bg-[#181d16] text-white rounded-xl font-semibold text-sm hover:bg-[#1E293B] active:scale-95 transition-all duration-200 flex justify-center items-center gap-2 cursor-pointer shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <span className="animate-pulse">Signing In...</span>
@@ -158,8 +155,8 @@ export default function ClientLoginPage() {
       </main>
 
       {/* Footer */}
-      <footer className="h-12 border-t border-[#D4F6FF] bg-white flex justify-center items-center font-body-sm text-slate-500 text-xs font-semibold">
-        <span>&copy; {new Date().getFullYear()} Cluso Infolink. Client Link.</span>
+      <footer className="h-12 border-t border-[#f0f5ea] bg-white flex justify-center items-center font-body-sm text-slate-500 text-xs font-semibold">
+        <span>&copy; {new Date().getFullYear()} Ozclu. Client Link.</span>
       </footer>
     </div>
   );

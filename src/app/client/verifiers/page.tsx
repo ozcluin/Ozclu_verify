@@ -137,7 +137,7 @@ export default function ManageVerifiersPage() {
         <div className={`border rounded-2xl p-5 text-left transition-all duration-300 ${
           slotsRemaining === 0 
             ? "bg-rose-500/5 border-rose-500/15" 
-            : "bg-[#C6E7FF]/10 border-[#C6E7FF]/20"
+            : "bg-[#eaf0e4]/10 border-[#eaf0e4]/20"
         }`}>
           <span className="text-[10px] text-slate-450 uppercase tracking-wider font-extrabold block mb-1">Slots Remaining</span>
           <span className={`text-2xl font-black ${slotsRemaining === 0 ? "text-rose-600" : "text-[#134074]"}`}>
@@ -149,7 +149,7 @@ export default function ManageVerifiersPage() {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
         {/* Left Column: List of verifiers */}
         <div className="lg:col-span-3 flex flex-col gap-4">
-          <div className="bg-white border border-[#C6E7FF]/30 rounded-3xl p-6 shadow-sm">
+          <div className="bg-white border border-[#eaf0e4]/30 rounded-3xl p-6 shadow-sm">
             <h3 className="font-extrabold text-sm text-[#134074] border-b border-slate-100 pb-3 mb-4 flex items-center gap-2">
               <Users className="w-4 h-4 text-slate-400" />
               <span>Team Accounts</span>
@@ -216,7 +216,7 @@ export default function ManageVerifiersPage() {
 
         {/* Right Column: Invite Form */}
         <div className="lg:col-span-2">
-          <div className="bg-white border border-[#C6E7FF]/30 rounded-3xl p-6 shadow-sm">
+          <div className="bg-white border border-[#eaf0e4]/30 rounded-3xl p-6 shadow-sm">
             <h3 className="font-extrabold text-sm text-[#134074] border-b border-slate-100 pb-3 mb-4 flex items-center gap-2">
               <UserPlus className="w-4 h-4 text-slate-400" />
               <span>Create Verifier login</span>
@@ -243,7 +243,7 @@ export default function ManageVerifiersPage() {
                   <span>Active Limit Reached</span>
                 </h4>
                 <p className="text-[11px] text-slate-500 leading-relaxed font-medium">
-                  Your organisation has reached the maximum of <strong className="text-slate-800 font-extrabold">{maxVerifiers} active verifiers</strong>. Deactivate an existing verifier to free up a slot, or contact your account manager at Cluso Infolink to increase capacity.
+                  Your organisation has reached the maximum of <strong className="text-slate-800 font-extrabold">{maxVerifiers} active verifiers</strong>. Deactivate an existing verifier to free up a slot, or contact your account manager at Ozclu to increase capacity.
                 </p>
               </div>
             ) : (
@@ -256,7 +256,7 @@ export default function ManageVerifiersPage() {
                       placeholder="e.g. Jane Smith" 
                       value={name} 
                       onChange={(e) => setName(e.target.value)}
-                      className="w-full border border-slate-200 rounded-xl p-3 font-body-sm text-slate-800 bg-white focus:outline-none focus:ring-4 focus:ring-[#C6E7FF]/30 focus:border-[#134074] transition-all placeholder-slate-400 text-xs"
+                      className="w-full border border-slate-200 rounded-xl p-3 font-body-sm text-slate-800 bg-white focus:outline-none focus:ring-4 focus:ring-[#eaf0e4]/30 focus:border-[#134074] transition-all placeholder-slate-400 text-xs"
                       required
                     />
                   </div>
@@ -270,7 +270,7 @@ export default function ManageVerifiersPage() {
                       placeholder="e.g. jane@company.com" 
                       value={email} 
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full border border-slate-200 rounded-xl p-3 font-body-sm text-slate-800 bg-white focus:outline-none focus:ring-4 focus:ring-[#C6E7FF]/30 focus:border-[#134074] transition-all placeholder-slate-400 text-xs"
+                      className="w-full border border-slate-200 rounded-xl p-3 font-body-sm text-slate-800 bg-white focus:outline-none focus:ring-4 focus:ring-[#eaf0e4]/30 focus:border-[#134074] transition-all placeholder-slate-400 text-xs"
                       required
                     />
                   </div>
@@ -284,7 +284,7 @@ export default function ManageVerifiersPage() {
                       placeholder="e.g. Verification Lead" 
                       value={designation} 
                       onChange={(e) => setDesignation(e.target.value)}
-                      className="w-full border border-slate-200 rounded-xl p-3 font-body-sm text-slate-800 bg-white focus:outline-none focus:ring-4 focus:ring-[#C6E7FF]/30 focus:border-[#134074] transition-all placeholder-slate-400 text-xs"
+                      className="w-full border border-slate-200 rounded-xl p-3 font-body-sm text-slate-800 bg-white focus:outline-none focus:ring-4 focus:ring-[#eaf0e4]/30 focus:border-[#134074] transition-all placeholder-slate-400 text-xs"
                     />
                   </div>
                 </div>
@@ -306,7 +306,7 @@ export default function ManageVerifiersPage() {
                       placeholder="Set temporary password" 
                       value={password} 
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full border border-slate-200 rounded-xl p-3 font-body-sm text-slate-800 bg-white focus:outline-none focus:ring-4 focus:ring-[#C6E7FF]/30 focus:border-[#134074] transition-all placeholder-slate-400 text-xs"
+                      className="w-full border border-slate-200 rounded-xl p-3 font-body-sm text-slate-800 bg-white focus:outline-none focus:ring-4 focus:ring-[#eaf0e4]/30 focus:border-[#134074] transition-all placeholder-slate-400 text-xs"
                       required
                       minLength={6}
                     />
@@ -316,7 +316,7 @@ export default function ManageVerifiersPage() {
                 <button 
                   type="submit" 
                   disabled={inviting}
-                  className="mt-2 w-full py-3 bg-[#134074] text-white hover:bg-[#0F172A] font-bold text-xs rounded-xl shadow-xs transition-colors flex justify-center items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  className="mt-2 w-full py-3 bg-[#134074] text-white hover:bg-[#181d16] font-bold text-xs rounded-xl shadow-xs transition-colors flex justify-center items-center gap-1.5 cursor-pointer disabled:opacity-50"
                 >
                   {inviting ? (
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>

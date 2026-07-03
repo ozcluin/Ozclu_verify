@@ -239,14 +239,14 @@ export default function OrderSummaryPage() {
       <div 
         className={`rounded-xl p-3.5 border relative flex flex-col justify-between gap-1.5 shadow-2xs transition-all hover:shadow-xs ${
           isIdCard 
-            ? "bg-[#FFDDAE]/15 border-[#FFDDAE]/50 hover:border-[#FFDDAE]" 
-            : "bg-[#D4F6FF]/20 border-[#C6E7FF]/55 hover:border-[#C6E7FF]"
+            ? "bg-[#FFF4CC]/15 border-[#FFF4CC]/50 hover:border-[#FFF4CC]" 
+            : "bg-[#f0f5ea]/20 border-[#eaf0e4]/55 hover:border-[#eaf0e4]"
         }`}
       >
         <div className="flex justify-between items-center w-full">
           {isBadge ? (
             <span className={`text-[8px] uppercase tracking-wider font-extrabold px-1.5 py-0.5 rounded ${
-              isIdCard ? "bg-[#5C3A21] text-white" : "bg-[#0F172A] text-white"
+              isIdCard ? "bg-[#805b00] text-white" : "bg-[#181d16] text-white"
             }`}>
               {label}
             </span>
@@ -259,7 +259,7 @@ export default function OrderSummaryPage() {
             <button
               onClick={() => toggleReveal(maskKey!)}
               className={`transition-colors cursor-pointer flex items-center justify-center p-1 rounded-full ${
-                isIdCard ? "text-[#5C3A21] hover:bg-[#FFDDAE]/40" : "text-[#1E3A5F] hover:bg-[#C6E7FF]/40"
+                isIdCard ? "text-[#805b00] hover:bg-[#FFF4CC]/40" : "text-[#00450e] hover:bg-[#eaf0e4]/40"
               }`}
               type="button"
             >
@@ -267,7 +267,7 @@ export default function OrderSummaryPage() {
             </button>
           )}
         </div>
-        <div className="font-body-sm font-bold text-[#0F172A] break-all mt-0.5 pr-4">
+        <div className="font-body-sm font-bold text-[#181d16] break-all mt-0.5 pr-4">
           {displayValue || "N/A"}
         </div>
       </div>
@@ -403,12 +403,12 @@ export default function OrderSummaryPage() {
   return (
     <>
       <div className="flex flex-col gap-6 pt-4 animate-fade-in pb-12">
-      <div className="flex flex-col gap-1 border-b border-[#D4F6FF] pb-5 mb-2">
-        <div className="flex items-center gap-2 text-[10px] font-bold text-[#1E3A5F] bg-[#D4F6FF]/60 px-2.5 py-1 rounded-full w-fit uppercase tracking-wider font-label-caps border border-[#C6E7FF]/60">
-          <Sparkles className="w-3.5 h-3.5 text-[#0F172A]" />
+      <div className="flex flex-col gap-1 border-b border-[#f0f5ea] pb-5 mb-2">
+        <div className="flex items-center gap-2 text-[10px] font-bold text-[#00450e] bg-[#f0f5ea]/60 px-2.5 py-1 rounded-full w-fit uppercase tracking-wider font-label-caps border border-[#eaf0e4]/60">
+          <Sparkles className="w-3.5 h-3.5 text-[#181d16]" />
           <span>MANAGEMENT PORTAL</span>
         </div>
-        <h2 className="font-display-lg text-primary font-bold tracking-tight text-3xl mt-2 text-[#0F172A]">Order Summary</h2>
+        <h2 className="font-display-lg text-primary font-bold tracking-tight text-3xl mt-2 text-[#181d16]">Order Summary</h2>
         <p className="font-body-sm text-secondary mt-1 max-w-2xl text-slate-500">
           Review your recent verification requests, billing history, and access detailed findings reports.
         </p>
@@ -424,17 +424,17 @@ export default function OrderSummaryPage() {
       {/* Bento Grid Layout */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 max-w-6xl">
         {/* Request Summary (Spans 2 columns on xl screens) */}
-        <section className="xl:col-span-2 bg-white border border-[#C6E7FF] rounded-3xl p-6 flex flex-col gap-6 shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-[#C6E7FF]"></div>
+        <section className="xl:col-span-2 bg-white border border-[#eaf0e4] rounded-3xl p-6 flex flex-col gap-6 shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-[#eaf0e4]"></div>
           <div className="flex justify-between items-center mb-1 relative">
-            <h3 className="font-semibold text-lg text-[#0F172A]">Request Summary</h3>
+            <h3 className="font-semibold text-lg text-[#181d16]">Request Summary</h3>
             <div className="flex gap-2 relative">
               {/* Small Refresh Button */}
               <button
                 onClick={handleRefresh}
                 disabled={isRefreshing}
                 title="Refresh requests"
-                className="p-2.5 rounded-xl transition-all border border-[#C6E7FF] bg-white hover:bg-[#D4F6FF]/35 flex items-center justify-center cursor-pointer shadow-2xs text-[#1E3A5F] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="p-2.5 rounded-xl transition-all border border-[#eaf0e4] bg-white hover:bg-[#f0f5ea]/35 flex items-center justify-center cursor-pointer shadow-2xs text-[#00450e] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <RotateCw className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`} />
               </button>
@@ -446,14 +446,14 @@ export default function OrderSummaryPage() {
                     setMonthDropdownOpen(!monthDropdownOpen);
                     setFilterDropdownOpen(false);
                   }}
-                  className="font-bold text-xs text-[#0F172A] bg-white hover:bg-[#D4F6FF]/35 px-4 py-2.5 rounded-xl transition-all border border-[#C6E7FF] flex items-center gap-2 cursor-pointer shadow-2xs"
+                  className="font-bold text-xs text-[#181d16] bg-white hover:bg-[#f0f5ea]/35 px-4 py-2.5 rounded-xl transition-all border border-[#eaf0e4] flex items-center gap-2 cursor-pointer shadow-2xs"
                 >
-                  <Calendar className="w-4 h-4 text-[#1E3A5F]" />
+                  <Calendar className="w-4 h-4 text-[#00450e]" />
                   <span>Month: {monthFilter === "all" ? "ALL" : monthFilter}</span>
                 </button>
 
                 {monthDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white border border-[#C6E7FF] rounded-xl shadow-lg z-30 overflow-hidden animate-fade-in">
+                  <div className="absolute right-0 mt-2 w-48 bg-white border border-[#eaf0e4] rounded-xl shadow-lg z-30 overflow-hidden animate-fade-in">
                     <div className="p-1 flex flex-col gap-1 font-body-sm max-h-60 overflow-y-auto">
                       <button
                         onClick={() => {
@@ -461,7 +461,7 @@ export default function OrderSummaryPage() {
                           setMonthDropdownOpen(false);
                         }}
                         className={`text-left px-3 py-2 rounded-lg text-xs transition-colors cursor-pointer font-semibold ${
-                          monthFilter === "all" ? "bg-[#C6E7FF] text-[#0F172A]" : "text-[#475569] hover:bg-[#D4F6FF]/30 hover:text-[#0F172A]"
+                          monthFilter === "all" ? "bg-[#eaf0e4] text-[#181d16]" : "text-[#475569] hover:bg-[#f0f5ea]/30 hover:text-[#181d16]"
                         }`}
                       >
                         ALL MONTHS
@@ -474,7 +474,7 @@ export default function OrderSummaryPage() {
                             setMonthDropdownOpen(false);
                           }}
                           className={`text-left px-3 py-2 rounded-lg text-xs transition-colors cursor-pointer font-semibold ${
-                            monthFilter === m ? "bg-[#C6E7FF] text-[#0F172A]" : "text-[#475569] hover:bg-[#D4F6FF]/30 hover:text-[#0F172A]"
+                            monthFilter === m ? "bg-[#eaf0e4] text-[#181d16]" : "text-[#475569] hover:bg-[#f0f5ea]/30 hover:text-[#181d16]"
                           }`}
                         >
                           {m.toUpperCase()}
@@ -492,14 +492,14 @@ export default function OrderSummaryPage() {
                     setFilterDropdownOpen(!filterDropdownOpen);
                     setMonthDropdownOpen(false);
                   }}
-                  className="font-bold text-xs text-[#0F172A] bg-white hover:bg-[#D4F6FF]/35 px-4 py-2.5 rounded-xl transition-all border border-[#C6E7FF] flex items-center gap-2 cursor-pointer shadow-2xs"
+                  className="font-bold text-xs text-[#181d16] bg-white hover:bg-[#f0f5ea]/35 px-4 py-2.5 rounded-xl transition-all border border-[#eaf0e4] flex items-center gap-2 cursor-pointer shadow-2xs"
                 >
-                  <Filter className="w-4 h-4 text-[#1E3A5F]" />
+                  <Filter className="w-4 h-4 text-[#00450e]" />
                   <span>Filter: {statusFilter.toUpperCase()}</span>
                 </button>
 
                 {filterDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white border border-[#C6E7FF] rounded-xl shadow-lg z-30 overflow-hidden animate-fade-in">
+                  <div className="absolute right-0 mt-2 w-48 bg-white border border-[#eaf0e4] rounded-xl shadow-lg z-30 overflow-hidden animate-fade-in">
                     <div className="p-1 flex flex-col gap-1 font-body-sm">
                       {["all", "Completed", "Processing", "Needs Attention"].map((status) => (
                         <button
@@ -509,7 +509,7 @@ export default function OrderSummaryPage() {
                             setFilterDropdownOpen(false);
                           }}
                           className={`text-left px-3 py-2 rounded-lg text-xs transition-colors cursor-pointer font-semibold ${
-                            statusFilter === status ? "bg-[#C6E7FF] text-[#0F172A]" : "text-[#475569] hover:bg-[#D4F6FF]/30 hover:text-[#0F172A]"
+                            statusFilter === status ? "bg-[#eaf0e4] text-[#181d16]" : "text-[#475569] hover:bg-[#f0f5ea]/30 hover:text-[#181d16]"
                           }`}
                         >
                           {status.toUpperCase()}
@@ -522,10 +522,10 @@ export default function OrderSummaryPage() {
             </div>
           </div>
 
-          <div className="overflow-x-auto border border-[#D4F6FF]/65 rounded-2xl shadow-2xs">
+          <div className="overflow-x-auto border border-[#f0f5ea]/65 rounded-2xl shadow-2xs">
             <table className="w-full text-left font-body-sm whitespace-nowrap">
               <thead>
-                <tr className="border-b border-[#D4F6FF] bg-[#D4F6FF]/20 text-[#0F172A] font-bold text-xs">
+                <tr className="border-b border-[#f0f5ea] bg-[#f0f5ea]/20 text-[#181d16] font-bold text-xs">
                   <th className="py-3 px-4 font-label-caps uppercase tracking-wider">Request ID</th>
                   <th className="py-3 px-4 font-label-caps uppercase tracking-wider">Subject</th>
                   <th className="py-3 px-4 font-label-caps uppercase tracking-wider">Date Submitted</th>
@@ -533,7 +533,7 @@ export default function OrderSummaryPage() {
                   <th className="py-3 px-4 font-label-caps text-right uppercase tracking-wider">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#D4F6FF]/40 bg-white">
+              <tbody className="divide-y divide-[#f0f5ea]/40 bg-white">
                 {filteredVerifications.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="py-8 text-center text-[#475569] text-xs font-medium">
@@ -542,9 +542,9 @@ export default function OrderSummaryPage() {
                   </tr>
                 ) : (
                   paginatedVerifications.map((v) => (
-                    <tr key={v.id} className="hover:bg-[#D4F6FF]/15 transition-colors group">
-                      <td className="py-3.5 px-4 font-semibold text-[#0F172A] text-xs">{v.id}</td>
-                      <td className="py-3.5 px-4 text-[#0F172A] text-xs">
+                    <tr key={v.id} className="hover:bg-[#f0f5ea]/15 transition-colors group">
+                      <td className="py-3.5 px-4 font-semibold text-[#181d16] text-xs">{v.id}</td>
+                      <td className="py-3.5 px-4 text-[#181d16] text-xs">
                         <div className="flex flex-col">
                           <span className="font-bold">{v.name}</span>
                           <span className="text-[11px] text-[#475569] font-medium">{v.email}</span>
@@ -557,8 +557,8 @@ export default function OrderSummaryPage() {
                             v.status === "Completed"
                               ? "bg-[#E6F8F3] text-[#00684A] border-[#A3EAD6]"
                               : v.status === "Processing"
-                              ? "bg-[#D4F6FF]/40 text-[#0F172A] border-[#C6E7FF]/70"
-                              : "bg-[#FFDDAE]/40 text-[#5C3A21] border-[#FFDDAE]"
+                              ? "bg-[#f0f5ea]/40 text-[#181d16] border-[#eaf0e4]/70"
+                              : "bg-[#FFF4CC]/40 text-[#805b00] border-[#FFF4CC]"
                           }`}
                         >
                           {v.status}
@@ -568,7 +568,7 @@ export default function OrderSummaryPage() {
                         {v.status === "Completed" ? (
                           <button
                             onClick={() => handleViewReport(v)}
-                            className="font-bold text-[11px] px-3 py-1.5 rounded-lg bg-[#C6E7FF]/40 text-[#0F172A] hover:bg-[#C6E7FF] transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs"
+                            className="font-bold text-[11px] px-3 py-1.5 rounded-lg bg-[#eaf0e4]/40 text-[#181d16] hover:bg-[#eaf0e4] transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs"
                           >
                             <span>View Report</span>
                             <ArrowRight className="w-3.5 h-3.5" />
@@ -576,18 +576,18 @@ export default function OrderSummaryPage() {
                         ) : v.status === "Needs Attention" ? (
                           <button
                             onClick={() => handleViewReport(v)}
-                            className="font-bold text-[11px] px-3 py-1.5 rounded-lg bg-[#FFDDAE] text-[#5C3A21] hover:bg-[#FFDDAE]/85 transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs"
+                            className="font-bold text-[11px] px-3 py-1.5 rounded-lg bg-[#FFF4CC] text-[#805b00] hover:bg-[#FFF4CC]/85 transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs"
                           >
                             <span>Resolve Issue</span>
-                            <AlertTriangle className="w-3.5 h-3.5 text-[#5C3A21]" />
+                            <AlertTriangle className="w-3.5 h-3.5 text-[#805b00]" />
                           </button>
                         ) : (
                           <button
                             onClick={() => handleViewReport(v)}
-                            className="font-bold text-[11px] px-3 py-1.5 rounded-lg bg-[#D4F6FF]/65 text-[#0F172A] hover:bg-[#D4F6FF] transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs"
+                            className="font-bold text-[11px] px-3 py-1.5 rounded-lg bg-[#f0f5ea]/65 text-[#181d16] hover:bg-[#f0f5ea] transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs"
                           >
                             <span>Credentials</span>
-                            <Key className="w-3.5 h-3.5 text-[#0F172A]" />
+                            <Key className="w-3.5 h-3.5 text-[#181d16]" />
                           </button>
                         )}
                       </td>
@@ -598,7 +598,7 @@ export default function OrderSummaryPage() {
             </table>
           </div>
           
-          <div className="mt-2 pt-4 border-t border-[#D4F6FF]/60 flex justify-between items-center text-xs">
+          <div className="mt-2 pt-4 border-t border-[#f0f5ea]/60 flex justify-between items-center text-xs">
             <span className="text-[#475569] font-medium">
               Showing {paginatedVerifications.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0}-{Math.min(currentPage * itemsPerPage, filteredVerifications.length)} of {filteredVerifications.length} requests
             </span>
@@ -606,14 +606,14 @@ export default function OrderSummaryPage() {
               <button 
                 onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
-                className="p-1.5 rounded-lg text-[#0F172A] hover:bg-[#D4F6FF]/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                className="p-1.5 rounded-lg text-[#181d16] hover:bg-[#f0f5ea]/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <button 
                 onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
                 disabled={currentPage === totalPages}
-                className="p-1.5 rounded-lg text-[#0F172A] hover:bg-[#D4F6FF]/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                className="p-1.5 rounded-lg text-[#181d16] hover:bg-[#f0f5ea]/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -624,30 +624,30 @@ export default function OrderSummaryPage() {
         {/* Sidebar Cards Column */}
         <div className="flex flex-col gap-6">
           {/* Redesigned Invoices & Billing Panel */}
-          <section className="bg-white border border-[#C6E7FF] rounded-3xl p-6 flex flex-col gap-5 relative overflow-hidden group shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-1">
-            <div className="absolute -right-10 -top-10 w-32 h-32 bg-[#C6E7FF] opacity-25 rounded-full blur-2xl group-hover:opacity-35 transition-opacity pointer-events-none"></div>
-            <div className="absolute top-0 left-0 right-0 h-1 bg-[#C6E7FF]"></div>
+          <section className="bg-white border border-[#eaf0e4] rounded-3xl p-6 flex flex-col gap-5 relative overflow-hidden group shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+            <div className="absolute -right-10 -top-10 w-32 h-32 bg-[#eaf0e4] opacity-25 rounded-full blur-2xl group-hover:opacity-35 transition-opacity pointer-events-none"></div>
+            <div className="absolute top-0 left-0 right-0 h-1 bg-[#eaf0e4]"></div>
             <div className="flex justify-between items-start mb-1 relative z-10">
-              <h3 className="font-semibold text-lg text-[#0F172A]">Invoices &amp; Billing</h3>
+              <h3 className="font-semibold text-lg text-[#181d16]">Invoices &amp; Billing</h3>
               <Receipt className="w-5 h-5 text-[#475569]" />
             </div>
             
             <div className="relative z-10">
               <p className="font-label-caps text-[#475569] text-[10px] font-bold tracking-wider uppercase mb-1">Total Outstanding</p>
-              <p className="font-display-lg text-[#0F172A] font-bold tracking-tight text-3xl">${(unpaidBalance + currentMonthRunningTotal).toFixed(2)}</p>
+              <p className="font-display-lg text-[#181d16] font-bold tracking-tight text-3xl">${(unpaidBalance + currentMonthRunningTotal).toFixed(2)}</p>
               <p className="text-slate-500 text-xs mt-1 font-medium">Due by next statement</p>
             </div>
 
             {/* Real-time Current Month Running Total */}
             {currentMonthCompleted > 0 && (
-              <div className="relative z-10 mt-1 p-3 bg-[#D4F6FF]/25 border border-[#C6E7FF]/50 rounded-xl">
+              <div className="relative z-10 mt-1 p-3 bg-[#f0f5ea]/25 border border-[#eaf0e4]/50 rounded-xl">
                 <div className="flex justify-between items-center mb-1">
                   <span className="font-label-caps text-[10px] text-[#475569] font-bold tracking-wider uppercase">Uninvoiced Charges</span>
-                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#C6E7FF]/40 text-[#0F172A] border border-[#C6E7FF] uppercase">Live</span>
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#eaf0e4]/40 text-[#181d16] border border-[#eaf0e4] uppercase">Live</span>
                 </div>
                 <div className="flex justify-between items-baseline">
                   <span className="text-xs text-[#475569] font-medium">{currentMonthCompleted} verification{currentMonthCompleted !== 1 ? "s" : ""} × ${perVerificationRate.toFixed(2)}</span>
-                  <span className="font-bold text-sm text-[#0F172A]">${currentMonthRunningTotal.toFixed(2)}</span>
+                  <span className="font-bold text-sm text-[#181d16]">${currentMonthRunningTotal.toFixed(2)}</span>
                 </div>
               </div>
             )}
@@ -666,20 +666,20 @@ export default function OrderSummaryPage() {
                       key={inv._id || inv.id}
                       type="button"
                       onClick={() => handleInitiatePayment(inv)}
-                      className="w-full text-left p-3 rounded-xl border border-[#D4F6FF]/40 bg-white hover:bg-[#D4F6FF]/15 transition-all flex justify-between items-center cursor-pointer shadow-3xs hover:shadow-2xs group/row"
+                      className="w-full text-left p-3 rounded-xl border border-[#f0f5ea]/40 bg-white hover:bg-[#f0f5ea]/15 transition-all flex justify-between items-center cursor-pointer shadow-3xs hover:shadow-2xs group/row"
                     >
                       <div className="flex flex-col gap-0.5">
-                        <span className="font-semibold text-xs text-[#0F172A] group-hover/row:text-[#1E3A5F] transition-colors">{inv.id}</span>
+                        <span className="font-semibold text-xs text-[#181d16] group-hover/row:text-[#00450e] transition-colors">{inv.id}</span>
                         <span className="text-[10px] text-[#475569] font-medium">{displayPeriod} · Due {inv.dueDate}</span>
                       </div>
                       <div className="flex flex-col items-end gap-1">
-                        <span className="font-bold text-xs text-[#0F172A]">${inv.amount.toFixed(2)}</span>
+                        <span className="font-bold text-xs text-[#181d16]">${inv.amount.toFixed(2)}</span>
                         <span
                           className={`text-[9px] font-bold px-1.5 py-0.5 rounded border uppercase tracking-wider ${
                             inv.status === "Paid"
                               ? "bg-[#E6F8F3] text-[#00684A] border-[#A3EAD6]"
                               : inv.status === "Pending"
-                              ? "bg-[#FFDDAE]/40 text-[#5C3A21] border-[#FFDDAE]"
+                              ? "bg-[#FFF4CC]/40 text-[#805b00] border-[#FFF4CC]"
                               : inv.status === "Overdue"
                               ? "bg-red-50 text-red-800 border border-red-200"
                               : "bg-slate-50 text-slate-700 border border-slate-200"
@@ -703,20 +703,20 @@ export default function OrderSummaryPage() {
       {/* View Report Detail Modal */}
       {selectedVerification && (
         <div className="fixed inset-0 bg-slate-900/15 backdrop-blur-xs overflow-y-auto flex justify-center p-4 z-[99999] animate-fade-in">
-          <div className={`bg-white border border-[#C6E7FF] rounded-3xl p-8 w-full shadow-2xl relative my-auto ${displayVerification?.digilockerStatus === "Verified" ? "max-w-3xl animate-fade-in" : "max-w-lg animate-fade-in"}`}>
+          <div className={`bg-white border border-[#eaf0e4] rounded-3xl p-8 w-full shadow-2xl relative my-auto ${displayVerification?.digilockerStatus === "Verified" ? "max-w-3xl animate-fade-in" : "max-w-lg animate-fade-in"}`}>
             <button
               onClick={() => {
                 setSelectedVerification(null);
                 setSelectedDetail(null);
               }}
-              className="absolute right-4 top-4 p-2 hover:bg-[#D4F6FF]/40 transition-colors rounded-xl text-[#0F172A] cursor-pointer"
+              className="absolute right-4 top-4 p-2 hover:bg-[#f0f5ea]/40 transition-colors rounded-xl text-[#181d16] cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
 
             {isLoadingDetail ? (
-              <div className="flex flex-col items-center justify-center py-20 gap-3 text-[#1E3A5F]">
-                <div className="w-10 h-10 border-4 border-[#C6E7FF] border-t-[#0F172A] rounded-full animate-spin"></div>
+              <div className="flex flex-col items-center justify-center py-20 gap-3 text-[#00450e]">
+                <div className="w-10 h-10 border-4 border-[#eaf0e4] border-t-[#181d16] rounded-full animate-spin"></div>
                 <span className="text-xs font-bold font-label-caps uppercase tracking-wider animate-pulse">Decrypting Secured Records...</span>
               </div>
             ) : displayVerification && (
@@ -728,7 +728,7 @@ export default function OrderSummaryPage() {
                     <AlertCircle className="w-6 h-6 text-red-700 shrink-0" />
                   )}
                   <div className="flex items-baseline gap-2">
-                    <h3 className="font-semibold text-lg text-[#0F172A]">Report</h3>
+                    <h3 className="font-semibold text-lg text-[#181d16]">Report</h3>
                     <span className="text-[11px] font-bold text-[#475569] font-mono">ID: {displayVerification.id}</span>
                   </div>
                 </div>
@@ -762,7 +762,7 @@ export default function OrderSummaryPage() {
 
                       <div className="flex flex-col md:flex-row gap-6 items-start">
                         {/* Photo on left */}
-                        <div className="w-24 h-28 bg-[#D4F6FF]/20 rounded-2xl overflow-hidden border border-[#D4F6FF] shrink-0 flex items-center justify-center shadow-xs">
+                        <div className="w-24 h-28 bg-[#f0f5ea]/20 rounded-2xl overflow-hidden border border-[#f0f5ea] shrink-0 flex items-center justify-center shadow-xs">
                           {displayVerification.digilockerPhoto ? (
                             <img 
                               src={getPhotoSrc(displayVerification.digilockerPhoto)} 
@@ -770,7 +770,7 @@ export default function OrderSummaryPage() {
                               className="w-full h-full object-cover"
                             />
                           ) : (
-                            <span className="text-[10px] font-bold text-[#1E3A5F]">No Photo</span>
+                            <span className="text-[10px] font-bold text-[#00450e]">No Photo</span>
                           )}
                         </div>
 
@@ -819,10 +819,10 @@ export default function OrderSummaryPage() {
                           <span className="font-label-caps text-[#475569] text-[10px] uppercase font-bold tracking-wider block">VERIFIED DOCUMENTS</span>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             {displayVerification.digilockerDocuments.map((doc: any) => (
-                              <div key={doc.id} className="p-3.5 bg-[#D4F6FF]/10 border border-[#D4F6FF] rounded-xl flex flex-col gap-1.5 shadow-2xs">
-                                <span className="font-bold text-xs text-[#0F172A]">{doc.name}</span>
+                              <div key={doc.id} className="p-3.5 bg-[#f0f5ea]/10 border border-[#f0f5ea] rounded-xl flex flex-col gap-1.5 shadow-2xs">
+                                <span className="font-bold text-xs text-[#181d16]">{doc.name}</span>
                                 <span className="text-[10px] text-[#475569] font-semibold">{doc.issuer}</span>
-                                <div className="flex justify-between items-center mt-2 pt-2 border-t border-[#D4F6FF]/40">
+                                <div className="flex justify-between items-center mt-2 pt-2 border-t border-[#f0f5ea]/40">
                                   <span className="text-[9px] font-mono text-secondary truncate max-w-[150px]" title={doc.uri}>{doc.uri}</span>
                                   <span className="text-[9px] bg-[#E6F8F3] text-[#00684A] font-bold px-2 py-0.5 rounded border border-[#A3EAD6]">{doc.status}</span>
                                 </div>
@@ -834,26 +834,26 @@ export default function OrderSummaryPage() {
                     </div>
                   ) : (
                     <>
-                      <div className="grid grid-cols-2 gap-4 bg-[#D4F6FF]/15 border border-[#D4F6FF] p-4 rounded-xl text-left">
+                      <div className="grid grid-cols-2 gap-4 bg-[#f0f5ea]/15 border border-[#f0f5ea] p-4 rounded-xl text-left">
                         <div>
                           <span className="font-label-caps text-[#475569] text-[10px] font-bold tracking-wider block">CANDIDATE NAME</span>
-                          <span className="text-[#0F172A] font-bold text-xs">{displayVerification.name}</span>
+                          <span className="text-[#181d16] font-bold text-xs">{displayVerification.name}</span>
                         </div>
                         <div>
                           <span className="font-label-caps text-[#475569] text-[10px] font-bold tracking-wider block">CANDIDATE EMAIL</span>
-                          <span className="text-[#0F172A] text-xs font-semibold">{displayVerification.email}</span>
+                          <span className="text-[#181d16] text-xs font-semibold">{displayVerification.email}</span>
                         </div>
                         <div>
                           <span className="font-label-caps text-[#475569] text-[10px] font-bold tracking-wider block">ORGANIZATION</span>
-                          <span className="text-[#0F172A] text-xs font-semibold">{displayVerification.orgName}</span>
+                          <span className="text-[#181d16] text-xs font-semibold">{displayVerification.orgName}</span>
                         </div>
                         <div>
                           <span className="font-label-caps text-[#475569] text-[10px] font-bold tracking-wider block">DATE INITIATED</span>
-                          <span className="text-[#0F172A] text-xs font-semibold">{displayVerification.date}</span>
+                          <span className="text-[#181d16] text-xs font-semibold">{displayVerification.date}</span>
                         </div>
                         <div>
                           <span className="font-label-caps text-[#475569] text-[10px] font-bold tracking-wider block">VERIFIER ASSIGNED</span>
-                          <span className="text-[#0F172A] text-xs font-semibold">{displayVerification.verifier || "Not Assigned"}</span>
+                          <span className="text-[#181d16] text-xs font-semibold">{displayVerification.verifier || "Not Assigned"}</span>
                         </div>
                         <div>
                           <span className="font-label-caps text-[#475569] text-[10px] font-bold tracking-wider block mb-0.5">STATUS</span>
@@ -861,7 +861,7 @@ export default function OrderSummaryPage() {
                             className={`inline-block font-bold px-2 py-0.5 rounded border text-[9px] uppercase ${
                               displayVerification.status === "Completed"
                                 ? "bg-[#E6F8F3] text-[#00684A] border-[#A3EAD6]"
-                                : "bg-[#FFDDAE]/40 text-[#5C3A21] border border-[#FFDDAE]"
+                                : "bg-[#FFF4CC]/40 text-[#805b00] border border-[#FFF4CC]"
                             }`}
                           >
                             {displayVerification.status}
@@ -870,9 +870,9 @@ export default function OrderSummaryPage() {
                       </div>
 
                       {displayVerification.status !== "Completed" && displayVerification.setupUrl && (
-                        <div className="w-full mt-4 p-5 bg-[#D4F6FF]/25 border border-[#C6E7FF] rounded-2xl text-left flex flex-col gap-3 relative overflow-hidden shadow-2xs">
+                        <div className="w-full mt-4 p-5 bg-[#f0f5ea]/25 border border-[#eaf0e4] rounded-2xl text-left flex flex-col gap-3 relative overflow-hidden shadow-2xs">
                           <div className="absolute right-3 top-3">
-                            <span className="text-[9px] uppercase font-bold tracking-wider text-[#0F172A] bg-white border border-[#C6E7FF] px-2 py-0.5 rounded animate-pulse">
+                            <span className="text-[9px] uppercase font-bold tracking-wider text-[#181d16] bg-white border border-[#eaf0e4] px-2 py-0.5 rounded animate-pulse">
                               Direct Login Link
                             </span>
                           </div>
@@ -882,8 +882,8 @@ export default function OrderSummaryPage() {
                             <p className="text-[11px] text-[#475569] leading-relaxed mb-2">
                               Share this direct login link with the candidate. Credentials are embedded and will pre-fill automatically.
                             </p>
-                            <div className="flex items-center justify-between bg-white px-3 py-2.5 rounded-xl border border-[#C6E7FF]/60 gap-3 mt-1 shadow-2xs">
-                              <span className="font-mono text-xs text-[#0F172A] truncate max-w-[65%]" title={displayVerification.setupUrl}>
+                            <div className="flex items-center justify-between bg-white px-3 py-2.5 rounded-xl border border-[#eaf0e4]/60 gap-3 mt-1 shadow-2xs">
+                              <span className="font-mono text-xs text-[#181d16] truncate max-w-[65%]" title={displayVerification.setupUrl}>
                                 {displayVerification.setupUrl}
                               </span>
                               <div className="flex items-center gap-2 shrink-0">
@@ -894,7 +894,7 @@ export default function OrderSummaryPage() {
                                     setCopiedUrl(true);
                                     setTimeout(() => setCopiedUrl(false), 2000);
                                   }}
-                                  className="text-xs px-3 py-1.5 bg-[#0F172A] text-white rounded-lg font-semibold hover:bg-[#1E293B] transition-all flex items-center gap-1.5 cursor-pointer"
+                                  className="text-xs px-3 py-1.5 bg-[#181d16] text-white rounded-lg font-semibold hover:bg-[#1E293B] transition-all flex items-center gap-1.5 cursor-pointer"
                                 >
                                   {copiedUrl ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                                   <span>{copiedUrl ? "Copied" : "Copy"}</span>
@@ -906,21 +906,21 @@ export default function OrderSummaryPage() {
                             {(() => {
                               const params = getUrlParams(displayVerification.setupUrl);
                               return (
-                                <div className="mt-3 p-4 bg-white/70 border border-[#C6E7FF]/40 rounded-2xl text-xs flex flex-col gap-2.5 shadow-2xs">
+                                <div className="mt-3 p-4 bg-white/70 border border-[#eaf0e4]/40 rounded-2xl text-xs flex flex-col gap-2.5 shadow-2xs">
                                   <div className="flex justify-between items-center">
                                     <span className="text-[#475569] font-semibold uppercase tracking-wider text-[10px] font-label-caps">Candidate Email ID</span>
-                                    <span className="font-mono text-[#0F172A] font-bold text-xs select-all">{params.email}</span>
+                                    <span className="font-mono text-[#181d16] font-bold text-xs select-all">{params.email}</span>
                                   </div>
-                                  <div className="flex justify-between items-center border-t border-[#D4F6FF]/30 pt-2">
+                                  <div className="flex justify-between items-center border-t border-[#f0f5ea]/30 pt-2">
                                     <span className="text-[#475569] font-semibold uppercase tracking-wider text-[10px] font-label-caps">Temporary Password</span>
-                                    <span className="font-mono text-[#0F172A] font-bold text-xs select-all">{params.password}</span>
+                                    <span className="font-mono text-[#181d16] font-bold text-xs select-all">{params.password}</span>
                                   </div>
                                 </div>
                               );
                             })()}
 
                             <div className="flex items-center gap-1.5 mt-2.5 text-[10px] text-[#64748B]">
-                              <Sparkles className="w-3 h-3 text-[#1E3A5F]" />
+                              <Sparkles className="w-3 h-3 text-[#00450e]" />
                               <span>The candidate can log in directly using this link without setting a password.</span>
                             </div>
                           </div>
@@ -931,7 +931,7 @@ export default function OrderSummaryPage() {
                         <span className="font-label-caps text-[#475569] text-[10px] uppercase font-bold tracking-wider block mb-1">
                           Verification Findings &amp; Summary
                         </span>
-                        <p className="p-4 bg-[#D4F6FF]/10 border border-[#D4F6FF] rounded-xl text-[#0F172A] leading-relaxed text-xs font-semibold">
+                        <p className="p-4 bg-[#f0f5ea]/10 border border-[#f0f5ea] rounded-xl text-[#181d16] leading-relaxed text-xs font-semibold">
                           {displayVerification.reportDetails ||
                             "This verification is currently in progress. Standard validation is being conducted by the verification officer. If additional paperwork is required, you will be notified."}
                         </p>
@@ -942,7 +942,7 @@ export default function OrderSummaryPage() {
                   {displayVerification.notes && (
                     <div className="pt-2">
                       <span className="font-label-caps text-[#475569] text-[10px] uppercase font-bold tracking-wider block mb-1">Status Notes</span>
-                      <p className="text-secondary italic pl-3 border-l-2 border-[#C6E7FF] text-xs font-semibold">
+                      <p className="text-secondary italic pl-3 border-l-2 border-[#eaf0e4] text-xs font-semibold">
                         {displayVerification.notes}
                       </p>
                     </div>
@@ -961,13 +961,13 @@ export default function OrderSummaryPage() {
                   )}
                 </div>
      
-                <div className="mt-8 flex justify-end gap-3 border-t border-[#D4F6FF]/40 pt-5">
+                <div className="mt-8 flex justify-end gap-3 border-t border-[#f0f5ea]/40 pt-5">
                   <button
                     onClick={() => {
                       setSelectedVerification(null);
                       setSelectedDetail(null);
                     }}
-                    className="px-5 py-2.5 border border-[#D4F6FF] hover:bg-[#FBFBFB] rounded-xl font-semibold text-xs text-[#334155] cursor-pointer bg-white"
+                    className="px-5 py-2.5 border border-[#f0f5ea] hover:bg-[#f6fbf0] rounded-xl font-semibold text-xs text-[#334155] cursor-pointer bg-white"
                   >
                     Close
                   </button>
@@ -978,7 +978,7 @@ export default function OrderSummaryPage() {
                         setSelectedVerification(null);
                         setSelectedDetail(null);
                       }}
-                      className="px-5 py-2.5 bg-[#0F172A] text-white rounded-xl font-semibold hover:bg-[#1E293B] flex items-center gap-1.5 cursor-pointer text-xs shadow-xs"
+                      className="px-5 py-2.5 bg-[#181d16] text-white rounded-xl font-semibold hover:bg-[#1E293B] flex items-center gap-1.5 cursor-pointer text-xs shadow-xs"
                     >
                       <Download className="w-4 h-4 text-white" />
                       <span>Download PDF Report</span>
@@ -994,23 +994,23 @@ export default function OrderSummaryPage() {
       {/* View Billing History Modal */}
       {billingHistoryOpen && (
         <div className="fixed inset-0 bg-slate-900/15 backdrop-blur-xs overflow-y-auto flex justify-center p-4 z-[99999] animate-fade-in">
-          <div className="bg-white border border-[#C6E7FF] rounded-3xl p-8 max-w-2xl w-full shadow-2xl relative my-auto animate-fade-in">
+          <div className="bg-white border border-[#eaf0e4] rounded-3xl p-8 max-w-2xl w-full shadow-2xl relative my-auto animate-fade-in">
             <button
               onClick={() => setBillingHistoryOpen(false)}
-              className="absolute right-4 top-4 p-2 hover:bg-[#D4F6FF]/40 transition-colors rounded-xl text-[#0F172A] cursor-pointer"
+              className="absolute right-4 top-4 p-2 hover:bg-[#f0f5ea]/40 transition-colors rounded-xl text-[#181d16] cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
  
-            <h3 className="font-semibold text-lg text-[#0F172A] mb-1">Billing &amp; Invoice History</h3>
+            <h3 className="font-semibold text-lg text-[#181d16] mb-1">Billing &amp; Invoice History</h3>
             <p className="text-secondary text-xs mb-6 font-medium text-slate-500">
               Full log of all monthly statements issued to {clientCompany}.
             </p>
  
-            <div className="overflow-x-auto border border-[#D4F6FF]/65 rounded-2xl shadow-2xs">
+            <div className="overflow-x-auto border border-[#f0f5ea]/65 rounded-2xl shadow-2xs">
               <table className="w-full text-left font-body-sm whitespace-nowrap">
                 <thead>
-                  <tr className="border-b border-[#D4F6FF] bg-[#D4F6FF]/20 text-[#0F172A] font-bold text-xs">
+                  <tr className="border-b border-[#f0f5ea] bg-[#f0f5ea]/20 text-[#181d16] font-bold text-xs">
                     <th className="py-2.5 px-4 font-label-caps uppercase tracking-wider">INVOICE ID</th>
                     <th className="py-2.5 px-4 font-label-caps uppercase tracking-wider">DATE GENERATED</th>
                     <th className="py-2.5 px-4 font-label-caps uppercase tracking-wider">DUE DATE</th>
@@ -1018,7 +1018,7 @@ export default function OrderSummaryPage() {
                     <th className="py-2.5 px-4 font-label-caps text-right uppercase tracking-wider">STATUS</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#D4F6FF]/40 bg-white">
+                <tbody className="divide-y divide-[#f0f5ea]/40 bg-white">
                   {clientInvoices.map((inv) => (
                     <tr
                       key={inv._id || inv.id}
@@ -1026,12 +1026,12 @@ export default function OrderSummaryPage() {
                         setBillingHistoryOpen(false);
                         handleInitiatePayment(inv);
                       }}
-                      className="hover:bg-[#D4F6FF]/15 transition-all cursor-pointer group/row"
+                      className="hover:bg-[#f0f5ea]/15 transition-all cursor-pointer group/row"
                     >
-                      <td className="py-3 px-4 font-bold text-[#0F172A] text-xs group-hover/row:text-[#1E3A5F] group-hover/row:underline transition-colors">{inv.id}</td>
+                      <td className="py-3 px-4 font-bold text-[#181d16] text-xs group-hover/row:text-[#00450e] group-hover/row:underline transition-colors">{inv.id}</td>
                       <td className="py-3 px-4 text-[#475569] text-xs font-semibold">{inv.date}</td>
                       <td className="py-3 px-4 text-[#475569] text-xs font-semibold">{inv.dueDate}</td>
-                      <td className="py-3 px-4 text-[#0F172A] font-bold text-xs">${inv.amount.toFixed(2)}</td>
+                      <td className="py-3 px-4 text-[#181d16] font-bold text-xs">${inv.amount.toFixed(2)}</td>
                       <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end gap-3">
                           <span
@@ -1039,7 +1039,7 @@ export default function OrderSummaryPage() {
                               inv.status === "Paid"
                                 ? "bg-[#E6F8F3] text-[#00684A] border-[#A3EAD6]"
                                 : inv.status === "Pending"
-                                ? "bg-[#FFDDAE]/40 text-[#5C3A21] border-[#FFDDAE]"
+                                ? "bg-[#FFF4CC]/40 text-[#805b00] border-[#FFF4CC]"
                                 : inv.status === "Overdue"
                                 ? "bg-red-50 text-red-800 border border-red-200"
                                 : "bg-slate-50 text-slate-700 border border-slate-200"
@@ -1056,10 +1056,10 @@ export default function OrderSummaryPage() {
               </table>
             </div>
  
-            <div className="mt-8 flex justify-end border-t border-[#D4F6FF]/40 pt-5">
+            <div className="mt-8 flex justify-end border-t border-[#f0f5ea]/40 pt-5">
               <button
                 onClick={() => setBillingHistoryOpen(false)}
-                className="px-5 py-2.5 bg-[#0F172A] text-white hover:bg-[#1E293B] rounded-xl font-semibold cursor-pointer text-xs shadow-xs border-none"
+                className="px-5 py-2.5 bg-[#181d16] text-white hover:bg-[#1E293B] rounded-xl font-semibold cursor-pointer text-xs shadow-xs border-none"
               >
                 Close
               </button>
@@ -1069,7 +1069,7 @@ export default function OrderSummaryPage() {
       )}
       {activeInvoice && (
         <div className="fixed inset-0 bg-slate-900/15 backdrop-blur-xs overflow-y-auto flex justify-center p-4 z-[99999] animate-fade-in">
-          <div className="bg-white border border-[#C6E7FF] rounded-3xl p-8 max-w-2xl w-full shadow-2xl relative my-auto animate-fade-in">
+          <div className="bg-white border border-[#eaf0e4] rounded-3xl p-8 max-w-2xl w-full shadow-2xl relative my-auto animate-fade-in">
             <button
               onClick={() => {
                 if (!paymentProcessing && !paymentSuccess && !modalClosing) {
@@ -1077,15 +1077,15 @@ export default function OrderSummaryPage() {
                 }
               }}
               disabled={paymentProcessing || paymentSuccess || modalClosing}
-              className="absolute right-4 top-4 p-2 hover:bg-[#D4F6FF]/40 rounded-xl text-[#0F172A] disabled:opacity-50 cursor-pointer border-none bg-transparent"
+              className="absolute right-4 top-4 p-2 hover:bg-[#f0f5ea]/40 rounded-xl text-[#181d16] disabled:opacity-50 cursor-pointer border-none bg-transparent"
             >
               <X className="w-5 h-5" />
             </button>
  
             {modalClosing ? (
               <div className="flex flex-col items-center justify-center py-20 text-center animate-fade-in min-h-[300px]">
-                <div className="w-10 h-10 border-4 border-[#1E3A5F] border-t-transparent rounded-full animate-spin mb-4"></div>
-                <h3 className="font-semibold text-sm text-[#0F172A]">Closing Invoice Details...</h3>
+                <div className="w-10 h-10 border-4 border-[#00450e] border-t-transparent rounded-full animate-spin mb-4"></div>
+                <h3 className="font-semibold text-sm text-[#181d16]">Closing Invoice Details...</h3>
                 <p className="text-secondary text-[10px] mt-1 text-slate-500 font-medium">Please wait a moment</p>
               </div>
             ) : paymentSuccess ? (
@@ -1093,50 +1093,50 @@ export default function OrderSummaryPage() {
                 <div className="w-16 h-16 bg-[#E6F8F3] border border-[#A3EAD6] rounded-full flex items-center justify-center text-[#00684A] mb-4 animate-bounce-subtle">
                   <CheckCircle className="w-8 h-8 text-[#00a877]" />
                 </div>
-                <h3 className="font-semibold text-lg text-[#0F172A]">Proof Uploaded Successfully</h3>
+                <h3 className="font-semibold text-lg text-[#181d16]">Proof Uploaded Successfully</h3>
                 <p className="text-secondary text-xs mt-2 font-semibold">
                   Your payment proof has been uploaded.
                 </p>
                 <p className="text-secondary text-xs mt-1 font-semibold">
-                  Invoice <strong className="text-[#0F172A] font-bold">{activeInvoice.id}</strong> is now <strong className="text-[#5C3A21] font-bold">Pending</strong> approval from our administrator.
+                  Invoice <strong className="text-[#181d16] font-bold">{activeInvoice.id}</strong> is now <strong className="text-[#805b00] font-bold">Pending</strong> approval from our administrator.
                 </p>
               </div>
             ) : (
               <div className="flex flex-col gap-5">
-                <div className="text-left border-b border-[#D4F6FF]/40 pb-3">
-                  <h3 className="font-semibold text-lg text-[#0F172A]">Invoice Statement</h3>
+                <div className="text-left border-b border-[#f0f5ea]/40 pb-3">
+                  <h3 className="font-semibold text-lg text-[#181d16]">Invoice Statement</h3>
                   <p className="text-secondary text-xs mt-1 font-medium text-slate-500">
                     Detailed billing information and payment options.
                   </p>
                 </div>
  
                 {/* Detailed Invoice Info */}
-                <div className="grid grid-cols-2 gap-x-4 gap-y-3 bg-[#D4F6FF]/10 p-4 rounded-2xl border border-[#C6E7FF]/60 text-xs text-left">
+                <div className="grid grid-cols-2 gap-x-4 gap-y-3 bg-[#f0f5ea]/10 p-4 rounded-2xl border border-[#eaf0e4]/60 text-xs text-left">
                   <div>
                     <span className="text-[#475569] font-label-caps text-[9px] font-bold tracking-wider block">INVOICE ID</span>
-                    <span className="text-[#0F172A] font-bold font-mono">{activeInvoice.id}</span>
+                    <span className="text-[#181d16] font-bold font-mono">{activeInvoice.id}</span>
                   </div>
                   <div>
                     <span className="text-[#475569] font-label-caps text-[9px] font-bold tracking-wider block">BILLING PERIOD</span>
-                    <span className="text-[#0F172A] font-bold">
+                    <span className="text-[#181d16] font-bold">
                       {(() => {
                         const { month, year } = getInvoiceBillingPeriod(activeInvoice);
                         return month ? `${month} ${year}` : "N/A";
                       })()}
                     </span>
                   </div>
-                  <div className="border-t border-[#D4F6FF]/40 pt-2 mt-1">
+                  <div className="border-t border-[#f0f5ea]/40 pt-2 mt-1">
                     <span className="text-[#475569] font-label-caps text-[9px] font-bold tracking-wider block">DATE ISSUED</span>
-                    <span className="text-[#0F172A] font-semibold">{activeInvoice.date}</span>
+                    <span className="text-[#181d16] font-semibold">{activeInvoice.date}</span>
                   </div>
-                  <div className="border-t border-[#D4F6FF]/40 pt-2 mt-1">
+                  <div className="border-t border-[#f0f5ea]/40 pt-2 mt-1">
                     <span className="text-[#475569] font-label-caps text-[9px] font-bold tracking-wider block">DUE DATE</span>
-                    <span className="text-[#0F172A] font-semibold">{activeInvoice.dueDate}</span>
+                    <span className="text-[#181d16] font-semibold">{activeInvoice.dueDate}</span>
                   </div>
-                  <div className="col-span-2 border-t border-[#D4F6FF]/40 pt-2 mt-1 flex justify-between items-baseline">
+                  <div className="col-span-2 border-t border-[#f0f5ea]/40 pt-2 mt-1 flex justify-between items-baseline">
                     <div>
                       <span className="text-[#475569] font-label-caps text-[9px] font-bold tracking-wider block">AMOUNT DUE</span>
-                      <span className="text-xl font-extrabold text-[#0F172A] font-mono">${activeInvoice.amount.toFixed(2)}</span>
+                      <span className="text-xl font-extrabold text-[#181d16] font-mono">${activeInvoice.amount.toFixed(2)}</span>
                     </div>
                     <div className="text-right">
                       <span className="text-[#475569] font-label-caps text-[9px] font-bold tracking-wider block">STATUS</span>
@@ -1145,7 +1145,7 @@ export default function OrderSummaryPage() {
                           activeInvoice.status === "Paid"
                             ? "bg-[#E6F8F3] text-[#00684A] border-[#A3EAD6]"
                             : activeInvoice.status === "Pending"
-                            ? "bg-[#FFDDAE]/40 text-[#5C3A21] border-[#FFDDAE]"
+                            ? "bg-[#FFF4CC]/40 text-[#805b00] border-[#FFF4CC]"
                             : activeInvoice.status === "Overdue"
                             ? "bg-red-50 text-red-800 border border-red-200"
                             : "bg-slate-50 text-slate-700 border border-slate-200"
@@ -1164,9 +1164,9 @@ export default function OrderSummaryPage() {
                     const { month, year } = getInvoiceBillingPeriod(activeInvoice);
                     window.open(`/client/billable-summary?month=${encodeURIComponent(month)}&year=${year}`, "_blank");
                   }}
-                  className="w-full py-2.5 bg-[#C6E7FF]/40 text-[#0F172A] hover:bg-[#C6E7FF]/70 font-bold text-xs rounded-xl border border-[#C6E7FF] transition-all flex justify-center items-center gap-2 cursor-pointer shadow-3xs"
+                  className="w-full py-2.5 bg-[#eaf0e4]/40 text-[#181d16] hover:bg-[#eaf0e4]/70 font-bold text-xs rounded-xl border border-[#eaf0e4] transition-all flex justify-center items-center gap-2 cursor-pointer shadow-3xs"
                 >
-                  <Download className="w-4 h-4 text-[#0F172A]" />
+                  <Download className="w-4 h-4 text-[#181d16]" />
                   <span>Download Billable Requests Summary</span>
                 </button>
 
@@ -1212,16 +1212,16 @@ export default function OrderSummaryPage() {
                   const sorted = base.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
                   return (
-                    <div className="mt-4 p-4 bg-white border border-[#D4F6FF]/60 rounded-2xl text-left flex flex-col gap-3">
-                      <span className="font-label-caps text-[#475569] text-[10px] font-bold tracking-wider uppercase block border-b border-[#D4F6FF]/30 pb-2 mb-1 flex items-center gap-1.5">
+                    <div className="mt-4 p-4 bg-white border border-[#f0f5ea]/60 rounded-2xl text-left flex flex-col gap-3">
+                      <span className="font-label-caps text-[#475569] text-[10px] font-bold tracking-wider uppercase block border-b border-[#f0f5ea]/30 pb-2 mb-1 flex items-center gap-1.5">
                         <span className="material-symbols-outlined text-[16px] text-slate-400">history</span>
                         <span>Invoice Activity History</span>
                       </span>
 
-                      <div className="relative border-l border-[#D4F6FF] pl-5 ml-2.5 flex flex-col gap-4">
+                      <div className="relative border-l border-[#f0f5ea] pl-5 ml-2.5 flex flex-col gap-4">
                         {sorted.map((act, index) => {
                           let icon = (
-                            <div className="absolute -left-[27px] top-0.5 w-3.5 h-3.5 rounded-full bg-sky-500 border-2 border-white flex items-center justify-center shadow-xs">
+                            <div className="absolute -left-[27px] top-0.5 w-3.5 h-3.5 rounded-full bg-primary border-2 border-white flex items-center justify-center shadow-xs">
                               <span className="w-1.5 h-1.5 rounded-full bg-white" />
                             </div>
                           );
@@ -1318,13 +1318,13 @@ export default function OrderSummaryPage() {
                       </div>
                     )}
                     {/* Payment Method Tabs */}
-                    <div className="flex border-b border-[#D4F6FF]">
+                    <div className="flex border-b border-[#f0f5ea]">
                       <button
                         type="button"
                         onClick={() => setPaymentMethod("wire")}
                         className={`flex-1 py-2.5 font-bold text-xs transition-all border-b-2 text-center flex justify-center items-center gap-1.5 cursor-pointer ${
                           paymentMethod === "wire"
-                            ? "border-[#0F172A] text-[#0F172A]"
+                            ? "border-[#181d16] text-[#181d16]"
                             : "border-transparent text-secondary hover:text-primary"
                         }`}
                       >
@@ -1339,7 +1339,7 @@ export default function OrderSummaryPage() {
                         <Lock className="w-4 h-4 text-[#94A3B8]/60" />
                         <span className="flex items-center gap-1">
                           <span>PayPal</span>
-                          <span className="bg-[#D4F6FF]/50 text-[#0F172A] text-[8px] uppercase px-1.5 py-0.5 rounded font-extrabold">Soon</span>
+                          <span className="bg-[#f0f5ea]/50 text-[#181d16] text-[8px] uppercase px-1.5 py-0.5 rounded font-extrabold">Soon</span>
                         </span>
                       </button>
                     </div>
@@ -1352,17 +1352,17 @@ export default function OrderSummaryPage() {
                         </p>
 
                         {organisation && organisation.bankName ? (
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 bg-[#D4F6FF]/10 p-4 rounded-2xl border border-[#C6E7FF]">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 bg-[#f0f5ea]/10 p-4 rounded-2xl border border-[#eaf0e4]">
                             {/* Bank Name */}
                             <div className="flex justify-between items-center text-xs">
                               <div>
                                 <span className="text-[#475569] font-label-caps text-[9px] font-bold tracking-wider block">BANK NAME</span>
-                                <span className="text-[#0F172A] font-bold">{organisation.bankName}</span>
+                                <span className="text-[#181d16] font-bold">{organisation.bankName}</span>
                               </div>
                               <button
                                 type="button"
                                 onClick={() => handleCopyText(organisation.bankName || "", "bankName")}
-                                className="text-[10px] text-[#0F172A] hover:underline font-bold flex items-center gap-1 cursor-pointer"
+                                className="text-[10px] text-[#181d16] hover:underline font-bold flex items-center gap-1 cursor-pointer"
                               >
                                 {copiedField === "bankName" ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
                                 <span>{copiedField === "bankName" ? "Copied" : "Copy"}</span>
@@ -1374,12 +1374,12 @@ export default function OrderSummaryPage() {
                               <div className="flex justify-between items-center text-xs">
                                 <div>
                                   <span className="text-[#475569] font-label-caps text-[9px] font-bold tracking-wider block">ACCOUNT NUMBER</span>
-                                  <span className="text-[#0F172A] font-mono font-bold">{organisation.accountNumber}</span>
+                                  <span className="text-[#181d16] font-mono font-bold">{organisation.accountNumber}</span>
                                 </div>
                                 <button
                                   type="button"
                                   onClick={() => handleCopyText(organisation.accountNumber || "", "accountNumber")}
-                                  className="text-[10px] text-[#0F172A] hover:underline font-bold flex items-center gap-1 cursor-pointer"
+                                  className="text-[10px] text-[#181d16] hover:underline font-bold flex items-center gap-1 cursor-pointer"
                                 >
                                   {copiedField === "accountNumber" ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
                                   <span>{copiedField === "accountNumber" ? "Copied" : "Copy"}</span>
@@ -1389,15 +1389,15 @@ export default function OrderSummaryPage() {
 
                             {/* IFSC Code */}
                             {organisation.ifscCode && (
-                              <div className="flex justify-between items-center text-xs border-t sm:border-t-0 border-[#D4F6FF]/65 pt-2.5 sm:pt-0">
+                              <div className="flex justify-between items-center text-xs border-t sm:border-t-0 border-[#f0f5ea]/65 pt-2.5 sm:pt-0">
                                 <div>
                                   <span className="text-[#475569] font-label-caps text-[9px] font-bold tracking-wider block">IFSC CODE</span>
-                                  <span className="text-[#0F172A] font-mono font-bold">{organisation.ifscCode}</span>
+                                  <span className="text-[#181d16] font-mono font-bold">{organisation.ifscCode}</span>
                                 </div>
                                 <button
                                   type="button"
                                   onClick={() => handleCopyText(organisation.ifscCode || "", "ifscCode")}
-                                  className="text-[10px] text-[#0F172A] hover:underline font-bold flex items-center gap-1 cursor-pointer"
+                                  className="text-[10px] text-[#181d16] hover:underline font-bold flex items-center gap-1 cursor-pointer"
                                 >
                                   {copiedField === "ifscCode" ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
                                   <span>{copiedField === "ifscCode" ? "Copied" : "Copy"}</span>
@@ -1407,15 +1407,15 @@ export default function OrderSummaryPage() {
 
                             {/* UPI ID */}
                             {organisation.upiId && (
-                              <div className="flex justify-between items-center text-xs border-t sm:border-t-0 border-[#D4F6FF]/65 pt-2.5 sm:pt-0">
+                              <div className="flex justify-between items-center text-xs border-t sm:border-t-0 border-[#f0f5ea]/65 pt-2.5 sm:pt-0">
                                 <div>
                                   <span className="text-[#475569] font-label-caps text-[9px] font-bold tracking-wider block">UPI ID</span>
-                                  <span className="text-[#0F172A] font-mono font-bold">{organisation.upiId}</span>
+                                  <span className="text-[#181d16] font-mono font-bold">{organisation.upiId}</span>
                                 </div>
                                 <button
                                   type="button"
                                   onClick={() => handleCopyText(organisation.upiId || "", "upiId")}
-                                  className="text-[10px] text-[#0F172A] hover:underline font-bold flex items-center gap-1 cursor-pointer"
+                                  className="text-[10px] text-[#181d16] hover:underline font-bold flex items-center gap-1 cursor-pointer"
                                 >
                                   {copiedField === "upiId" ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
                                   <span>{copiedField === "upiId" ? "Copied" : "Copy"}</span>
@@ -1425,7 +1425,7 @@ export default function OrderSummaryPage() {
 
                             {/* Payment Notes */}
                             {organisation.paymentNotes && (
-                              <div className="col-span-1 sm:col-span-2 border-t border-[#D4F6FF]/65 pt-2.5">
+                              <div className="col-span-1 sm:col-span-2 border-t border-[#f0f5ea]/65 pt-2.5">
                                 <span className="text-[#475569] font-label-caps text-[9px] font-bold tracking-wider block mb-0.5">PAYMENT NOTES</span>
                                 <p className="text-[10px] text-[#475569] italic leading-relaxed">
                                   {organisation.paymentNotes}
@@ -1434,7 +1434,7 @@ export default function OrderSummaryPage() {
                             )}
                           </div>
                         ) : (
-                          <div className="bg-[#FBFBFB] p-4 rounded-xl border border-[#D4F6FF] text-center flex flex-col gap-2 justify-center py-6 text-secondary">
+                          <div className="bg-[#f6fbf0] p-4 rounded-xl border border-[#f0f5ea] text-center flex flex-col gap-2 justify-center py-6 text-secondary">
                             <Lock className="w-6 h-6 text-slate-400 mx-auto" />
                             <p className="text-xs font-semibold">No bank details have been configured for your organisation.</p>
                             <p className="text-[10px] opacity-80 font-medium">Please contact the system administrator to set up payment options.</p>
@@ -1442,13 +1442,13 @@ export default function OrderSummaryPage() {
                         )}
  
                         {/* Payment Proof Upload Section */}
-                        <div className="mt-3 border-t border-[#D4F6FF]/60 pt-3 flex flex-col gap-2">
+                        <div className="mt-3 border-t border-[#f0f5ea]/60 pt-3 flex flex-col gap-2">
                           <span className="text-[#475569] font-label-caps text-[9px] font-bold tracking-wider block">UPLOAD PAYMENT PROOF SCREENSHOT</span>
                           
                           {!proofFile ? (
-                            <label className="border-2 border-dashed border-[#D4F6FF] hover:border-[#0F172A]/50 bg-[#FBFBFB] hover:bg-[#D4F6FF]/20 rounded-2xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all">
+                            <label className="border-2 border-dashed border-[#f0f5ea] hover:border-[#181d16]/50 bg-[#f6fbf0] hover:bg-[#f0f5ea]/20 rounded-2xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all">
                               <UploadCloud className="w-8 h-8 text-slate-400 animate-pulse" />
-                              <span className="text-xs text-[#0F172A] font-bold">Click to upload payment proof</span>
+                              <span className="text-xs text-[#181d16] font-bold">Click to upload payment proof</span>
                               <span className="text-[10px] text-secondary">PNG, JPG or PDF up to 2MB</span>
                               <input
                                 type="file"
@@ -1458,11 +1458,11 @@ export default function OrderSummaryPage() {
                               />
                             </label>
                           ) : (
-                            <div className="bg-[#D4F6FF]/10 border border-[#D4F6FF] rounded-2xl p-4 flex flex-col gap-3">
+                            <div className="bg-[#f0f5ea]/10 border border-[#f0f5ea] rounded-2xl p-4 flex flex-col gap-3">
                               <div className="flex justify-between items-center">
                                 <div className="flex items-center gap-2 max-w-[80%]">
                                   <CheckCircle className="w-4 h-4 text-green-600" />
-                                  <span className="text-xs text-[#0F172A] font-bold truncate" title={proofFileName}>
+                                  <span className="text-xs text-[#181d16] font-bold truncate" title={proofFileName}>
                                     {proofFileName}
                                   </span>
                                 </div>
@@ -1480,7 +1480,7 @@ export default function OrderSummaryPage() {
                               </div>
  
                               {proofFile.startsWith("data:image/") && (
-                                <div className="w-full h-40 rounded-xl overflow-hidden border border-[#D4F6FF]/50 flex items-center justify-center bg-black/5 animate-fade-in">
+                                <div className="w-full h-40 rounded-xl overflow-hidden border border-[#f0f5ea]/50 flex items-center justify-center bg-black/5 animate-fade-in">
                                   <img src={proofFile} alt="Payment proof preview" className="w-full h-full object-contain" />
                                 </div>
                               )}
@@ -1496,7 +1496,7 @@ export default function OrderSummaryPage() {
                                 onChange={(e) => setClientNote(e.target.value)}
                                 placeholder="e.g. Transaction Reference, Bank branch, or transfer notes..."
                                 rows={2}
-                                className="w-full border border-[#C6E7FF]/70 rounded-xl p-3 text-xs text-slate-800 bg-white focus:outline-none focus:ring-4 focus:ring-[#D4F6FF]/10 focus:border-[#C6E7FF] transition-all resize-none"
+                                className="w-full border border-[#eaf0e4]/70 rounded-xl p-3 text-xs text-slate-800 bg-white focus:outline-none focus:ring-4 focus:ring-[#f0f5ea]/10 focus:border-[#eaf0e4] transition-all resize-none"
                               />
                             </div>
                           )}
@@ -1505,12 +1505,12 @@ export default function OrderSummaryPage() {
                     )}
  
                     {/* Actions */}
-                    <div className="mt-4 flex justify-end gap-3 border-t border-[#D4F6FF]/60 pt-4">
+                    <div className="mt-4 flex justify-end gap-3 border-t border-[#f0f5ea]/60 pt-4">
                       <button
                         type="button"
                         onClick={handleCloseInvoiceModal}
                         disabled={paymentProcessing}
-                        className="px-5 py-2.5 border border-[#D4F6FF] hover:bg-[#FBFBFB] rounded-xl font-semibold text-[#334155] cursor-pointer text-xs disabled:opacity-50 bg-white"
+                        className="px-5 py-2.5 border border-[#f0f5ea] hover:bg-[#f6fbf0] rounded-xl font-semibold text-[#334155] cursor-pointer text-xs disabled:opacity-50 bg-white"
                       >
                         Cancel
                       </button>
@@ -1519,7 +1519,7 @@ export default function OrderSummaryPage() {
                           type="button"
                           onClick={handleConfirmPayment}
                           disabled={paymentProcessing || !proofFile}
-                          className="px-5 py-2.5 bg-[#0F172A] text-[#ffffff] rounded-xl font-semibold flex items-center gap-1.5 cursor-pointer text-xs disabled:opacity-50 min-w-[130px] justify-center shadow-xs border-none"
+                          className="px-5 py-2.5 bg-[#181d16] text-[#ffffff] rounded-xl font-semibold flex items-center gap-1.5 cursor-pointer text-xs disabled:opacity-50 min-w-[130px] justify-center shadow-xs border-none"
                         >
                           {paymentProcessing ? (
                             <span className="flex items-center gap-2">
@@ -1558,7 +1558,7 @@ export default function OrderSummaryPage() {
                       <button
                         type="button"
                         onClick={handleCloseInvoiceModal}
-                        className="px-5 py-2 bg-[#0F172A] hover:bg-[#1E293B] text-white rounded-xl font-semibold text-xs cursor-pointer border-none"
+                        className="px-5 py-2 bg-[#181d16] hover:bg-[#1E293B] text-white rounded-xl font-semibold text-xs cursor-pointer border-none"
                       >
                         Close
                       </button>
@@ -1580,7 +1580,7 @@ export default function OrderSummaryPage() {
                       <button
                         type="button"
                         onClick={handleCloseInvoiceModal}
-                        className="px-5 py-2 bg-[#0F172A] hover:bg-[#1E293B] text-white rounded-xl font-semibold text-xs cursor-pointer border-none"
+                        className="px-5 py-2 bg-[#181d16] hover:bg-[#1E293B] text-white rounded-xl font-semibold text-xs cursor-pointer border-none"
                       >
                         Close
                       </button>

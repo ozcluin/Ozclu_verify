@@ -65,7 +65,7 @@ export async function GET(req: NextRequest) {
     );
 
     // ── Sanitize responses ──
-    const clusoSettings = await db.collection("settings").findOne(
+    const ozcluSettings = await db.collection("settings").findOne(
       { id: "acme" },
       { projection: { password: 0 } }
     );
@@ -99,7 +99,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       settings: cleanSettings,
-      clusoSettings: clusoSettings ? { ...clusoSettings, _id: clusoSettings._id.toString() } : null,
+      ozcluSettings: ozcluSettings ? { ...ozcluSettings, _id: ozcluSettings._id.toString() } : null,
       verifications: cleanVerifications,
       invoices: cleanInvoices,
       verifiers: cleanVerifiers,

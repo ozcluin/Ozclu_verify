@@ -2,70 +2,70 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #0F172A;
+  --color-primary: #016e1c; /* OzClu Primary Green */
   --color-on-primary: #ffffff;
-  --color-primary-container: #C6E7FF;
-  --color-on-primary-container: #0F172A;
-  --color-inverse-primary: #8DA9C4;
+  --color-primary-container: #eaf0e4; /* OzClu light container */
+  --color-on-primary-container: #00450e;
+  --color-inverse-primary: #5cb85c;
   
-  --color-secondary: #334155;
+  --color-secondary: #5b5f61; /* OzClu Secondary Grey */
   --color-on-secondary: #ffffff;
-  --color-secondary-container: #D4F6FF;
-  --color-on-secondary-container: #0F172A;
+  --color-secondary-container: #dfe4d9;
+  --color-on-secondary-container: #181d16;
 
-  --color-tertiary: #5C3A21;
+  --color-tertiary: #C6982E; /* OzClu Gold Accent */
   --color-on-tertiary: #ffffff;
-  --color-tertiary-container: #FFDDAE;
-  --color-on-tertiary-container: #5C3A21;
+  --color-tertiary-container: #FFF4CC;
+  --color-on-tertiary-container: #805b00;
 
   --color-error: #ba1a1a;
   --color-on-error: #ffffff;
   --color-error-container: #ffdad6;
   --color-on-error-container: #93000a;
 
-  --color-primary-fixed: #C6E7FF;
-  --color-primary-fixed-dim: #8DA9C4;
-  --color-on-primary-fixed: #0F172A;
-  --color-on-primary-fixed-variant: #1E293B;
+  --color-primary-fixed: #eaf0e4;
+  --color-primary-fixed-dim: #bfcab9;
+  --color-on-primary-fixed: #00450e;
+  --color-on-primary-fixed-variant: #181d16;
 
-  --color-secondary-fixed: #D4F6FF;
-  --color-secondary-fixed-dim: #94A3B8;
-  --color-on-secondary-fixed: #0F172A;
-  --color-on-secondary-fixed-variant: #334155;
+  --color-secondary-fixed: #dfe4d9;
+  --color-secondary-fixed-dim: #bfcab9;
+  --color-on-secondary-fixed: #181d16;
+  --color-on-secondary-fixed-variant: #3f4a3d;
 
-  --color-tertiary-fixed: #FFDDAE;
-  --color-tertiary-fixed-dim: #D97706;
-  --color-on-tertiary-fixed: #5C3A21;
-  --color-on-tertiary-fixed-variant: #78350F;
+  --color-tertiary-fixed: #FFF4CC;
+  --color-tertiary-fixed-dim: #DDB44B;
+  --color-on-tertiary-fixed: #805b00;
+  --color-on-tertiary-fixed-variant: #A67D1F;
 
-  --color-background: #FBFBFB;
-  --color-on-background: #0F172A;
+  --color-background: #f6fbf0; /* OzClu surface (Creamy Sage Green) */
+  --color-on-background: #181d16;
 
   --color-surface: #ffffff;
-  --color-surface-dim: #F1F5F9;
-  --color-surface-bright: #ffffff;
+  --color-surface-dim: #d6dcd1;
+  --color-surface-bright: #f6fbf0;
   --color-surface-container-lowest: #ffffff;
-  --color-surface-container-low: #F8FAFC;
-  --color-surface-container: #F1F5F9;
-  --color-surface-container-high: #E2E8F0;
-  --color-surface-container-highest: #CBD5E1;
-  --color-on-surface: #0F172A;
-  --color-on-surface-variant: #334155;
+  --color-surface-container-low: #f0f5ea;
+  --color-surface-container: #eaf0e4;
+  --color-surface-container-high: #e5eadf;
+  --color-surface-container-highest: #dfe4d9;
+  --color-on-surface: #181d16;
+  --color-on-surface-variant: #3f4a3d;
   
-  --color-inverse-surface: #1E293B;
-  --color-inverse-on-surface: #F8FAFC;
+  --color-inverse-surface: #2c322a;
+  --color-inverse-on-surface: #edf3e7;
   
-  --color-outline: #94A3B8;
-  --color-outline-variant: #D4F6FF;
+  --color-outline: #6f7a6b;
+  --color-outline-variant: #bfcab9;
   
-  --color-surface-tint: #475569;
-  --color-surface-variant: #E2E8F0;
+  --color-surface-tint: #016e1c;
+  --color-surface-variant: #eaf0e4;
 
   --font-plus-jakarta: var(--font-plus-jakarta), sans-serif;
   --font-outfit: var(--font-outfit), sans-serif;
   --font-jetbrains-mono: var(--font-jetbrains-mono), monospace;
 
-  /* Custom typography classes mapping to DESIGN.md */
+  /* Custom typography classes mapping */
   --font-sans: var(--font-plus-jakarta), sans-serif;
   
   /* Spacings */
@@ -77,7 +77,7 @@
   --spacing-margin-mobile: 16px;
   --spacing-stack-md: 16px;
 
-  /* Border radius adjustments to match the DESIGN.md */
+  /* Border radius adjustments */
   --radius-DEFAULT: 0.125rem;
   --radius-lg: 0.25rem;
   --radius-xl: 0.5rem;
