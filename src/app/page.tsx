@@ -77,8 +77,10 @@ export default function ClientLoginPage() {
           {/* Top accent line */}
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#eaf0e4] to-[#f0f5ea]"></div>
 
-          <div className="text-center mb-8 relative z-10">
-            <h2 className="font-display-lg text-primary text-2xl font-bold mb-2">Client Portal</h2>
+          <div className="text-center mb-8 relative z-10 flex flex-col items-center">
+            <div className="mb-4 select-none">
+              <OzcluLogo size="lg" />
+            </div>
             <p className="font-body-lg text-secondary text-sm text-slate-500 font-semibold">
               Initiate and monitor candidate identity checks.
             </p>
