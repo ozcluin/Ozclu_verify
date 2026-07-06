@@ -20,6 +20,7 @@ import {
   MapPin,
   Calendar,
   Building,
+  ChevronDown,
 } from "lucide-react";
 import { INDIAN_STATES } from "src/lib/courts-mapping";
 
@@ -28,10 +29,22 @@ type ServiceType = "identity" | "court_record";
 export default function IdentityVerification() {
   const router = useRouter();
   const { user, profile } = useAuth();
-  const { addVerification, addCourtRecordVerification, settings, removeRecentRequestingOrg } = usePortal();
+  const { addVerification, addCourtRecordVerification, settings, removeRecentRequestingOrg, organisation } = usePortal();
+
+  // Service active switches based on admin config
+  const identityEnabled = organisation?.identityEnabled !== false;
+  const courtRecordEnabled = organisation?.courtRecordEnabled !== false;
 
   // Service selector state
   const [activeService, setActiveService] = useState<ServiceType>("identity");
+
+  React.useEffect(() => {
+    if (!identityEnabled && activeService === "identity" && courtRecordEnabled) {
+      setActiveService("court_record");
+    } else if (!courtRecordEnabled && activeService === "court_record" && identityEnabled) {
+      setActiveService("identity");
+    }
+  }, [identityEnabled, courtRecordEnabled, activeService]);
 
   // ─── Identity Check States (existing) ───
   const [candidateName, setCandidateName] = useState("");
@@ -63,13 +76,14 @@ export default function IdentityVerification() {
   );
 
   // ─── Court Record Check States ───
+  const currentYear = new Date().getFullYear();
   const [crCandidateName, setCrCandidateName] = useState("");
   const [crCandidateDob, setCrCandidateDob] = useState("");
   const [crRequestingOrgName, setCrRequestingOrgName] = useState("");
   const [crShowOrgDropdown, setCrShowOrgDropdown] = useState(false);
   const [crAddresses, setCrAddresses] = useState<
-    Array<{ address: string; city: string; state: string; stateCode: string; districtCode: string; country: string }>
-  >([{ address: "", city: "", state: "", stateCode: "", districtCode: "", country: "India" }]);
+    Array<{ address: string; city: string; state: string; stateCode: string; districtCode: string; country: string; fromYear: number; toYear: number }>
+  >([{ address: "", city: "", state: "", stateCode: "", districtCode: "", country: "India", fromYear: currentYear - 2, toYear: currentYear }]);
   const [crSuccessMsg, setCrSuccessMsg] = useState("");
   const [crErrorMsg, setCrErrorMsg] = useState("");
   const [crCreatedId, setCrCreatedId] = useState<string | null>(null);
@@ -198,7 +212,7 @@ export default function IdentityVerification() {
 
   // ─── Court Record Check Handlers ───
   const addAddress = () => {
-    setCrAddresses((prev) => [...prev, { address: "", city: "", state: "", stateCode: "", districtCode: "", country: "India" }]);
+    setCrAddresses((prev) => [...prev, { address: "", city: "", state: "", stateCode: "", districtCode: "", country: "India", fromYear: currentYear - 2, toYear: currentYear }]);
   };
 
   const removeAddress = (index: number) => {
@@ -249,6 +263,14 @@ export default function IdentityVerification() {
         setCrErrorMsg(`Address ${i + 1}: District is required`);
         return;
       }
+      if (crAddresses[i].fromYear > crAddresses[i].toYear) {
+        setCrErrorMsg(`Address ${i + 1}: "From Year" must be before or equal to "To Year"`);
+        return;
+      }
+      if (crAddresses[i].toYear - crAddresses[i].fromYear + 1 > 3) {
+        setCrErrorMsg(`Address ${i + 1}: Maximum 3-year search span allowed per address`);
+        return;
+      }
     }
 
     if (!crRequestingOrgName.trim()) {
@@ -274,7 +296,7 @@ export default function IdentityVerification() {
         setCrCreatedId(res.id);
         setCrCandidateName("");
         setCrCandidateDob("");
-        setCrAddresses([{ address: "", city: "", state: "", stateCode: "", districtCode: "", country: "India" }]);
+        setCrAddresses([{ address: "", city: "", state: "", stateCode: "", districtCode: "", country: "India", fromYear: currentYear - 2, toYear: currentYear }]);
         setCrRequestingOrgName("");
       } else {
         setCrErrorMsg("Failed to initiate court record verification");
@@ -289,7 +311,7 @@ export default function IdentityVerification() {
   const handleCourtRecordCancel = () => {
     setCrCandidateName("");
     setCrCandidateDob("");
-    setCrAddresses([{ address: "", city: "", state: "", stateCode: "", districtCode: "", country: "India" }]);
+    setCrAddresses([{ address: "", city: "", state: "", stateCode: "", districtCode: "", country: "India", fromYear: currentYear - 2, toYear: currentYear }]);
     setCrRequestingOrgName("");
     setCrErrorMsg("");
     setCrSuccessMsg("");
@@ -316,53 +338,63 @@ export default function IdentityVerification() {
 
       {/* Service Selector Tabs */}
       <div className="flex gap-3 max-w-2xl">
-        <button
-          type="button"
-          onClick={() => setActiveService("identity")}
-          className={`flex-1 flex items-center gap-3 p-4 rounded-2xl border-2 transition-all duration-300 cursor-pointer group ${
-            activeService === "identity"
-              ? "border-[#181d16] bg-white shadow-md"
-              : "border-[#eaf0e4] bg-[#f6fbf0]/50 hover:border-[#d0dbc6] hover:bg-white/80"
-          }`}
-        >
-          <div className={`p-2.5 rounded-xl transition-all ${
-            activeService === "identity"
-              ? "bg-[#181d16] text-white"
-              : "bg-[#f0f5ea]/60 text-[#00450e] group-hover:bg-[#e0e8d8]"
-          }`}>
-            <UserPlus className="w-5 h-5" />
-          </div>
-          <div className="text-left">
-            <div className={`font-semibold text-sm ${activeService === "identity" ? "text-[#181d16]" : "text-[#475569]"}`}>
-              Identity Check
+        {identityEnabled && (
+          <button
+            type="button"
+            onClick={() => setActiveService("identity")}
+            className={`flex-1 flex items-center gap-3 p-4 rounded-2xl border-2 transition-all duration-300 cursor-pointer group ${
+              activeService === "identity"
+                ? "border-[#181d16] bg-white shadow-md"
+                : "border-[#eaf0e4] bg-[#f6fbf0]/50 hover:border-[#d0dbc6] hover:bg-white/80"
+            }`}
+          >
+            <div className={`p-2.5 rounded-xl transition-all ${
+              activeService === "identity"
+                ? "bg-[#181d16] text-white"
+                : "bg-[#f0f5ea]/60 text-[#00450e] group-hover:bg-[#e0e8d8]"
+            }`}>
+              <UserPlus className="w-5 h-5" />
             </div>
-            <div className="text-[11px] text-[#64748B] mt-0.5">DigiLocker verified identity</div>
-          </div>
-        </button>
+            <div className="text-left">
+              <div className={`font-semibold text-sm ${activeService === "identity" ? "text-[#181d16]" : "text-[#475569]"}`}>
+                Identity Check
+              </div>
+              <div className="text-[11px] text-[#64748B] mt-0.5">DigiLocker verified identity</div>
+            </div>
+          </button>
+        )}
 
-        <button
-          type="button"
-          onClick={() => setActiveService("court_record")}
-          className={`flex-1 flex items-center gap-3 p-4 rounded-2xl border-2 transition-all duration-300 cursor-pointer group ${
-            activeService === "court_record"
-              ? "border-[#181d16] bg-white shadow-md"
-              : "border-[#eaf0e4] bg-[#f6fbf0]/50 hover:border-[#d0dbc6] hover:bg-white/80"
-          }`}
-        >
-          <div className={`p-2.5 rounded-xl transition-all ${
-            activeService === "court_record"
-              ? "bg-[#181d16] text-white"
-              : "bg-[#f0f5ea]/60 text-[#00450e] group-hover:bg-[#e0e8d8]"
-          }`}>
-            <Scale className="w-5 h-5" />
-          </div>
-          <div className="text-left">
-            <div className={`font-semibold text-sm ${activeService === "court_record" ? "text-[#181d16]" : "text-[#475569]"}`}>
-              Court Record Check
+        {courtRecordEnabled && (
+          <button
+            type="button"
+            onClick={() => setActiveService("court_record")}
+            className={`flex-1 flex items-center gap-3 p-4 rounded-2xl border-2 transition-all duration-300 cursor-pointer group ${
+              activeService === "court_record"
+                ? "border-[#181d16] bg-white shadow-md"
+                : "border-[#eaf0e4] bg-[#f6fbf0]/50 hover:border-[#d0dbc6] hover:bg-white/80"
+            }`}
+          >
+            <div className={`p-2.5 rounded-xl transition-all ${
+              activeService === "court_record"
+                ? "bg-[#181d16] text-white"
+                : "bg-[#f0f5ea]/60 text-[#00450e] group-hover:bg-[#e0e8d8]"
+            }`}>
+              <Scale className="w-5 h-5" />
             </div>
-            <div className="text-[11px] text-[#64748B] mt-0.5">eCourts India search</div>
+            <div className="text-left">
+              <div className={`font-semibold text-sm ${activeService === "court_record" ? "text-[#181d16]" : "text-[#475569]"}`}>
+                Court Record Check
+              </div>
+              <div className="text-[11px] text-[#64748B] mt-0.5">eCourts India search</div>
+            </div>
+          </button>
+        )}
+
+        {!identityEnabled && !courtRecordEnabled && (
+          <div className="flex-1 bg-rose-50 border border-rose-100 rounded-2xl p-4 text-center">
+            <p className="text-xs font-bold text-rose-800">All verification services are currently deactivated by the administrator.</p>
           </div>
-        </button>
+        )}
       </div>
 
       {/* Settings incomplete warning banner */}
@@ -387,7 +419,7 @@ export default function IdentityVerification() {
       {/* ═══════════════════════════════════════════════════ */}
       {/* IDENTITY CHECK FORM (existing functionality) */}
       {/* ═══════════════════════════════════════════════════ */}
-      {activeService === "identity" && (
+      {activeService === "identity" && identityEnabled && (
         <>
           {/* Form Alerts */}
           {successMsg && !createdCredentials && (
@@ -651,7 +683,7 @@ export default function IdentityVerification() {
       {/* ═══════════════════════════════════════════════════ */}
       {/* COURT RECORD CHECK FORM (new) */}
       {/* ═══════════════════════════════════════════════════ */}
-      {activeService === "court_record" && (
+      {activeService === "court_record" && courtRecordEnabled && (
         <>
           {/* Form Alerts */}
           {crSuccessMsg && !crCreatedId && (
@@ -669,25 +701,28 @@ export default function IdentityVerification() {
           )}
 
           {/* Court Record Form Card */}
-          <div className="bg-white border border-[#eaf0e4] rounded-3xl p-8 max-w-2xl shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+          <div className="bg-white border border-slate-200 rounded-3xl p-8 max-w-2xl shadow-lg relative overflow-hidden transition-all duration-300 hover:shadow-xl">
             {/* Top gradient line */}
-            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#eaf0e4] via-[#E8D5B7] to-[#f0f5ea]"></div>
+            <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-emerald-600 via-teal-500 to-green-500"></div>
 
             {/* Subtle decorative background shapes */}
-            <div className="absolute -right-12 -bottom-12 w-32 h-32 bg-[#f0f5ea]/35 rounded-full blur-2xl pointer-events-none"></div>
-            <div className="absolute -left-12 -top-12 w-32 h-32 bg-[#E8D5B7]/15 rounded-full blur-2xl pointer-events-none"></div>
+            <div className="absolute -right-12 -bottom-12 w-32 h-32 bg-[#f0f5ea]/20 rounded-full blur-2xl pointer-events-none"></div>
+            <div className="absolute -left-12 -top-12 w-32 h-32 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none"></div>
 
             <form onSubmit={handleCourtRecordSubmit} className="flex flex-col gap-6 mt-2 relative z-10">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="p-2 bg-[#f0f5ea]/40 rounded-xl border border-[#eaf0e4]/60">
-                  <Scale className="w-5 h-5 text-[#00450e]" />
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2.5 bg-gradient-to-br from-emerald-600 to-teal-700 rounded-xl shadow-md shadow-emerald-600/10 text-white">
+                  <Scale className="w-5 h-5" />
                 </div>
-                <h3 className="font-semibold text-[#181d16] text-lg">Court Record Check</h3>
+                <div>
+                  <h3 className="font-bold text-slate-800 text-lg leading-tight">Court Record Check</h3>
+                  <p className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider">eCourts India Database Search</p>
+                </div>
               </div>
 
               {/* Candidate Full Name */}
               <div className="flex flex-col gap-2">
-                <label className="font-label-caps text-[#475569] text-xs font-semibold uppercase tracking-wider" htmlFor="cr-candidate-name">
+                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5" htmlFor="cr-candidate-name">
                   Candidate Full Name
                 </label>
                 <input
@@ -697,8 +732,8 @@ export default function IdentityVerification() {
                   onChange={(e) => setCrCandidateName(e.target.value)}
                   autoComplete="off"
                   disabled={isSettingsIncomplete}
-                  className={`border border-[#eaf0e4] rounded-xl p-3.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] focus:border-[#181d16] transition-all bg-[#f6fbf0]/50 placeholder-slate-400 font-semibold ${
-                    isSettingsIncomplete ? "bg-slate-100/60 text-slate-500 cursor-not-allowed border-slate-200 opacity-80" : ""
+                  className={`border border-slate-300 rounded-xl p-3.5 font-body-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-650 transition-all bg-white placeholder-slate-400 font-semibold shadow-2xs ${
+                    isSettingsIncomplete ? "bg-slate-100 text-slate-500 cursor-not-allowed border-slate-200 opacity-80" : ""
                   }`}
                   placeholder="Enter candidate's full legal name"
                 />
@@ -706,7 +741,7 @@ export default function IdentityVerification() {
 
               {/* Candidate DOB */}
               <div className="flex flex-col gap-2">
-                <label className="font-label-caps text-[#475569] text-xs font-semibold uppercase tracking-wider" htmlFor="cr-candidate-dob">
+                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5" htmlFor="cr-candidate-dob">
                   Candidate Date of Birth
                 </label>
                 <div className="relative">
@@ -715,9 +750,19 @@ export default function IdentityVerification() {
                     type="date"
                     value={crCandidateDob}
                     onChange={(e) => setCrCandidateDob(e.target.value)}
+                    onFocus={() => {
+                      if (!crCandidateDob) {
+                        setCrCandidateDob("2000-01-01");
+                      }
+                    }}
+                    onClick={() => {
+                      if (!crCandidateDob) {
+                        setCrCandidateDob("2000-01-01");
+                      }
+                    }}
                     disabled={isSettingsIncomplete}
-                    className={`w-full border border-[#eaf0e4] rounded-xl p-3.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] focus:border-[#181d16] transition-all bg-[#f6fbf0]/50 placeholder-slate-400 font-semibold ${
-                      isSettingsIncomplete ? "bg-slate-100/60 text-slate-500 cursor-not-allowed border-slate-200 opacity-80" : ""
+                    className={`w-full border border-slate-300 rounded-xl p-3.5 font-body-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-650 transition-all bg-white placeholder-slate-400 font-semibold shadow-2xs ${
+                      isSettingsIncomplete ? "bg-slate-100 text-slate-500 cursor-not-allowed border-slate-200 opacity-80" : ""
                     }`}
                   />
                 </div>
@@ -726,19 +771,19 @@ export default function IdentityVerification() {
               {/* Addresses Section */}
               <div className="flex flex-col gap-4">
                 <div className="flex items-center justify-between">
-                  <label className="font-label-caps text-[#475569] text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5">
-                    <MapPin className="w-3.5 h-3.5" />
+                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5 text-slate-500" />
                     Addresses
                   </label>
                   <button
                     type="button"
                     onClick={addAddress}
                     disabled={isSettingsIncomplete}
-                    className={`text-xs font-semibold text-[#00450e] hover:text-[#181d16] flex items-center gap-1 transition-colors ${
-                      isSettingsIncomplete ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                    className={`px-3 py-1.5 border border-slate-300 text-xs font-bold text-slate-800 hover:text-emerald-800 hover:border-emerald-500 hover:bg-emerald-50/30 rounded-lg flex items-center gap-1 transition-all shadow-2xs ${
+                      isSettingsIncomplete ? "opacity-50 cursor-not-allowed" : "cursor-pointer active:scale-95"
                     }`}
                   >
-                    <Plus className="w-3.5 h-3.5" />
+                    <Plus className="w-3.5 h-3.5 text-emerald-700" />
                     Add Address
                   </button>
                 </div>
@@ -746,13 +791,13 @@ export default function IdentityVerification() {
                 {crAddresses.map((addr, index) => (
                   <div
                     key={index}
-                    className="border border-[#eaf0e4] rounded-2xl p-5 bg-[#f6fbf0]/30 relative group transition-all hover:border-[#d0dbc6]"
+                    className="border border-slate-200 rounded-2xl p-5 bg-gradient-to-br from-slate-50/70 via-white to-emerald-50/10 relative group transition-all hover:border-emerald-300 hover:shadow-xs shadow-2xs"
                   >
                     {crAddresses.length > 1 && (
                       <button
                         type="button"
                         onClick={() => removeAddress(index)}
-                        className="absolute top-3 right-3 p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100 cursor-pointer"
+                        className="absolute top-3 right-3 p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-55 transition-all opacity-0 group-hover:opacity-100 cursor-pointer"
                         title="Remove address"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -760,7 +805,7 @@ export default function IdentityVerification() {
                     )}
 
                     <div className="flex items-center gap-1.5 mb-3">
-                      <span className="text-[10px] font-bold text-[#00450e] bg-[#f0f5ea]/60 px-2 py-0.5 rounded-full uppercase tracking-wider border border-[#eaf0e4]/60">
+                      <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100/50 px-2 py-0.5 rounded-full uppercase tracking-wider border border-emerald-200/50">
                         Address {index + 1}
                       </span>
                     </div>
@@ -772,8 +817,8 @@ export default function IdentityVerification() {
                         value={addr.address}
                         onChange={(e) => updateAddress(index, "address", e.target.value)}
                         disabled={isSettingsIncomplete}
-                        className={`border border-[#eaf0e4] rounded-xl p-3 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] focus:border-[#181d16] transition-all bg-white/80 placeholder-slate-400 font-semibold text-sm ${
-                          isSettingsIncomplete ? "bg-slate-100/60 text-slate-500 cursor-not-allowed border-slate-200 opacity-80" : ""
+                        className={`border border-slate-300 rounded-xl p-3 font-body-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-650 transition-all bg-white placeholder-slate-400 font-semibold text-sm shadow-2xs ${
+                          isSettingsIncomplete ? "bg-slate-100 text-slate-500 cursor-not-allowed border-slate-200 opacity-80" : ""
                         }`}
                         placeholder="Street address (optional)"
                       />
@@ -781,95 +826,177 @@ export default function IdentityVerification() {
                       {/* State + District Row (cascading dropdowns) */}
                       <div className="grid grid-cols-2 gap-3">
                         <div className="flex flex-col gap-1.5">
-                          <label className="text-[10px] font-semibold text-[#64748B] uppercase tracking-wider">
+                          <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">
                             State *
                           </label>
-                          <select
-                            value={addr.stateCode}
-                            onChange={(e) => {
-                              const selectedCode = e.target.value;
-                              const selectedState = INDIAN_STATES.find((s) => s.code === selectedCode);
-                              setCrAddresses((prev) =>
-                                prev.map((a, i) =>
-                                  i === index
-                                    ? { ...a, state: selectedState?.name || "", stateCode: selectedCode, city: "", districtCode: "" }
-                                    : a
-                                )
-                              );
-                              if (selectedCode) {
-                                fetchDistrictsForState(selectedCode);
-                              }
-                            }}
-                            disabled={isSettingsIncomplete}
-                            className={`border border-[#eaf0e4] rounded-xl p-3 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] focus:border-[#181d16] transition-all bg-white/80 font-semibold text-sm appearance-none ${
-                              isSettingsIncomplete ? "bg-slate-100/60 text-slate-500 cursor-not-allowed border-slate-200 opacity-80" : "cursor-pointer"
-                            } ${!addr.stateCode ? "text-slate-400" : ""}`}
-                          >
-                            <option value="">Select state</option>
-                            {sortedStates.map((state) => (
-                              <option key={state.code} value={state.code}>
-                                {state.name}
-                              </option>
-                            ))}
-                          </select>
+                          <div className="relative">
+                            <select
+                              value={addr.stateCode}
+                              onChange={(e) => {
+                                const selectedCode = e.target.value;
+                                const selectedState = INDIAN_STATES.find((s) => s.code === selectedCode);
+                                setCrAddresses((prev) =>
+                                  prev.map((a, i) =>
+                                    i === index
+                                      ? { ...a, state: selectedState?.name || "", stateCode: selectedCode, city: "", districtCode: "" }
+                                      : a
+                                  )
+                                );
+                                if (selectedCode) {
+                                  fetchDistrictsForState(selectedCode);
+                                }
+                              }}
+                              disabled={isSettingsIncomplete}
+                              className={`w-full border border-slate-300 rounded-xl p-3 pr-8 font-body-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-650 transition-all bg-white font-semibold text-sm appearance-none ${
+                                isSettingsIncomplete ? "bg-slate-100 text-slate-500 cursor-not-allowed border-slate-200 opacity-80" : "cursor-pointer"
+                              } ${!addr.stateCode ? "text-slate-400" : ""}`}
+                            >
+                              <option value="">Select state</option>
+                              {sortedStates.map((state) => (
+                                <option key={state.code} value={state.code}>
+                                  {state.name}
+                                </option>
+                              ))}
+                            </select>
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500">
+                              <ChevronDown className="w-4 h-4" />
+                            </div>
+                          </div>
                         </div>
                         <div className="flex flex-col gap-1.5">
-                          <label className="text-[10px] font-semibold text-[#64748B] uppercase tracking-wider flex items-center gap-1.5">
+                          <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
                             District *
                             {addr.stateCode && districtsCache[addr.stateCode]?.loading && (
-                              <span className="inline-block w-3 h-3 border-2 border-[#016e1c] border-t-transparent rounded-full animate-spin" />
+                              <span className="inline-block w-3 h-3 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
                             )}
                           </label>
-                          <select
-                            value={addr.districtCode}
-                            onChange={(e) => {
-                              const selectedDistCode = e.target.value;
-                              const distEntry = districtsCache[addr.stateCode]?.districts?.find((d) => d.value === selectedDistCode);
-                              setCrAddresses((prev) =>
-                                prev.map((a, i) =>
-                                  i === index
-                                    ? { ...a, city: distEntry?.name || "", districtCode: selectedDistCode }
-                                    : a
-                                )
-                              );
-                            }}
-                            disabled={isSettingsIncomplete || !addr.stateCode || districtsCache[addr.stateCode]?.loading}
-                            className={`border border-[#eaf0e4] rounded-xl p-3 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] focus:border-[#181d16] transition-all bg-white/80 font-semibold text-sm appearance-none ${
-                              isSettingsIncomplete || !addr.stateCode
-                                ? "bg-slate-100/60 text-slate-500 cursor-not-allowed border-slate-200 opacity-80"
-                                : "cursor-pointer"
-                            } ${!addr.districtCode ? "text-slate-400" : ""}`}
-                          >
-                            <option value="">
-                              {!addr.stateCode
-                                ? "Select state first"
-                                : districtsCache[addr.stateCode]?.loading
-                                  ? "Loading districts..."
-                                  : districtsCache[addr.stateCode]?.districts?.length === 0
-                                    ? "No districts found"
-                                    : "Select district"}
-                            </option>
-                            {(districtsCache[addr.stateCode]?.districts || []).map((dist) => (
-                              <option key={dist.value} value={dist.value}>
-                                {dist.name}
+                          <div className="relative">
+                            <select
+                              value={addr.districtCode}
+                              onChange={(e) => {
+                                const selectedDistCode = e.target.value;
+                                const distEntry = districtsCache[addr.stateCode]?.districts?.find((d) => d.value === selectedDistCode);
+                                setCrAddresses((prev) =>
+                                  prev.map((a, i) =>
+                                    i === index
+                                      ? { ...a, city: distEntry?.name || "", districtCode: selectedDistCode }
+                                      : a
+                                  )
+                                );
+                              }}
+                              disabled={isSettingsIncomplete || !addr.stateCode || districtsCache[addr.stateCode]?.loading}
+                              className={`w-full border border-slate-300 rounded-xl p-3 pr-8 font-body-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-650 transition-all bg-white font-semibold text-sm appearance-none ${
+                                isSettingsIncomplete || !addr.stateCode
+                                  ? "bg-slate-100 text-slate-500 cursor-not-allowed border-slate-200 opacity-80"
+                                  : "cursor-pointer"
+                              } ${!addr.districtCode ? "text-slate-400" : ""}`}
+                            >
+                              <option value="">
+                                {!addr.stateCode
+                                  ? "Select state first"
+                                  : districtsCache[addr.stateCode]?.loading
+                                    ? "Loading districts..."
+                                    : districtsCache[addr.stateCode]?.districts?.length === 0
+                                      ? "No districts found"
+                                      : "Select district"}
                               </option>
-                            ))}
-                          </select>
+                              {(districtsCache[addr.stateCode]?.districts || []).map((dist) => (
+                                <option key={dist.value} value={dist.value}>
+                                  {dist.name}
+                                </option>
+                              ))}
+                            </select>
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500">
+                              <ChevronDown className="w-4 h-4" />
+                            </div>
+                          </div>
                         </div>
                       </div>
 
                       {/* Country (auto-filled) */}
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-[10px] font-semibold text-[#64748B] uppercase tracking-wider">
+                        <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">
                           Country
                         </label>
                         <input
                           type="text"
                           value="India"
                           disabled
-                          className="border border-[#eaf0e4] rounded-xl p-3 font-body-sm bg-slate-50/80 text-slate-500 font-semibold text-sm cursor-not-allowed"
+                          className="border border-slate-300 rounded-xl p-3 font-body-sm bg-slate-50 text-slate-500 font-semibold text-sm cursor-not-allowed shadow-2xs"
                         />
                       </div>
+
+                      {/* Year Range (FROM → TO) */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                            From Year *
+                          </label>
+                          <div className="relative">
+                            <select
+                              value={addr.fromYear}
+                              onChange={(e) => {
+                                const newFrom = Number(e.target.value);
+                                setCrAddresses((prev) =>
+                                  prev.map((a, i) => {
+                                    if (i !== index) return a;
+                                    // Auto-adjust toYear if span would exceed 3 years
+                                    const maxTo = Math.min(newFrom + 2, currentYear);
+                                    return { ...a, fromYear: newFrom, toYear: a.toYear > maxTo ? maxTo : (a.toYear < newFrom ? newFrom : a.toYear) };
+                                  })
+                                );
+                              }}
+                              disabled={isSettingsIncomplete}
+                              className={`w-full border border-slate-300 rounded-xl p-3 pr-8 font-body-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-650 transition-all bg-white font-semibold text-sm appearance-none ${
+                                isSettingsIncomplete ? "bg-slate-100 text-slate-500 cursor-not-allowed border-slate-200 opacity-80" : "cursor-pointer"
+                              }`}
+                            >
+                              {Array.from({ length: currentYear - 2015 + 1 }, (_, idx) => currentYear - idx).map((yr) => (
+                                <option key={yr} value={yr}>{yr}</option>
+                              ))}
+                            </select>
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500">
+                              <ChevronDown className="w-4 h-4" />
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                            To Year *
+                          </label>
+                          <div className="relative">
+                            <select
+                              value={addr.toYear}
+                              onChange={(e) => {
+                                const newTo = Number(e.target.value);
+                                setCrAddresses((prev) =>
+                                  prev.map((a, i) => {
+                                    if (i !== index) return a;
+                                    // Auto-adjust fromYear if span would exceed 3 years
+                                    const minFrom = Math.max(newTo - 2, 2015);
+                                    return { ...a, toYear: newTo, fromYear: a.fromYear < minFrom ? minFrom : (a.fromYear > newTo ? newTo : a.fromYear) };
+                                  })
+                                );
+                              }}
+                              disabled={isSettingsIncomplete}
+                              className={`w-full border border-slate-300 rounded-xl p-3 pr-8 font-body-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-650 transition-all bg-white font-semibold text-sm appearance-none ${
+                                isSettingsIncomplete ? "bg-slate-100 text-slate-500 cursor-not-allowed border-slate-200 opacity-80" : "cursor-pointer"
+                              }`}
+                            >
+                              {Array.from({ length: Math.min(3, currentYear - addr.fromYear + 1) }, (_, idx) => addr.fromYear + idx).map((yr) => (
+                                <option key={yr} value={yr}>{yr}</option>
+                              ))}
+                            </select>
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500">
+                              <ChevronDown className="w-4 h-4" />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      {/* Year range hint */}
+                      <p className="text-[9px] text-[#94a3b8] font-medium -mt-1">
+                        Max 3-year span per address · Searching {addr.fromYear} → {addr.toYear} ({addr.toYear - addr.fromYear + 1} year{addr.toYear - addr.fromYear + 1 !== 1 ? "s" : ""})
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -877,7 +1004,7 @@ export default function IdentityVerification() {
 
               {/* Requesting ORG Name */}
               <div className="flex flex-col gap-2 relative">
-                <label className="font-label-caps text-[#475569] text-xs font-semibold uppercase tracking-wider" htmlFor="cr-org-name">
+                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider" htmlFor="cr-org-name">
                   {isAdmin ? "Target Client ORG Name" : "Requesting ORG Name"}
                 </label>
                 <div className="relative">
@@ -895,8 +1022,8 @@ export default function IdentityVerification() {
                     }}
                     autoComplete="off"
                     disabled={isSettingsIncomplete}
-                    className={`w-full border border-[#eaf0e4] rounded-xl p-3.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] focus:border-[#181d16] transition-all bg-[#f6fbf0]/50 placeholder-slate-400 font-semibold ${
-                      isSettingsIncomplete ? "bg-slate-100/60 text-slate-500 cursor-not-allowed border-slate-200 opacity-80" : ""
+                    className={`w-full border border-slate-300 rounded-xl p-3.5 font-body-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-650 transition-all bg-white placeholder-slate-400 font-semibold shadow-2xs ${
+                      isSettingsIncomplete ? "bg-slate-100 text-slate-500 cursor-not-allowed border-slate-200 opacity-80" : ""
                     }`}
                     placeholder="Enter the organization name requiring the verification"
                   />
@@ -935,21 +1062,21 @@ export default function IdentityVerification() {
               </div>
 
               {/* Info Note */}
-              <div className="bg-[#f0f5ea]/30 border border-[#eaf0e4]/60 rounded-xl p-3.5 flex items-start gap-2.5">
-                <Scale className="w-4 h-4 text-[#00450e] shrink-0 mt-0.5" />
-                <div className="text-[11px] text-[#475569] leading-relaxed font-medium">
-                  <strong className="text-[#181d16]">How it works:</strong> The system searches eCourts India for court records matching the candidate&apos;s name across all court complexes in each specified district. This process runs in the background and typically takes 1-3 minutes.
+              <div className="bg-emerald-50/40 border border-emerald-100 rounded-xl p-4 flex items-start gap-3 shadow-2xs">
+                <Scale className="w-4.5 h-4.5 text-emerald-800 shrink-0 mt-0.5" />
+                <div className="text-[11px] text-slate-650 leading-relaxed font-semibold">
+                  <strong className="text-slate-800">How it works:</strong> The system searches eCourts India for court records matching the candidate&apos;s name across all court complexes in each specified district. This process runs in the background and typically takes 1-3 minutes.
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex items-center gap-3 mt-4 justify-end">
+              <div className="flex items-center gap-3 mt-6 justify-end border-t border-slate-100 pt-5">
                 <button
                   type="button"
                   onClick={handleCourtRecordCancel}
                   disabled={isSettingsIncomplete || crSubmitting}
-                  className={`px-6 py-3 border border-[#eaf0e4] rounded-xl font-semibold text-sm text-[#334155] hover:bg-[#f6fbf0] hover:text-[#181d16] transition-all bg-white ${
-                    isSettingsIncomplete || crSubmitting ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                  className={`px-6 py-3 border border-slate-200 rounded-xl font-bold text-sm text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-all bg-white shadow-2xs ${
+                    isSettingsIncomplete || crSubmitting ? "opacity-50 cursor-not-allowed" : "cursor-pointer active:scale-95"
                   }`}
                 >
                   Cancel
@@ -957,8 +1084,8 @@ export default function IdentityVerification() {
                 <button
                   type="submit"
                   disabled={isSettingsIncomplete || crSubmitting}
-                  className={`px-6 py-3 bg-[#181d16] text-white hover:bg-[#1E293B] active:scale-95 rounded-xl font-semibold text-sm transition-all flex items-center gap-2 shadow-sm group ${
-                    isSettingsIncomplete || crSubmitting ? "opacity-50 cursor-not-allowed hover:bg-[#181d16] active:scale-100" : "cursor-pointer"
+                  className={`px-6 py-3 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-950 text-white hover:brightness-110 active:scale-95 rounded-xl font-bold text-sm transition-all flex items-center gap-2 shadow-md shadow-slate-950/10 group ${
+                    isSettingsIncomplete || crSubmitting ? "opacity-50 cursor-not-allowed hover:brightness-100 active:scale-100 shadow-none" : "cursor-pointer"
                   }`}
                 >
                   {crSubmitting ? (

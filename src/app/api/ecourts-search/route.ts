@@ -14,11 +14,16 @@ import { getDistrictsLocal, getCourtComplexesLocal, getEstablishmentsLocal } fro
  * POST /api/ecourts-search
  * 
  * Runs a court record search across all court complexes in the given districts.
- * This is a long-running endpoint — it may take 30-120 seconds depending on
- * how many complexes need to be searched.
+ * Includes global timeout (3 min), per-establishment timeout, and smart skip logic.
  * 
  * Body: { verificationId, candidateName, addresses }
  */
+
+// ─── Configurable Search Parameters ───
+const GLOBAL_TIMEOUT_MS = 3 * 60 * 1000;          // 3 minutes max for entire search
+const DEFAULT_YEARS_BACK = 3;                       // Fallback: search current year + 2 prior
+const PER_ESTABLISHMENT_TIMEOUT_MS = 45_000;        // 45s max per establishment (all years combined)
+const MAX_CONSECUTIVE_FAILURES = 3;                 // Skip remaining establishments after 3 consecutive failures
 export async function POST(req: NextRequest) {
   try {
     // Auth check — require client or admin session
@@ -78,6 +83,8 @@ export async function POST(req: NextRequest) {
     const errors: string[] = [];
     let totalCasesFound = 0;
     let totalComplexesSearched = 0;
+    const globalStartTime = Date.now();
+    let globalTimedOut = false;
 
     // Get ONE session upfront — reuse for all searches to avoid "socket hang up"
     let sessionCookies: SessionCookies;
@@ -107,6 +114,17 @@ export async function POST(req: NextRequest) {
       const stateName = addr.state?.trim();
       const providedStateCode = addr.stateCode?.trim();
       const providedDistrictCode = addr.districtCode?.trim();
+
+      // Per-address year range (fallback to current year - 2 → current year)
+      const fallbackCurrentYear = new Date().getFullYear();
+      const addrToYear = (typeof addr.toYear === "number" && addr.toYear >= 2015 && addr.toYear <= fallbackCurrentYear)
+        ? addr.toYear : fallbackCurrentYear;
+      const addrFromYear = (typeof addr.fromYear === "number" && addr.fromYear >= 2015 && addr.fromYear <= addrToYear)
+        ? addr.fromYear : Math.max(addrToYear - DEFAULT_YEARS_BACK + 1, 2015);
+      const addrYearsToSearch = Array.from(
+        { length: addrToYear - addrFromYear + 1 },
+        (_, idx) => String(addrToYear - idx)
+      );
 
       if (!stateName) {
         errors.push(`Address ${i + 1}: No state provided`);
@@ -208,24 +226,46 @@ export async function POST(req: NextRequest) {
 
         // Search each court complex
         for (const complex of complexes) {
+          // ── Global timeout check ──
+          if (Date.now() - globalStartTime > GLOBAL_TIMEOUT_MS) {
+            globalTimedOut = true;
+            errors.push(`Global timeout reached (${GLOBAL_TIMEOUT_MS / 1000}s). Search completed with partial results.`);
+            console.log(`[ECOURTS] Global timeout for ${verificationId} after ${totalComplexesSearched} establishments`);
+            break;
+          }
+
           // Check if this complex has establishments in our local database
           if (complex.hasEstablishments) {
             const establishments = getEstablishmentsLocal(stateCode, matchedDistrictCode, complex.code);
 
             if (establishments && establishments.length > 0) {
+              let consecutiveFailures = 0;
+
               // Loop and search each establishment individually
               for (const est of establishments) {
+                // ── Global timeout check (inner loop) ──
+                if (Date.now() - globalStartTime > GLOBAL_TIMEOUT_MS) {
+                  globalTimedOut = true;
+                  errors.push(`Global timeout reached during ${complex.name}. Partial results saved.`);
+                  break;
+                }
+
+                // ── Skip remaining if too many consecutive failures ──
+                if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+                  const remaining = establishments.length - establishments.indexOf(est);
+                  errors.push(`Skipped ${remaining} remaining establishments in ${complex.name} after ${MAX_CONSECUTIVE_FAILURES} consecutive failures.`);
+                  break;
+                }
+
                 totalComplexesSearched++;
 
-                const currentYear = new Date().getFullYear();
-                const yearsToSearch = Array.from({ length: 5 }, (_, idx) => String(currentYear - idx));
+                const yearsToSearch = addrYearsToSearch;
 
-                let aggregatedCases: any[] = [];
-                let searchErrorOccurred = false;
-                let searchErrorMessage = "";
+                // ── Per-establishment timeout wrapper ──
+                const estSearchPromise = (async () => {
+                  let aggregatedCases: any[] = [];
 
-                for (const year of yearsToSearch) {
-                  try {
+                  for (const year of yearsToSearch) {
                     // Use session-reusing search with automatic retry
                     const { result: searchResult, cookies: updatedCookies } = await searchCourtOrdersWithSession({
                       partyName: candidateName,
@@ -235,12 +275,11 @@ export async function POST(req: NextRequest) {
                       distCode: matchedDistrictCode,
                       courtComplex: complex.code,
                       courtComplexArr: complex.arr,
-                      estCode: est.value, // Pass individual establishment code
+                      estCode: est.value,
                       cookies: sessionCookies,
                       maxRetries: 2,
                     });
 
-                    // Update session cookies in case they were renewed during retry
                     sessionCookies = updatedCookies;
 
                     if (searchResult.cases && searchResult.cases.length > 0) {
@@ -252,26 +291,22 @@ export async function POST(req: NextRequest) {
                       })));
                     }
 
-                    // Small politeness delay between year queries
                     await delay(250);
-                  } catch (searchError: any) {
-                    searchErrorOccurred = true;
-                    searchErrorMessage = searchError.message || "Search failed";
-                    break;
                   }
-                }
 
-                if (searchErrorOccurred) {
-                  addressResult.complexSearches.push({
-                    complexName: complex.name,
-                    complexCode: complex.code,
-                    establishmentName: est.name,
-                    establishmentCode: est.value,
-                    casesFound: 0,
-                    cases: [],
-                    error: searchErrorMessage,
-                  });
-                } else {
+                  return aggregatedCases;
+                })();
+
+                // Race the establishment search against a timeout
+                const timeoutPromise = new Promise<never>((_, reject) =>
+                  setTimeout(() => reject(new Error(`Establishment search timed out after ${PER_ESTABLISHMENT_TIMEOUT_MS / 1000}s`)), PER_ESTABLISHMENT_TIMEOUT_MS)
+                );
+
+                try {
+                  const aggregatedCases = await Promise.race([estSearchPromise, timeoutPromise]);
+
+                  consecutiveFailures = 0; // Reset on success
+
                   addressResult.complexSearches.push({
                     complexName: complex.name,
                     complexCode: complex.code,
@@ -281,6 +316,22 @@ export async function POST(req: NextRequest) {
                     cases: aggregatedCases,
                   });
                   totalCasesFound += aggregatedCases.length;
+                } catch (searchError: any) {
+                  consecutiveFailures++;
+
+                  const errorMsg = (searchError as any).isDataVolume
+                    ? `Data volume issue: too many results for this name`
+                    : searchError.message || "Search failed";
+
+                  addressResult.complexSearches.push({
+                    complexName: complex.name,
+                    complexCode: complex.code,
+                    establishmentName: est.name,
+                    establishmentCode: est.value,
+                    casesFound: 0,
+                    cases: [],
+                    error: errorMsg,
+                  });
                 }
 
                 // Update progress in DB after each establishment search
@@ -296,23 +347,21 @@ export async function POST(req: NextRequest) {
                 // Politeness delay between requests (500ms to avoid eCourts rate limiting)
                 await delay(500);
               }
+
+              if (globalTimedOut) break;
               continue; // proceed to next complex
             }
           }
 
-          // Fallback / standard path for complexes with no establishments
           totalComplexesSearched++;
 
-          const currentYear = new Date().getFullYear();
-          const yearsToSearch = Array.from({ length: 5 }, (_, idx) => String(currentYear - idx));
+          const yearsToSearch = addrYearsToSearch;
 
-          let aggregatedCases: any[] = [];
-          let searchErrorOccurred = false;
-          let searchErrorMessage = "";
+          // ── Per-complex timeout wrapper ──
+          const complexSearchPromise = (async () => {
+            let aggregatedCases: any[] = [];
 
-          for (const year of yearsToSearch) {
-            try {
-              // Use session-reusing search with automatic retry
+            for (const year of yearsToSearch) {
               const { result: searchResult, cookies: updatedCookies } = await searchCourtOrdersWithSession({
                 partyName: candidateName,
                 year,
@@ -321,7 +370,7 @@ export async function POST(req: NextRequest) {
                 distCode: matchedDistrictCode,
                 courtComplex: complex.code,
                 courtComplexArr: complex.arr,
-                estCode: "", // no establishment
+                estCode: "",
                 cookies: sessionCookies,
                 maxRetries: 2,
               });
@@ -337,24 +386,19 @@ export async function POST(req: NextRequest) {
                 })));
               }
 
-              // Small politeness delay between year queries
               await delay(250);
-            } catch (searchError: any) {
-              searchErrorOccurred = true;
-              searchErrorMessage = searchError.message || "Search failed";
-              break;
             }
-          }
 
-          if (searchErrorOccurred) {
-            addressResult.complexSearches.push({
-              complexName: complex.name,
-              complexCode: complex.code,
-              casesFound: 0,
-              cases: [],
-              error: searchErrorMessage,
-            });
-          } else {
+            return aggregatedCases;
+          })();
+
+          const timeoutPromise = new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error(`Complex search timed out after ${PER_ESTABLISHMENT_TIMEOUT_MS / 1000}s`)), PER_ESTABLISHMENT_TIMEOUT_MS)
+          );
+
+          try {
+            const aggregatedCases = await Promise.race([complexSearchPromise, timeoutPromise]);
+
             addressResult.complexSearches.push({
               complexName: complex.name,
               complexCode: complex.code,
@@ -362,6 +406,18 @@ export async function POST(req: NextRequest) {
               cases: aggregatedCases,
             });
             totalCasesFound += aggregatedCases.length;
+          } catch (searchError: any) {
+            const errorMsg = (searchError as any).isDataVolume
+              ? `Data volume issue: too many results for this name`
+              : searchError.message || "Search failed";
+
+            addressResult.complexSearches.push({
+              complexName: complex.name,
+              complexCode: complex.code,
+              casesFound: 0,
+              cases: [],
+              error: errorMsg,
+            });
           }
 
           // Update progress in DB after each complex
@@ -379,6 +435,8 @@ export async function POST(req: NextRequest) {
         }
 
         allResults.push(addressResult);
+
+        if (globalTimedOut) break;
       } catch (stateError: any) {
         errors.push(
           `Address ${i + 1}: Error processing state "${stateName}": ${stateError.message}`
@@ -388,38 +446,51 @@ export async function POST(req: NextRequest) {
 
     // Determine final status and summary
     const hasResults = totalCasesFound > 0;
+    const searchDuration = Math.round((Date.now() - globalStartTime) / 1000);
     const courtRecordSummary = hasResults
-      ? `${totalCasesFound} court record(s) found across ${totalComplexesSearched} court complexes`
-      : `No court records found across ${totalComplexesSearched} court complexes`;
+      ? `${totalCasesFound} court record(s) found across ${totalComplexesSearched} court complexes in ${searchDuration}s${globalTimedOut ? " (partial — timed out)" : ""}`
+      : `No court records found across ${totalComplexesSearched} court complexes in ${searchDuration}s${globalTimedOut ? " (partial — timed out)" : ""}`;
 
-    const finalStatus = errors.length > 0 && allResults.length === 0 
+    const finalStatus = (errors.length > 0 && allResults.length === 0)
       ? "error" 
-      : "completed";
+      : hasResults
+        ? "admin_review"   // Records found → route to admin for manual review
+        : "completed";     // No records → auto-complete
 
     const verificationStatus = finalStatus === "error" 
       ? "Needs Attention" 
-      : "Completed";
+      : finalStatus === "admin_review"
+        ? "Processing"      // Stay within allowed union; UI reads courtRecordStatus for review state
+        : "Completed";
+
+    // Build the update document
+    const updateDoc: Record<string, any> = {
+      courtRecordResults: allResults,
+      courtRecordSummary,
+      courtRecordStatus: finalStatus,
+      courtRecordErrors: errors.length > 0 ? errors : undefined,
+      courtRecordTotalCases: totalCasesFound,
+      courtRecordTotalComplexes: totalComplexesSearched,
+      courtRecordCompletedAt: new Date().toISOString(),
+      courtRecordHasRecords: hasResults,
+      status: verificationStatus,
+      reportDetails: hasResults
+        ? `Court record search completed. ${totalCasesFound} record(s) found across ${totalComplexesSearched} court complexes. Pending admin review.`
+        : `Court record search completed. No records found across ${totalComplexesSearched} court complexes.`,
+    };
+
+    // If records found → flag for admin review; if not → mark as fully completed
+    if (hasResults) {
+      updateDoc.courtRecordAdminReview = true;
+      updateDoc.courtRecordAdminReviewStartedAt = new Date().toISOString();
+    } else {
+      updateDoc.completedAt = new Date().toISOString();
+    }
 
     // Update the verification document with results
     await db.collection("verifications").updateOne(
       { id: verificationId },
-      {
-        $set: {
-          courtRecordResults: allResults,
-          courtRecordSummary,
-          courtRecordStatus: finalStatus,
-          courtRecordErrors: errors.length > 0 ? errors : undefined,
-          courtRecordTotalCases: totalCasesFound,
-          courtRecordTotalComplexes: totalComplexesSearched,
-          courtRecordCompletedAt: new Date().toISOString(),
-          courtRecordHasRecords: hasResults,
-          status: verificationStatus,
-          completedAt: new Date().toISOString(),
-          reportDetails: hasResults
-            ? `Court record search completed. ${totalCasesFound} record(s) found across ${totalComplexesSearched} court complexes.`
-            : `Court record search completed. No records found across ${totalComplexesSearched} court complexes.`,
-        },
-      }
+      { $set: updateDoc }
     );
 
     return NextResponse.json({

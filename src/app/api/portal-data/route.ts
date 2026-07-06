@@ -93,7 +93,7 @@ export async function GET(req: NextRequest) {
       const clean = sanitizeVerifier(v);
       return {
         ...clean,
-        ratePerVerification: organisation ? (organisation.monthlyRate || 0) : (clean.ratePerVerification || 0)
+        ratePerVerification: organisation ? (organisation.monthlyRate || 0) : (clean.ratePerVerification || 0) // Display rate (identity); billing uses per-service org rates
       };
     });
 
@@ -300,6 +300,7 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ error: `Cannot invite verifier. Maximum active verifier limit of ${maxV} reached. Deactivate an existing verifier to free up a slot.` }, { status: 400 });
         }
 
+        // ratePerVerification is display-only (identity rate); billing uses per-service org rates
         await db.collection("verifiers").insertOne({
           id, name, email, org: targetOrgName, status, createdBy: user.email, ratePerVerification: organisation?.monthlyRate || 0
         });

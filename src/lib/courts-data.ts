@@ -61,6 +61,14 @@ export function getCourtComplexesLocal(
       r.district_code === districtCode &&
       !seen.has(r.court_complex_code)
     ) {
+      // Special override: For Bengaluru (state code 3, district code 20),
+      // only search "City Civil Court Complex" (1030135) and "NyayaDegula Court Complex" (1030136).
+      if (stateCode === "3" && districtCode === "20") {
+        if (r.court_complex_code !== "1030135" && r.court_complex_code !== "1030136") {
+          continue;
+        }
+      }
+
       seen.add(r.court_complex_code);
       results.push({
         code: r.court_complex_code,

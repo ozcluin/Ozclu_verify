@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { usePortal, Verification, Invoice, InvoiceActivity } from "src/context/PortalContext";
 import { 
   Filter, 
@@ -30,11 +30,82 @@ import {
   CheckCircle2,
   Building,
   User,
-  AlertCircle
+  AlertCircle,
+  Clock,
+  Timer
 } from "lucide-react";
+
+// ─── Helper: format elapsed/remaining seconds into "Xm Ys" ───
+function formatDuration(totalSeconds: number): string {
+  if (totalSeconds < 0) totalSeconds = 0;
+  const mins = Math.floor(totalSeconds / 60);
+  const secs = Math.floor(totalSeconds % 60);
+  if (mins > 0) return `${mins}m ${secs}s`;
+  return `${secs}s`;
+}
+
+// ─── Search Progress Indicator Component ───
+function SearchProgressIndicator({ verification, now }: { verification: Verification; now: number }) {
+  const MAX_SEARCH_DURATION_S = 180; // 3 minutes max
+
+  // Calculate elapsed time
+  const startedAt = verification.courtRecordSearchStartedAt;
+  let elapsedSeconds = 0;
+  if (startedAt) {
+    elapsedSeconds = Math.max(0, Math.floor((now - new Date(startedAt).getTime()) / 1000));
+  }
+
+  // Parse progress text from backend: "Searched X establishments/complexes, found Y cases"
+  const progress = verification.courtRecordProgress || "";
+  const progressMatch = progress.match(/Searched (\d+) establishments/);
+  const searched = progressMatch ? parseInt(progressMatch[1]) : 0;
+
+  // Calculate remaining time
+  const remainingSeconds = Math.max(0, MAX_SEARCH_DURATION_S - elapsedSeconds);
+  const progressPercent = Math.min(100, Math.round((elapsedSeconds / MAX_SEARCH_DURATION_S) * 100));
+
+  return (
+    <div className="flex flex-col gap-1.5 min-w-[140px]">
+      {/* Live timer */}
+      <div className="flex items-center gap-1.5">
+        <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse shrink-0"></div>
+        <span className="text-[11px] text-[#475569] font-semibold">Searching eCourts...</span>
+      </div>
+
+      {/* Progress bar */}
+      <div className="w-full h-1.5 bg-[#f0f5ea] rounded-full overflow-hidden">
+        <div
+          className="h-full bg-gradient-to-r from-amber-400 to-amber-500 rounded-full transition-all duration-1000 ease-linear"
+          style={{ width: `${Math.max(5, progressPercent)}%` }}
+        />
+      </div>
+
+      {/* Time info */}
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[9px] text-[#475569] font-medium flex items-center gap-1">
+          <Clock className="w-2.5 h-2.5" />
+          {formatDuration(elapsedSeconds)} elapsed
+        </span>
+        <span className="text-[9px] text-amber-600 font-semibold">
+          ≤{formatDuration(remainingSeconds)} left
+        </span>
+      </div>
+
+      {/* Searched count */}
+      {searched > 0 && (
+        <span className="text-[9px] text-[#475569] font-medium">
+          {searched} court(s) checked
+        </span>
+      )}
+    </div>
+  );
+}
 
 export default function OrderSummaryPage() {
   const { verifications, invoices, settings, organisation, submitPaymentProof, fetchVerificationDetail, refreshData } = usePortal();
+
+  // Tick state for live timer updates (re-renders every second when searches are active)
+  const [tickNow, setTickNow] = useState(Date.now());
 
   const [activeInvoice, setActiveInvoice] = useState<Invoice | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<"wire" | "paypal">("wire");
@@ -42,6 +113,27 @@ export default function OrderSummaryPage() {
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [modalClosing, setModalClosing] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Check if any court record searches are currently active
+  const hasActiveSearches = verifications.some(
+    (v) => v.type === "court_record" && v.status === "Processing" && v.courtRecordStatus !== "completed" && v.courtRecordStatus !== "error"
+  );
+
+  // Tick every second while searches are active (for live timer)
+  useEffect(() => {
+    if (!hasActiveSearches) return;
+    const interval = setInterval(() => setTickNow(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, [hasActiveSearches]);
+
+  // Auto-refresh data every 15s while searches are active
+  useEffect(() => {
+    if (!hasActiveSearches) return;
+    const interval = setInterval(() => {
+      refreshData().catch(() => {});
+    }, 15000);
+    return () => clearInterval(interval);
+  }, [hasActiveSearches, refreshData]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -312,6 +404,7 @@ export default function OrderSummaryPage() {
   // Real-time: count all COMPLETED verifications that have NOT been invoiced yet
   const totalCompletedCount = clientVerifications.filter((v) => v.status === "Completed").length;
   const perVerificationRate = organisation?.monthlyRate || 0;
+  const courtRecordRate = organisation?.courtRecordRate !== undefined ? organisation.courtRecordRate : perVerificationRate;
 
   // Calculate total invoiced amount
   const totalInvoicedAmount = clientInvoices.reduce((sum, inv) => sum + inv.amount, 0);
@@ -321,7 +414,14 @@ export default function OrderSummaryPage() {
   
   // Uninvoiced completed verifications count
   const currentMonthCompleted = Math.max(0, totalCompletedCount - totalInvoicedCount);
-  const currentMonthRunningTotal = currentMonthCompleted * perVerificationRate;
+
+  // Calculate running total using service-specific rates
+  const completedVerifications = clientVerifications.filter((v) => v.status === "Completed");
+  const uninvoicedVerifications = completedVerifications.slice(totalInvoicedCount);
+  const currentMonthRunningTotal = uninvoicedVerifications.reduce((sum, v) => {
+    const rate = v.type === "court_record" ? courtRecordRate : perVerificationRate;
+    return sum + rate;
+  }, 0);
 
   // UI state for filter modal, active report modal, billing history modal, and report toast
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -566,7 +666,12 @@ export default function OrderSummaryPage() {
                         <div className="flex flex-col">
                           <span className="font-bold">{v.name}</span>
                           <span className="text-[11px] text-[#475569] font-medium break-words">
-                            {v.type === "court_record" ? (v.courtRecordSummary || "Search in progress...") : v.email}
+                            {v.type === "court_record"
+                              ? (v.courtRecordSummary
+                                || (v.courtRecordProgress
+                                  ? v.courtRecordProgress
+                                  : "Search in progress..."))
+                              : v.email}
                           </span>
                         </div>
                       </td>
@@ -576,12 +681,14 @@ export default function OrderSummaryPage() {
                           className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold tracking-wide uppercase border ${
                             v.status === "Completed"
                               ? "bg-[#E6F8F3] text-[#00684A] border-[#A3EAD6]"
+                              : (v.type === "court_record" && v.courtRecordStatus === "admin_review")
+                              ? "bg-amber-100/60 text-amber-700 border-amber-300/50"
                               : v.status === "Processing"
                               ? "bg-[#f0f5ea]/40 text-[#181d16] border-[#eaf0e4]/70"
                               : "bg-[#FFF4CC]/40 text-[#805b00] border-[#FFF4CC]"
                           }`}
                         >
-                          {v.status}
+                          {(v.type === "court_record" && v.courtRecordStatus === "admin_review") ? "Under Review" : v.status}
                         </span>
                       </td>
                       <td className="py-3.5 px-2.5 text-right">
@@ -594,6 +701,14 @@ export default function OrderSummaryPage() {
                               <span>View Report</span>
                               <ArrowRight className="w-3.5 h-3.5" />
                             </button>
+                          ) : v.courtRecordStatus === "admin_review" ? (
+                            <div className="flex flex-col items-end gap-1 min-w-[140px]">
+                              <div className="flex items-center gap-1.5">
+                                <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse shrink-0"></div>
+                                <span className="text-[11px] text-amber-700 font-bold">Under Review</span>
+                              </div>
+                              <span className="text-[9px] text-[#475569] font-medium text-right leading-tight">Internal verification in progress. Will complete within 12 hours.</span>
+                            </div>
                           ) : v.status === "Needs Attention" ? (
                             <button
                               onClick={() => window.open(`/client/court-record-report?id=${v.id}`, "_blank")}
@@ -603,10 +718,7 @@ export default function OrderSummaryPage() {
                               <AlertTriangle className="w-3.5 h-3.5 text-[#805b00]" />
                             </button>
                           ) : (
-                            <span className="text-[11px] text-[#475569] font-semibold inline-flex items-center gap-1.5">
-                              <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></div>
-                              Searching...
-                            </span>
+                            <SearchProgressIndicator verification={v} now={tickNow} />
                           )
                         ) : v.status === "Completed" ? (
                           <button
@@ -689,7 +801,7 @@ export default function OrderSummaryPage() {
                   <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#eaf0e4]/40 text-[#181d16] border border-[#eaf0e4] uppercase">Live</span>
                 </div>
                 <div className="flex justify-between items-baseline">
-                  <span className="text-xs text-[#475569] font-medium">{currentMonthCompleted} verification{currentMonthCompleted !== 1 ? "s" : ""} × ${perVerificationRate.toFixed(2)}</span>
+                  <span className="text-xs text-[#475569] font-medium">{currentMonthCompleted} verification{currentMonthCompleted !== 1 ? "s" : ""}</span>
                   <span className="font-bold text-sm text-[#181d16]">${currentMonthRunningTotal.toFixed(2)}</span>
                 </div>
               </div>

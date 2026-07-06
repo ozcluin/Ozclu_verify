@@ -58,7 +58,7 @@ function _post(
   endpoint: string,
   payload: Record<string, string>,
   cookies: SessionCookies,
-  timeoutMs = 90000
+  timeoutMs = 30000
 ): Promise<any> {
   return new Promise((resolve, reject) => {
     const body: Record<string, string> = {
@@ -186,6 +186,7 @@ export async function searchCourtOrders({
 
 // ─── 2b. Search with pre-fetched session (for batch searches) ───
 // This avoids creating a new session per complex — prevents "socket hang up"
+// Smart retry: skips retries for data-volume issues (common names causing too many results)
 export async function searchCourtOrdersWithSession({
   partyName,
   year = "",
@@ -224,6 +225,18 @@ export async function searchCourtOrdersWithSession({
     } catch (err: any) {
       lastError = err;
       const msg = (err.message || "").toLowerCase();
+
+      // Check if this is a data-volume issue — eCourts drops connection
+      // when a query returns too many results. Retrying won't help.
+      const isDataVolumeError = isLikelyDataVolumeError(msg, partyName);
+
+      if (isDataVolumeError) {
+        console.log(`[ECOURTS] Skipping retries — likely data volume issue for "${partyName}" (${err.message})`);
+        const dvError = new Error(`Search skipped: eCourts server overwhelmed by too many results for "${partyName}". This is a data volume issue, not a connection error.`);
+        (dvError as any).isDataVolume = true;
+        throw dvError;
+      }
+
       const isRetryable = msg.includes("socket hang up") ||
         msg.includes("econnreset") ||
         msg.includes("timed out") ||
@@ -246,6 +259,42 @@ export async function searchCourtOrdersWithSession({
   }
 
   throw lastError || new Error("Search failed after retries");
+}
+
+// ─── Helper: detect if error is a data-volume issue ───
+// eCourts drops connections when queries return too many results.
+// Common Indian surnames like Kumar, Singh, Sharma etc. often trigger this.
+function isLikelyDataVolumeError(errorMsg: string, partyName: string): boolean {
+  const isConnectionDrop = errorMsg.includes("socket hang up") ||
+    errorMsg.includes("econnreset") ||
+    errorMsg.includes("timed out");
+
+  if (!isConnectionDrop) return false;
+
+  // Check if the party name contains common surnames known to cause data volume issues
+  const commonSurnames = [
+    "kumar", "singh", "sharma", "verma", "gupta", "das", "devi",
+    "yadav", "mishra", "pandey", "jha", "state", "union",
+    "government", "bank", "insurance", "india", "national",
+    "pradesh", "corporation", "company", "limited", "ltd",
+    "society", "trust", "committee", "board", "department",
+  ];
+
+  const nameLower = partyName.toLowerCase().trim();
+  const nameWords = nameLower.split(/\s+/);
+
+  // If the name is just a single common word, it's very likely to cause volume issues
+  if (nameWords.length === 1 && commonSurnames.includes(nameWords[0])) {
+    return true;
+  }
+
+  // If the name is short (1-2 words) and contains a very common surname, likely volume issue
+  if (nameWords.length <= 2) {
+    const hasCommonSurname = nameWords.some((w) => commonSurnames.includes(w));
+    if (hasCommonSurname) return true;
+  }
+
+  return false;
 }
 
 // ─── Internal: perform search with given cookies ───

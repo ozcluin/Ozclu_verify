@@ -68,6 +68,8 @@ export interface Verification {
   courtRecordTotalComplexes?: number;
   courtRecordErrors?: string[];
   courtRecordProgress?: string;
+  courtRecordSearchStartedAt?: string;
+  courtRecordAdminReview?: boolean;
   attempts?: Array<{ date: string; verifier: string; status: string; notes?: string }>;
 }
 
@@ -150,6 +152,9 @@ export interface Organisation {
   paymentNotes?: string;
   createdAt: string;
   maxVerifiers?: number;
+  identityEnabled?: boolean;
+  courtRecordEnabled?: boolean;
+  courtRecordRate?: number;
 }
 
 interface PortalContextType {
@@ -163,7 +168,7 @@ interface PortalContextType {
   addCourtRecordVerification: (params: {
     candidateName: string;
     candidateDob: string;
-    addresses: Array<{ address: string; city: string; state: string; country: string }>;
+    addresses: Array<{ address: string; city: string; state: string; country: string; fromYear?: number; toYear?: number }>;
     orgName: string;
     requestingOrgName: string;
   }) => Promise<any>;
@@ -582,7 +587,7 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const addCourtRecordVerification = async (params: {
     candidateName: string;
     candidateDob: string;
-    addresses: Array<{ address: string; city: string; state: string; country: string }>;
+    addresses: Array<{ address: string; city: string; state: string; country: string; fromYear?: number; toYear?: number }>;
     orgName: string;
     requestingOrgName: string;
   }) => {
