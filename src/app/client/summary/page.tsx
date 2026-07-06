@@ -1017,7 +1017,10 @@ export default function OrderSummaryPage() {
                   {displayVerification.status === "Completed" && (
                     <button
                       onClick={() => {
-                        window.open(`/client/report?id=${displayVerification.id}`, "_blank");
+                        const reportPath = displayVerification.type === "court_record"
+                          ? `/client/court-record-report?id=${displayVerification.id}`
+                          : `/client/report?id=${displayVerification.id}`;
+                        window.open(reportPath, "_blank");
                         setSelectedVerification(null);
                         setSelectedDetail(null);
                       }}
