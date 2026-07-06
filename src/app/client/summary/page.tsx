@@ -280,12 +280,20 @@ export default function OrderSummaryPage() {
     .filter((v) => v.orgName.toLowerCase() === clientCompany.toLowerCase())
     .sort((a, b) => {
       try {
+        // 1. Sort by createdAt ISO string timestamp descending if available
+        if (a.createdAt && b.createdAt) {
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        }
+        // 2. Fallback: Sort by submission date
         const timeA = new Date(a.date).getTime();
         const timeB = new Date(b.date).getTime();
         if (!isNaN(timeA) && !isNaN(timeB)) {
-          return timeB - timeA;
+          if (timeB !== timeA) {
+            return timeB - timeA;
+          }
         }
-        return 0;
+        // 3. Fallback 2: Sort by ID descending (newer requests have higher ID suffixes)
+        return (b.id || "").localeCompare(a.id || "");
       } catch {
         return 0;
       }
@@ -526,32 +534,44 @@ export default function OrderSummaryPage() {
             <table className="w-full text-left font-body-sm whitespace-nowrap">
               <thead>
                 <tr className="border-b border-[#f0f5ea] bg-[#f0f5ea]/20 text-[#181d16] font-bold text-xs">
-                  <th className="py-3 px-4 font-label-caps uppercase tracking-wider">Request ID</th>
-                  <th className="py-3 px-4 font-label-caps uppercase tracking-wider">Subject</th>
-                  <th className="py-3 px-4 font-label-caps uppercase tracking-wider">Date Submitted</th>
-                  <th className="py-3 px-4 font-label-caps uppercase tracking-wider">Status</th>
-                  <th className="py-3 px-4 font-label-caps text-right uppercase tracking-wider">Action</th>
+                  <th className="py-3 px-2.5 font-label-caps uppercase tracking-wider">Request ID</th>
+                  <th className="py-3 px-2.5 font-label-caps uppercase tracking-wider">Type</th>
+                  <th className="py-3 px-2.5 font-label-caps uppercase tracking-wider">Subject</th>
+                  <th className="py-3 px-2.5 font-label-caps uppercase tracking-wider">Date Submitted</th>
+                  <th className="py-3 px-2.5 font-label-caps uppercase tracking-wider">Status</th>
+                  <th className="py-3 px-2.5 font-label-caps text-right uppercase tracking-wider">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#f0f5ea]/40 bg-white">
                 {filteredVerifications.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-8 text-center text-[#475569] text-xs font-medium">
+                    <td colSpan={6} className="py-8 text-center text-[#475569] text-xs font-medium">
                       No verification requests found matching filter constraints.
                     </td>
                   </tr>
                 ) : (
                   paginatedVerifications.map((v) => (
                     <tr key={v.id} className="hover:bg-[#f0f5ea]/15 transition-colors group">
-                      <td className="py-3.5 px-4 font-semibold text-[#181d16] text-xs">{v.id}</td>
-                      <td className="py-3.5 px-4 text-[#181d16] text-xs">
+                      <td className="py-3.5 px-2.5 font-semibold text-[#181d16] text-xs">{v.id}</td>
+                      <td className="py-3.5 px-2.5">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[9px] font-bold tracking-wide uppercase border ${
+                          v.type === "court_record"
+                            ? "bg-amber-50 text-amber-700 border-amber-200"
+                            : "bg-[#E6F8F3] text-[#00684A] border-[#A3EAD6]"
+                        }`}>
+                          {v.type === "court_record" ? "Court Record" : "Identity"}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-2.5 text-[#181d16] text-xs whitespace-normal max-w-[240px]">
                         <div className="flex flex-col">
                           <span className="font-bold">{v.name}</span>
-                          <span className="text-[11px] text-[#475569] font-medium">{v.email}</span>
+                          <span className="text-[11px] text-[#475569] font-medium break-words">
+                            {v.type === "court_record" ? (v.courtRecordSummary || "Search in progress...") : v.email}
+                          </span>
                         </div>
                       </td>
-                      <td className="py-3.5 px-4 text-[#475569] text-xs font-semibold">{v.date}</td>
-                      <td className="py-3.5 px-4">
+                      <td className="py-3.5 px-2.5 text-[#475569] text-xs font-semibold">{v.date}</td>
+                      <td className="py-3.5 px-2.5">
                         <span
                           className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold tracking-wide uppercase border ${
                             v.status === "Completed"
@@ -564,8 +584,31 @@ export default function OrderSummaryPage() {
                           {v.status}
                         </span>
                       </td>
-                      <td className="py-3.5 px-4 text-right">
-                        {v.status === "Completed" ? (
+                      <td className="py-3.5 px-2.5 text-right">
+                        {v.type === "court_record" ? (
+                          v.status === "Completed" || v.courtRecordStatus === "completed" ? (
+                            <button
+                              onClick={() => window.open(`/client/court-record-report?id=${v.id}`, "_blank")}
+                              className="font-bold text-[11px] px-3 py-1.5 rounded-lg bg-[#eaf0e4]/40 text-[#181d16] hover:bg-[#eaf0e4] transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs"
+                            >
+                              <span>View Report</span>
+                              <ArrowRight className="w-3.5 h-3.5" />
+                            </button>
+                          ) : v.status === "Needs Attention" ? (
+                            <button
+                              onClick={() => window.open(`/client/court-record-report?id=${v.id}`, "_blank")}
+                              className="font-bold text-[11px] px-3 py-1.5 rounded-lg bg-[#FFF4CC] text-[#805b00] hover:bg-[#FFF4CC]/85 transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs"
+                            >
+                              <span>View Details</span>
+                              <AlertTriangle className="w-3.5 h-3.5 text-[#805b00]" />
+                            </button>
+                          ) : (
+                            <span className="text-[11px] text-[#475569] font-semibold inline-flex items-center gap-1.5">
+                              <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></div>
+                              Searching...
+                            </span>
+                          )
+                        ) : v.status === "Completed" ? (
                           <button
                             onClick={() => handleViewReport(v)}
                             className="font-bold text-[11px] px-3 py-1.5 rounded-lg bg-[#eaf0e4]/40 text-[#181d16] hover:bg-[#eaf0e4] transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs"

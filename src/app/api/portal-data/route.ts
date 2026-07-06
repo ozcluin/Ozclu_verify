@@ -211,7 +211,8 @@ export async function POST(req: NextRequest) {
           onboardingStatus: "active",
           tempPassword,
           attempts: [initialAttempt],
-          setupUrl
+          setupUrl,
+          createdAt: new Date().toISOString()
         });
  
         if (requestingOrgName && requestingOrgName.trim()) {
@@ -515,6 +516,102 @@ export async function POST(req: NextRequest) {
           metadata: { status }
         });
         break;
+      }
+      case "addCourtRecordVerification": {
+        const { candidateName, candidateDob, addresses, orgName, requestingOrgName: reqOrgName } = payload;
+
+        if (!candidateName?.trim() || !addresses || !Array.isArray(addresses) || addresses.length === 0) {
+          return NextResponse.json({ error: "Candidate name and at least one address are required" }, { status: 400 });
+        }
+
+        const isAdminSession = sessionOrgName?.toLowerCase() === "ozclu" || sessionOrgName?.toLowerCase() === "admin";
+        const safeOrgName = isAdminSession ? (orgName || sessionOrgName) : (sessionOrgName || orgName);
+
+        const cleanOrg = (safeOrgName || "XXX").replace(/[^a-zA-Z]/g, "").slice(0, 3).padEnd(3, "X").toUpperCase();
+        const nowTime = new Date();
+        const dd = String(nowTime.getDate()).padStart(2, "0");
+        const mm = String(nowTime.getMonth() + 1).padStart(2, "0");
+        const yy = String(nowTime.getFullYear()).slice(-2);
+        const dateStr = `${dd}${mm}${yy}`;
+        const prefix = `${cleanOrg}${dateStr}-`;
+
+        const count = await db.collection("verifications").countDocuments({
+          id: { $regex: `^${prefix}` }
+        });
+        const finalId = `${prefix}${String(count + 1).padStart(4, "0")}`;
+
+        const dateFormatted = new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
+
+        const initialAttempt = {
+          date: new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata", hour12: true }).replace(/\u202f/g, " ").toLowerCase(),
+          verifier: "System",
+          status: "Processing",
+          notes: "Court record verification request created. eCourts search initiated."
+        };
+
+        await db.collection("verifications").insertOne({
+          id: finalId,
+          name: candidateName.trim(),
+          email: "",
+          orgName: safeOrgName,
+          requestingOrgName: reqOrgName || safeOrgName,
+          date: dateFormatted,
+          status: "Processing",
+          verifier: null,
+          notes: "Court record search in progress...",
+          type: "court_record",
+          candidateDob: candidateDob || "",
+          addresses,
+          courtRecordStatus: "pending",
+          courtRecordSummary: "Search in progress...",
+          attempts: [initialAttempt],
+          createdAt: new Date().toISOString()
+        });
+
+        if (reqOrgName && reqOrgName.trim()) {
+          await db.collection("settings").updateOne(
+            { companyName: safeOrgName },
+            { $addToSet: { recentRequestingOrgs: reqOrgName.trim() } },
+            { upsert: true }
+          );
+        }
+
+        await logAuditEvent(db, {
+          actorUserId: user.id,
+          actorEmail: user.email,
+          actorRole: user.role,
+          portal: "client",
+          action: "court_record_verification_created",
+          targetType: "verification",
+          targetId: finalId,
+          ip,
+          userAgent,
+          outcome: "success"
+        });
+
+        // Fire and forget the eCourts search (it runs in the background)
+        const baseUrl = req.headers.get("origin") || req.headers.get("host") || "";
+        const searchUrl = baseUrl.startsWith("http") ? `${baseUrl}/api/ecourts-search` : `http://${baseUrl}/api/ecourts-search`;
+
+        // Get the cookie header to forward auth
+        const cookieHeader = req.headers.get("cookie") || "";
+
+        fetch(searchUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Cookie": cookieHeader,
+          },
+          body: JSON.stringify({
+            verificationId: finalId,
+            candidateName: candidateName.trim(),
+            addresses,
+          }),
+        }).catch((err) => {
+          console.error(`[ECOURTS] Failed to trigger search for ${finalId}:`, err.message);
+        });
+
+        return NextResponse.json({ success: true, id: finalId });
       }
       default:
         return NextResponse.json({ error: `Unsupported action: ${action}` }, { status: 400 });

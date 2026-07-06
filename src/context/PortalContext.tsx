@@ -33,6 +33,42 @@ export interface Verification {
   digilockerDocuments?: any[];
   completedAt?: Date | string;
   setupUrl?: string;
+  createdAt?: string;
+  // Court Record Verification fields
+  type?: "identity" | "court_record";
+  candidateDob?: string;
+  addresses?: Array<{ address: string; city: string; state: string; country: string }>;
+  courtRecordResults?: Array<{
+    addressIndex: number;
+    address: string;
+    city: string;
+    state: string;
+    stateCode: string;
+    district: string;
+    districtCode: string;
+    complexSearches: Array<{
+      complexName: string;
+      complexCode: string;
+      establishmentName?: string;
+      establishmentCode?: string;
+      casesFound: number;
+      cases: Array<{
+        caseNumber: string;
+        petitioner: string;
+        respondent: string;
+        orderDate: string;
+      }>;
+      error?: string;
+    }>;
+  }>;
+  courtRecordSummary?: string;
+  courtRecordStatus?: string;
+  courtRecordHasRecords?: boolean;
+  courtRecordTotalCases?: number;
+  courtRecordTotalComplexes?: number;
+  courtRecordErrors?: string[];
+  courtRecordProgress?: string;
+  attempts?: Array<{ date: string; verifier: string; status: string; notes?: string }>;
 }
 
 export interface InvoiceActivity {
@@ -124,6 +160,13 @@ interface PortalContextType {
   organisation: Organisation | null;
   ozcluSettings: CompanySettings | null;
   addVerification: (name: string, email: string, orgName: string, requestingOrgName?: string) => Promise<any>;
+  addCourtRecordVerification: (params: {
+    candidateName: string;
+    candidateDob: string;
+    addresses: Array<{ address: string; city: string; state: string; country: string }>;
+    orgName: string;
+    requestingOrgName: string;
+  }) => Promise<any>;
   updateSettings: (newSettings: CompanySettings) => Promise<void>;
   inviteVerifier: (name: string, email: string, org: string, password?: string, designation?: string) => Promise<void>;
   updateVerifierStatus: (verifierId: string, status: "Active" | "Inactive") => Promise<void>;
@@ -536,6 +579,34 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   };
 
+  const addCourtRecordVerification = async (params: {
+    candidateName: string;
+    candidateDob: string;
+    addresses: Array<{ address: string; city: string; state: string; country: string }>;
+    orgName: string;
+    requestingOrgName: string;
+  }) => {
+    try {
+      const res = await fetch("/api/portal-data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "addCourtRecordVerification",
+          payload: params,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        fetchAllData();
+        return data;
+      }
+    } catch (err) {
+      console.error("Failed creating court record verification:", err);
+    }
+    fetchAllData();
+    return null;
+  };
+
   return (
     <PortalContext.Provider
       value={{
@@ -546,6 +617,7 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         organisation,
         ozcluSettings,
         addVerification,
+        addCourtRecordVerification,
         updateSettings,
         inviteVerifier,
         updateVerifierStatus,
