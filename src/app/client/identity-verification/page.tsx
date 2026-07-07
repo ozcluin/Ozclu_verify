@@ -766,6 +766,21 @@ export default function IdentityVerification() {
                     }`}
                   />
                 </div>
+                {crCandidateDob && (() => {
+                  const dob = new Date(crCandidateDob);
+                  const today = new Date();
+                  if (isNaN(dob.getTime()) || dob > today) return null;
+                  let years = today.getFullYear() - dob.getFullYear();
+                  let months = today.getMonth() - dob.getMonth();
+                  if (today.getDate() < dob.getDate()) months--;
+                  if (months < 0) { years--; months += 12; }
+                  return (
+                    <p className="text-xs font-semibold text-slate-500 mt-1.5 flex items-center gap-1.5">
+                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                      Age: <span className="font-bold text-slate-700">{years} year{years !== 1 ? "s" : ""}{months > 0 ? `, ${months} month${months !== 1 ? "s" : ""}` : ""}</span>
+                    </p>
+                  );
+                })()}
               </div>
 
               {/* Addresses Section */}

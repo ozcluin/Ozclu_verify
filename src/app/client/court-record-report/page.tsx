@@ -315,8 +315,8 @@ function CourtRecordReportContent() {
                       <span className="text-xs font-bold text-[#1B365D]">
                         {result.district}, {result.state}
                       </span>
-                      {result.city && (
-                        <span className="text-[10px] text-slate-500 ml-2">(City: {result.city})</span>
+                      {result.address && (
+                        <div className="text-[10px] text-slate-500 mt-0.5">{result.address}{result.city ? `, ${result.city}` : ""}{result.state ? `, ${result.state}` : ""}</div>
                       )}
                     </div>
                     <span className="text-[10px] font-bold text-slate-500 uppercase">
