@@ -570,9 +570,9 @@ export default function OrderSummaryPage() {
       )}
 
       {/* Bento Grid Layout */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 max-w-6xl">
-        {/* Request Summary (Spans 2 columns on xl screens) */}
-        <section className="xl:col-span-2 bg-white border border-[#eaf0e4] rounded-3xl p-6 flex flex-col gap-6 shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 w-full max-w-none">
+        {/* Request Summary (Spans 3 columns on xl screens) */}
+        <section className="xl:col-span-3 bg-white border border-[#eaf0e4] rounded-3xl p-6 flex flex-col gap-6 shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1">
           <div className="absolute top-0 left-0 right-0 h-1 bg-[#eaf0e4]"></div>
           <div className="flex justify-between items-center mb-1 relative">
             <h3 className="font-semibold text-lg text-[#181d16]">Request Summary</h3>
@@ -913,7 +913,7 @@ export default function OrderSummaryPage() {
                           {v.type === "court_record" ? "Court Record" : "Identity"}
                         </span>
                       </td>
-                      <td className="py-3.5 px-2.5 text-[#181d16] text-xs whitespace-normal max-w-[240px]">
+                      <td className="py-3.5 px-2.5 text-[#181d16] text-xs whitespace-normal max-w-[450px]">
                         <div className="flex flex-col">
                           <span className="font-bold">{v.name}</span>
                           <span className="text-[11px] text-[#475569] font-medium break-words">
@@ -1028,7 +1028,7 @@ export default function OrderSummaryPage() {
         </section>
 
         {/* Sidebar Cards Column */}
-        <div className="flex flex-col gap-6">
+        <div className="xl:col-span-1 flex flex-col gap-6">
           {/* Redesigned Invoices & Billing Panel */}
           <section className="bg-white border border-[#eaf0e4] rounded-3xl p-6 flex flex-col gap-5 relative overflow-hidden group shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-1">
             <div className="absolute -right-10 -top-10 w-32 h-32 bg-[#eaf0e4] opacity-25 rounded-full blur-2xl group-hover:opacity-35 transition-opacity pointer-events-none"></div>
