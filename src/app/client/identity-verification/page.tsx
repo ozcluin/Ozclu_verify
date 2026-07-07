@@ -790,17 +790,6 @@ export default function IdentityVerification() {
                     <MapPin className="w-3.5 h-3.5 text-slate-500" />
                     Addresses
                   </label>
-                  <button
-                    type="button"
-                    onClick={addAddress}
-                    disabled={isSettingsIncomplete}
-                    className={`px-3 py-1.5 border border-slate-300 text-xs font-bold text-slate-800 hover:text-emerald-800 hover:border-emerald-500 hover:bg-emerald-50/30 rounded-lg flex items-center gap-1 transition-all shadow-2xs ${
-                      isSettingsIncomplete ? "opacity-50 cursor-not-allowed" : "cursor-pointer active:scale-95"
-                    }`}
-                  >
-                    <Plus className="w-3.5 h-3.5 text-emerald-700" />
-                    Add Address
-                  </button>
                 </div>
 
                 {crAddresses.map((addr, index) => (
@@ -1015,6 +1004,20 @@ export default function IdentityVerification() {
                     </div>
                   </div>
                 ))}
+
+                <div className="flex justify-end mt-1">
+                  <button
+                    type="button"
+                    onClick={addAddress}
+                    disabled={isSettingsIncomplete}
+                    className={`px-3 py-1.5 border border-slate-300 text-xs font-bold text-slate-800 hover:text-emerald-800 hover:border-emerald-500 hover:bg-emerald-50/30 rounded-lg flex items-center gap-1 transition-all shadow-2xs ${
+                      isSettingsIncomplete ? "opacity-50 cursor-not-allowed" : "cursor-pointer active:scale-95"
+                    }`}
+                  >
+                    <Plus className="w-3.5 h-3.5 text-emerald-700" />
+                    Add Address
+                  </button>
+                </div>
               </div>
 
               {/* Requesting ORG Name */}
