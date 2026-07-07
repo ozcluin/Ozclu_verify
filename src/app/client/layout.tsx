@@ -270,7 +270,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       )}
 
       {/* Page Canvas Container */}
-      <div className="flex-1 md:ml-sidebar-width flex flex-col min-h-screen">
+      <div className="flex-1 min-w-0 md:ml-sidebar-width flex flex-col min-h-screen">
         {/* Floating Top AppBar */}
         <header className="h-16 fixed top-0 right-0 w-[calc(100%-32px)] md:w-[calc(100%-292px)] mx-4 my-3 bg-white/85 backdrop-blur-md border border-[#eaf0e4] rounded-2xl z-20 flex justify-between items-center px-6 transition-all duration-200 shadow-sm">
           <div className="flex items-center gap-4">
@@ -389,7 +389,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         </header>
 
         {/* Content Area */}
-        <main className="flex-1 mt-20 p-margin-mobile md:p-gutter max-w-container-max mx-auto w-full">
+        <main className="flex-1 min-w-0 mt-20 p-margin-mobile md:p-gutter max-w-container-max mx-auto w-full">
           {children}
         </main>
       </div>

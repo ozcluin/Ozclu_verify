@@ -578,7 +578,7 @@ export default function IdentityVerification() {
 
           {/* Credentials Modal */}
           {createdCredentials && (
-            <div className="fixed inset-0 bg-slate-400/10 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fade-in">
+            <div className="fixed inset-0 bg-slate-400/10 backdrop-blur-md flex items-center justify-center p-4 z-[99999] animate-fade-in">
               <div className="bg-white border border-[#eaf0e4] rounded-3xl p-8 max-w-lg w-full shadow-2xl relative animate-scale-up">
                 <div className="flex flex-col items-center text-center gap-4">
                   <div className="w-16 h-16 bg-[#E6F8F3] border border-[#A3EAD6] rounded-full flex items-center justify-center text-[#00684A] mb-2 animate-bounce-subtle">
@@ -1106,7 +1106,7 @@ export default function IdentityVerification() {
 
           {/* Success Modal for Court Record */}
           {crCreatedId && (
-            <div className="fixed inset-0 bg-slate-400/10 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fade-in">
+            <div className="fixed inset-0 bg-slate-400/10 backdrop-blur-md flex items-center justify-center p-4 z-[99999] animate-fade-in">
               <div className="bg-white border border-[#eaf0e4] rounded-3xl p-8 max-w-lg w-full shadow-2xl relative animate-scale-up">
                 <div className="flex flex-col items-center text-center gap-4">
                   <div className="w-16 h-16 bg-[#E6F8F3] border border-[#A3EAD6] rounded-full flex items-center justify-center text-[#00684A] mb-2 animate-bounce-subtle">

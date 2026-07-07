@@ -32,7 +32,11 @@ import {
   User,
   AlertCircle,
   Clock,
-  Timer
+  Timer,
+  Layers,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
 } from "lucide-react";
 
 // ─── Helper: format elapsed/remaining seconds into "Xm Ys" ───
@@ -430,6 +434,11 @@ export default function OrderSummaryPage() {
     return new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" });
   });
   const [monthDropdownOpen, setMonthDropdownOpen] = useState(false);
+  const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [typeDropdownOpen, setTypeDropdownOpen] = useState(false);
+  const [sortField, setSortField] = useState<"date" | "subject" | "id" | "type" | "status">("date");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedVerification, setSelectedVerification] = useState<Verification | null>(null);
   const [selectedDetail, setSelectedDetail] = useState<Verification | null>(null);
@@ -440,7 +449,7 @@ export default function OrderSummaryPage() {
 
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [statusFilter, monthFilter]);
+  }, [statusFilter, monthFilter, typeFilter]);
 
   // Dynamically extract month-year options from verifications
   const monthOptions = Array.from(
@@ -485,6 +494,7 @@ export default function OrderSummaryPage() {
 
   const filteredVerifications = clientVerifications.filter((v) => {
     const matchesStatus = statusFilter === "all" || v.status.toLowerCase() === statusFilter.toLowerCase();
+    const matchesType = typeFilter === "all" || (v.type || "identity").toLowerCase() === typeFilter.toLowerCase();
     
     let matchesMonth = true;
     if (monthFilter !== "all") {
@@ -501,12 +511,42 @@ export default function OrderSummaryPage() {
       }
     }
     
-    return matchesStatus && matchesMonth;
+    return matchesStatus && matchesMonth && matchesType;
+  });
+
+  const sortedVerifications = [...filteredVerifications].sort((a, b) => {
+    let comparison = 0;
+    if (sortField === "date") {
+      try {
+        const timeA = a.createdAt ? new Date(a.createdAt).getTime() : new Date(a.date).getTime();
+        const timeB = b.createdAt ? new Date(b.createdAt).getTime() : new Date(b.date).getTime();
+        if (!isNaN(timeA) && !isNaN(timeB)) {
+          comparison = timeA - timeB;
+        } else {
+          comparison = (a.id || "").localeCompare(b.id || "");
+        }
+      } catch {
+        comparison = 0;
+      }
+    } else if (sortField === "subject") {
+      comparison = (a.name || "").localeCompare(b.name || "");
+    } else if (sortField === "id") {
+      comparison = (a.id || "").localeCompare(b.id || "");
+    } else if (sortField === "type") {
+      const typeA = a.type === "court_record" ? "court record" : "identity";
+      const typeB = b.type === "court_record" ? "court record" : "identity";
+      comparison = typeA.localeCompare(typeB);
+    } else if (sortField === "status") {
+      const statusA = (a.type === "court_record" && a.courtRecordStatus === "admin_review") ? "under review" : a.status.toLowerCase();
+      const statusB = (b.type === "court_record" && b.courtRecordStatus === "admin_review") ? "under review" : b.status.toLowerCase();
+      comparison = statusA.localeCompare(statusB);
+    }
+    return sortOrder === "asc" ? comparison : -comparison;
   });
 
   const itemsPerPage = 5;
-  const totalPages = Math.ceil(filteredVerifications.length / itemsPerPage) || 1;
-  const paginatedVerifications = filteredVerifications.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const totalPages = Math.ceil(sortedVerifications.length / itemsPerPage) || 1;
+  const paginatedVerifications = sortedVerifications.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <>
@@ -536,7 +576,7 @@ export default function OrderSummaryPage() {
           <div className="absolute top-0 left-0 right-0 h-1 bg-[#eaf0e4]"></div>
           <div className="flex justify-between items-center mb-1 relative">
             <h3 className="font-semibold text-lg text-[#181d16]">Request Summary</h3>
-            <div className="flex gap-2 relative">
+            <div className="flex flex-wrap gap-2 relative justify-end items-center">
               {/* Small Refresh Button */}
               <button
                 onClick={handleRefresh}
@@ -553,6 +593,8 @@ export default function OrderSummaryPage() {
                   onClick={() => {
                     setMonthDropdownOpen(!monthDropdownOpen);
                     setFilterDropdownOpen(false);
+                    setTypeDropdownOpen(false);
+                    setSortDropdownOpen(false);
                   }}
                   className="font-bold text-xs text-[#181d16] bg-white hover:bg-[#f0f5ea]/35 px-4 py-2.5 rounded-xl transition-all border border-[#eaf0e4] flex items-center gap-2 cursor-pointer shadow-2xs"
                 >
@@ -593,12 +635,55 @@ export default function OrderSummaryPage() {
                 )}
               </div>
 
+              {/* Type Filter Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => {
+                    setTypeDropdownOpen(!typeDropdownOpen);
+                    setMonthDropdownOpen(false);
+                    setFilterDropdownOpen(false);
+                    setSortDropdownOpen(false);
+                  }}
+                  className="font-bold text-xs text-[#181d16] bg-white hover:bg-[#f0f5ea]/35 px-4 py-2.5 rounded-xl transition-all border border-[#eaf0e4] flex items-center gap-2 cursor-pointer shadow-2xs"
+                >
+                  <Layers className="w-4 h-4 text-[#00450e]" />
+                  <span>Type: {typeFilter === "all" ? "ALL" : typeFilter === "court_record" ? "COURT RECORD" : "IDENTITY"}</span>
+                </button>
+
+                {typeDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white border border-[#eaf0e4] rounded-xl shadow-lg z-30 overflow-hidden animate-fade-in">
+                    <div className="p-1 flex flex-col gap-1 font-body-sm">
+                      {[
+                        { key: "all", label: "ALL" },
+                        { key: "identity", label: "IDENTITY" },
+                        { key: "court_record", label: "COURT RECORD" }
+                      ].map((item) => (
+                        <button
+                          key={item.key}
+                          onClick={() => {
+                            setTypeFilter(item.key);
+                            setTypeDropdownOpen(false);
+                          }}
+                          className={`text-left px-3 py-2 rounded-lg text-xs transition-colors cursor-pointer font-semibold ${
+                            typeFilter === item.key ? "bg-[#eaf0e4] text-[#181d16]" : "text-[#475569] hover:bg-[#f0f5ea]/30 hover:text-[#181d16]"
+                          }`}
+                        >
+                          {item.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {/* Status Filter Dropdown */}
               <div className="relative">
                 <button
                   onClick={() => {
                     setFilterDropdownOpen(!filterDropdownOpen);
                     setMonthDropdownOpen(false);
+                    setTypeDropdownOpen(false);
+                    setSortDropdownOpen(false);
                   }}
                   className="font-bold text-xs text-[#181d16] bg-white hover:bg-[#f0f5ea]/35 px-4 py-2.5 rounded-xl transition-all border border-[#eaf0e4] flex items-center gap-2 cursor-pointer shadow-2xs"
                 >
@@ -609,7 +694,7 @@ export default function OrderSummaryPage() {
                 {filterDropdownOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white border border-[#eaf0e4] rounded-xl shadow-lg z-30 overflow-hidden animate-fade-in">
                     <div className="p-1 flex flex-col gap-1 font-body-sm">
-                      {["all", "Completed", "Processing", "Needs Attention"].map((status) => (
+                      {["all", "Completed", "Processing"].map((status) => (
                         <button
                           key={status}
                           onClick={() => {
@@ -627,6 +712,57 @@ export default function OrderSummaryPage() {
                   </div>
                 )}
               </div>
+
+              {/* Sort By Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => {
+                    setSortDropdownOpen(!sortDropdownOpen);
+                    setMonthDropdownOpen(false);
+                    setFilterDropdownOpen(false);
+                    setTypeDropdownOpen(false);
+                  }}
+                  className="font-bold text-xs text-[#181d16] bg-white hover:bg-[#f0f5ea]/35 px-4 py-2.5 rounded-xl transition-all border border-[#eaf0e4] flex items-center gap-2 cursor-pointer shadow-2xs"
+                >
+                  <ArrowUpDown className="w-4 h-4 text-[#00450e]" />
+                  <span>Sort: {sortField === "date" ? (sortOrder === "desc" ? "Newest First" : "Oldest First") : `${sortField.toUpperCase()} (${sortOrder.toUpperCase()})`}</span>
+                </button>
+
+                {sortDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-52 bg-white border border-[#eaf0e4] rounded-xl shadow-lg z-30 overflow-hidden animate-fade-in">
+                    <div className="p-1 flex flex-col gap-1 font-body-sm max-h-64 overflow-y-auto">
+                      {[
+                        { field: "date", order: "desc", label: "Date: Newest First" },
+                        { field: "date", order: "asc", label: "Date: Oldest First" },
+                        { field: "subject", order: "asc", label: "Subject: A to Z" },
+                        { field: "subject", order: "desc", label: "Subject: Z to A" },
+                        { field: "id", order: "asc", label: "ID: Ascending" },
+                        { field: "id", order: "desc", label: "ID: Descending" },
+                        { field: "type", order: "asc", label: "Type: A to Z" },
+                        { field: "type", order: "desc", label: "Type: Z to A" },
+                        { field: "status", order: "asc", label: "Status: A to Z" },
+                        { field: "status", order: "desc", label: "Status: Z to A" },
+                      ].map((opt) => (
+                        <button
+                          key={`${opt.field}-${opt.order}`}
+                          onClick={() => {
+                            setSortField(opt.field as any);
+                            setSortOrder(opt.order as any);
+                            setSortDropdownOpen(false);
+                          }}
+                          className={`text-left px-3 py-2 rounded-lg text-xs transition-colors cursor-pointer font-semibold ${
+                            sortField === opt.field && sortOrder === opt.order
+                              ? "bg-[#eaf0e4] text-[#181d16]"
+                              : "text-[#475569] hover:bg-[#f0f5ea]/30 hover:text-[#181d16]"
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -634,16 +770,131 @@ export default function OrderSummaryPage() {
             <table className="w-full text-left font-body-sm whitespace-nowrap">
               <thead>
                 <tr className="border-b border-[#f0f5ea] bg-[#f0f5ea]/20 text-[#181d16] font-bold text-xs">
-                  <th className="py-3 px-2.5 font-label-caps uppercase tracking-wider">Request ID</th>
-                  <th className="py-3 px-2.5 font-label-caps uppercase tracking-wider">Type</th>
-                  <th className="py-3 px-2.5 font-label-caps uppercase tracking-wider">Subject</th>
-                  <th className="py-3 px-2.5 font-label-caps uppercase tracking-wider">Date Submitted</th>
-                  <th className="py-3 px-2.5 font-label-caps uppercase tracking-wider">Status</th>
+                  <th 
+                    onClick={() => {
+                      if (sortField === "id") {
+                        setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                      } else {
+                        setSortField("id");
+                        setSortOrder("asc");
+                      }
+                    }}
+                    className="py-3 px-2.5 font-label-caps uppercase tracking-wider cursor-pointer hover:bg-[#f0f5ea]/40 transition-colors select-none group rounded-lg animate-fade-in"
+                  >
+                    <div className="flex items-center gap-1">
+                      <span>Request ID</span>
+                      {sortField === "id" ? (
+                        sortOrder === "asc" ? (
+                          <ArrowUp className="w-3.5 h-3.5 text-[#00450e] inline" />
+                        ) : (
+                          <ArrowDown className="w-3.5 h-3.5 text-[#00450e] inline" />
+                        )
+                      ) : (
+                        <ArrowUpDown className="w-3 h-3 text-slate-400 group-hover:text-slate-600 transition-colors" />
+                      )}
+                    </div>
+                  </th>
+                  <th 
+                    onClick={() => {
+                      if (sortField === "type") {
+                        setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                      } else {
+                        setSortField("type");
+                        setSortOrder("asc");
+                      }
+                    }}
+                    className="py-3 px-2.5 font-label-caps uppercase tracking-wider cursor-pointer hover:bg-[#f0f5ea]/40 transition-colors select-none group rounded-lg"
+                  >
+                    <div className="flex items-center gap-1">
+                      <span>Type</span>
+                      {sortField === "type" ? (
+                        sortOrder === "asc" ? (
+                          <ArrowUp className="w-3.5 h-3.5 text-[#00450e] inline" />
+                        ) : (
+                          <ArrowDown className="w-3.5 h-3.5 text-[#00450e] inline" />
+                        )
+                      ) : (
+                        <ArrowUpDown className="w-3 h-3 text-slate-400 group-hover:text-slate-600 transition-colors" />
+                      )}
+                    </div>
+                  </th>
+                  <th 
+                    onClick={() => {
+                      if (sortField === "subject") {
+                        setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                      } else {
+                        setSortField("subject");
+                        setSortOrder("asc");
+                      }
+                    }}
+                    className="py-3 px-2.5 font-label-caps uppercase tracking-wider cursor-pointer hover:bg-[#f0f5ea]/40 transition-colors select-none group rounded-lg"
+                  >
+                    <div className="flex items-center gap-1">
+                      <span>Subject</span>
+                      {sortField === "subject" ? (
+                        sortOrder === "asc" ? (
+                          <ArrowUp className="w-3.5 h-3.5 text-[#00450e] inline" />
+                        ) : (
+                          <ArrowDown className="w-3.5 h-3.5 text-[#00450e] inline" />
+                        )
+                      ) : (
+                        <ArrowUpDown className="w-3 h-3 text-slate-400 group-hover:text-slate-600 transition-colors" />
+                      )}
+                    </div>
+                  </th>
+                  <th 
+                    onClick={() => {
+                      if (sortField === "date") {
+                        setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                      } else {
+                        setSortField("date");
+                        setSortOrder("desc");
+                      }
+                    }}
+                    className="py-3 px-2.5 font-label-caps uppercase tracking-wider cursor-pointer hover:bg-[#f0f5ea]/40 transition-colors select-none group rounded-lg"
+                  >
+                    <div className="flex items-center gap-1">
+                      <span>Date Submitted</span>
+                      {sortField === "date" ? (
+                        sortOrder === "asc" ? (
+                          <ArrowUp className="w-3.5 h-3.5 text-[#00450e] inline" />
+                        ) : (
+                          <ArrowDown className="w-3.5 h-3.5 text-[#00450e] inline" />
+                        )
+                      ) : (
+                        <ArrowUpDown className="w-3 h-3 text-slate-400 group-hover:text-slate-600 transition-colors" />
+                      )}
+                    </div>
+                  </th>
+                  <th 
+                    onClick={() => {
+                      if (sortField === "status") {
+                        setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                      } else {
+                        setSortField("status");
+                        setSortOrder("asc");
+                      }
+                    }}
+                    className="py-3 px-2.5 font-label-caps uppercase tracking-wider cursor-pointer hover:bg-[#f0f5ea]/40 transition-colors select-none group rounded-lg"
+                  >
+                    <div className="flex items-center gap-1">
+                      <span>Status</span>
+                      {sortField === "status" ? (
+                        sortOrder === "asc" ? (
+                          <ArrowUp className="w-3.5 h-3.5 text-[#00450e] inline" />
+                        ) : (
+                          <ArrowDown className="w-3.5 h-3.5 text-[#00450e] inline" />
+                        )
+                      ) : (
+                        <ArrowUpDown className="w-3 h-3 text-slate-400 group-hover:text-slate-600 transition-colors" />
+                      )}
+                    </div>
+                  </th>
                   <th className="py-3 px-2.5 font-label-caps text-right uppercase tracking-wider">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#f0f5ea]/40 bg-white">
-                {filteredVerifications.length === 0 ? (
+                {sortedVerifications.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="py-8 text-center text-[#475569] text-xs font-medium">
                       No verification requests found matching filter constraints.
@@ -755,7 +1006,7 @@ export default function OrderSummaryPage() {
           
           <div className="mt-2 pt-4 border-t border-[#f0f5ea]/60 flex justify-between items-center text-xs">
             <span className="text-[#475569] font-medium">
-              Showing {paginatedVerifications.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0}-{Math.min(currentPage * itemsPerPage, filteredVerifications.length)} of {filteredVerifications.length} requests
+              Showing {paginatedVerifications.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0}-{Math.min(currentPage * itemsPerPage, sortedVerifications.length)} of {sortedVerifications.length} requests
             </span>
             <div className="flex gap-2">
               <button 
