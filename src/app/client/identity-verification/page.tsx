@@ -228,6 +228,7 @@ export default function IdentityVerification() {
 
   const handleCourtRecordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    window.scrollTo({ top: 0, behavior: "smooth" });
     setCrErrorMsg("");
     setCrSuccessMsg("");
     setCrCreatedId(null);
