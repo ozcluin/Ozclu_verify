@@ -37,6 +37,10 @@ export interface Verification {
   // Court Record Verification fields
   type?: "identity" | "court_record";
   candidateDob?: string;
+  candidateFatherName?: string;
+  candidateMotherName?: string;
+  candidateIsMarried?: boolean;
+  candidateHusbandName?: string;
   addresses?: Array<{ address: string; city: string; state: string; country: string }>;
   courtRecordResults?: Array<{
     addressIndex: number;
@@ -168,6 +172,10 @@ interface PortalContextType {
   addCourtRecordVerification: (params: {
     candidateName: string;
     candidateDob: string;
+    candidateFatherName: string;
+    candidateMotherName: string;
+    candidateIsMarried: boolean;
+    candidateHusbandName?: string;
     addresses: Array<{ address: string; city: string; state: string; country: string; fromYear?: number; toYear?: number }>;
     orgName: string;
     requestingOrgName: string;
@@ -587,6 +595,10 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const addCourtRecordVerification = async (params: {
     candidateName: string;
     candidateDob: string;
+    candidateFatherName: string;
+    candidateMotherName: string;
+    candidateIsMarried: boolean;
+    candidateHusbandName?: string;
     addresses: Array<{ address: string; city: string; state: string; country: string; fromYear?: number; toYear?: number }>;
     orgName: string;
     requestingOrgName: string;

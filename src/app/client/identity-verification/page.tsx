@@ -79,6 +79,10 @@ export default function IdentityVerification() {
   const currentYear = new Date().getFullYear();
   const [crCandidateName, setCrCandidateName] = useState("");
   const [crCandidateDob, setCrCandidateDob] = useState("");
+  const [crFatherName, setCrFatherName] = useState("");
+  const [crMotherName, setCrMotherName] = useState("");
+  const [crIsMarried, setCrIsMarried] = useState(false);
+  const [crHusbandName, setCrHusbandName] = useState("");
   const [crRequestingOrgName, setCrRequestingOrgName] = useState("");
   const [crShowOrgDropdown, setCrShowOrgDropdown] = useState(false);
   const [crAddresses, setCrAddresses] = useState<
@@ -253,6 +257,18 @@ export default function IdentityVerification() {
       setCrErrorMsg("Candidate Date of Birth is required");
       return;
     }
+    if (!crFatherName.trim()) {
+      setCrErrorMsg("Father's Name is required");
+      return;
+    }
+    if (!crMotherName.trim()) {
+      setCrErrorMsg("Mother's Name is required");
+      return;
+    }
+    if (crIsMarried && !crHusbandName.trim()) {
+      setCrErrorMsg("Husband's Name is required when the candidate is married");
+      return;
+    }
 
     // Validate addresses
     for (let i = 0; i < crAddresses.length; i++) {
@@ -287,6 +303,10 @@ export default function IdentityVerification() {
       const res = await addCourtRecordVerification({
         candidateName: crCandidateName.trim(),
         candidateDob: crCandidateDob,
+        candidateFatherName: crFatherName.trim(),
+        candidateMotherName: crMotherName.trim(),
+        candidateIsMarried: crIsMarried,
+        candidateHusbandName: crIsMarried ? crHusbandName.trim() : undefined,
         addresses: crAddresses,
         orgName: effectiveOrgName,
         requestingOrgName: crRequestingOrgName.trim(),
@@ -297,6 +317,10 @@ export default function IdentityVerification() {
         setCrCreatedId(res.id);
         setCrCandidateName("");
         setCrCandidateDob("");
+        setCrFatherName("");
+        setCrMotherName("");
+        setCrIsMarried(false);
+        setCrHusbandName("");
         setCrAddresses([{ address: "", city: "", state: "", stateCode: "", districtCode: "", country: "India", fromYear: currentYear - 2, toYear: currentYear }]);
         setCrRequestingOrgName("");
       } else {
@@ -312,6 +336,10 @@ export default function IdentityVerification() {
   const handleCourtRecordCancel = () => {
     setCrCandidateName("");
     setCrCandidateDob("");
+    setCrFatherName("");
+    setCrMotherName("");
+    setCrIsMarried(false);
+    setCrHusbandName("");
     setCrAddresses([{ address: "", city: "", state: "", stateCode: "", districtCode: "", country: "India", fromYear: currentYear - 2, toYear: currentYear }]);
     setCrRequestingOrgName("");
     setCrErrorMsg("");
@@ -782,6 +810,108 @@ export default function IdentityVerification() {
                     </p>
                   );
                 })()}
+              </div>
+
+              {/* Family Details Section */}
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <span className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                    <svg className="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    Family Details
+                  </span>
+                </div>
+
+                {/* Father's Name & Mother's Name row */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider" htmlFor="cr-father-name">
+                      Father's Name *
+                    </label>
+                    <input
+                      id="cr-father-name"
+                      type="text"
+                      value={crFatherName}
+                      onChange={(e) => setCrFatherName(e.target.value)}
+                      autoComplete="off"
+                      disabled={isSettingsIncomplete}
+                      className={`border border-slate-300 rounded-xl p-3 font-body-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-650 transition-all bg-white placeholder-slate-400 font-semibold text-sm shadow-2xs ${
+                        isSettingsIncomplete ? "bg-slate-100 text-slate-500 cursor-not-allowed border-slate-200 opacity-80" : ""
+                      }`}
+                      placeholder="Enter father's full name"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider" htmlFor="cr-mother-name">
+                      Mother's Name *
+                    </label>
+                    <input
+                      id="cr-mother-name"
+                      type="text"
+                      value={crMotherName}
+                      onChange={(e) => setCrMotherName(e.target.value)}
+                      autoComplete="off"
+                      disabled={isSettingsIncomplete}
+                      className={`border border-slate-300 rounded-xl p-3 font-body-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-650 transition-all bg-white placeholder-slate-400 font-semibold text-sm shadow-2xs ${
+                        isSettingsIncomplete ? "bg-slate-100 text-slate-500 cursor-not-allowed border-slate-200 opacity-80" : ""
+                      }`}
+                      placeholder="Enter mother's full name"
+                    />
+                  </div>
+                </div>
+
+                {/* Marital Status Toggle */}
+                <div className="flex flex-col gap-2">
+                  <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                    Marital Status
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCrIsMarried(!crIsMarried);
+                        if (crIsMarried) setCrHusbandName("");
+                      }}
+                      disabled={isSettingsIncomplete}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 ${
+                        isSettingsIncomplete ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                      } ${
+                        crIsMarried ? "bg-emerald-600" : "bg-slate-300"
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-300 ${
+                          crIsMarried ? "translate-x-6" : "translate-x-1"
+                        }`}
+                      />
+                    </button>
+                    <span className={`text-xs font-semibold ${
+                      crIsMarried ? "text-emerald-800" : "text-slate-500"
+                    }`}>
+                      {crIsMarried ? "Married" : "Not Married"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Husband's Name (conditional) */}
+                {crIsMarried && (
+                  <div className="flex flex-col gap-1.5 animate-fade-in">
+                    <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider" htmlFor="cr-husband-name">
+                      Husband's Name *
+                    </label>
+                    <input
+                      id="cr-husband-name"
+                      type="text"
+                      value={crHusbandName}
+                      onChange={(e) => setCrHusbandName(e.target.value)}
+                      autoComplete="off"
+                      disabled={isSettingsIncomplete}
+                      className={`border border-slate-300 rounded-xl p-3 font-body-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-650 transition-all bg-white placeholder-slate-400 font-semibold text-sm shadow-2xs ${
+                        isSettingsIncomplete ? "bg-slate-100 text-slate-500 cursor-not-allowed border-slate-200 opacity-80" : ""
+                      }`}
+                      placeholder="Enter husband's full name"
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Addresses Section */}
