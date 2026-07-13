@@ -111,7 +111,6 @@ function CourtRecordReportContent() {
   const totalCases = verification.courtRecordTotalCases || 0;
   const totalComplexes = verification.courtRecordTotalComplexes || 0;
   const results = verification.courtRecordResults || [];
-  const searchErrors = verification.courtRecordErrors || [];
   const isSearchComplete = verification.courtRecordStatus === "completed" || verification.courtRecordStatus === "error";
 
   const getVerificationYear = () => {
@@ -235,22 +234,14 @@ function CourtRecordReportContent() {
           <div>
             <h3 className="text-xs uppercase font-extrabold tracking-wider text-[#1B365D] border-b border-slate-200 pb-1 mb-2">Candidate Details</h3>
             <div className="space-y-1.5 text-xs">
-              <div><span className="text-slate-500 font-semibold">Full Name:</span> <span className="font-bold text-slate-800">{verification.name}</span></div>
-              {verification.gender && (
-                <div><span className="text-slate-500 font-semibold">Gender:</span> <span className="font-semibold text-slate-800">{verification.gender}</span></div>
-              )}
-              <div><span className="text-slate-500 font-semibold">Date of Birth:</span> <span className="font-semibold text-slate-800">{verification.candidateDob || "-"}</span></div>
-              {verification.idProofType && (
-                <div><span className="text-slate-500 font-semibold">ID Type:</span> <span className="font-semibold text-slate-800">{verification.idProofType}</span></div>
-              )}
-              {verification.idProofNumber && (
-                <div><span className="text-slate-500 font-semibold">ID Number:</span> <span className="font-semibold text-slate-800">{verification.idProofNumber}</span></div>
-              )}
-              <div><span className="text-slate-500 font-semibold">Father&apos;s Name:</span> <span className="font-semibold text-slate-800">{verification.candidateFatherName || "-"}</span></div>
-              <div><span className="text-slate-500 font-semibold">Mother&apos;s Name:</span> <span className="font-semibold text-slate-800">{verification.candidateMotherName || "-"}</span></div>
-              {verification.candidateIsMarried && verification.candidateHusbandName && (
-                <div><span className="text-slate-500 font-semibold">Husband&apos;s Name:</span> <span className="font-semibold text-slate-800">{verification.candidateHusbandName}</span></div>
-              )}
+              <div><span className="text-slate-500 font-semibold">Full Name:</span> <span className="font-bold text-slate-800">{verification.name || "Not Given"}</span></div>
+              <div><span className="text-slate-500 font-semibold">Gender:</span> <span className="font-semibold text-slate-800">{verification.gender || "Not Given"}</span></div>
+              <div><span className="text-slate-500 font-semibold">Date of Birth:</span> <span className="font-semibold text-slate-800">{verification.candidateDob || "Not Given"}</span></div>
+              <div><span className="text-slate-500 font-semibold">ID Type:</span> <span className="font-semibold text-slate-800">{verification.idProofType || "Not Given"}</span></div>
+              <div><span className="text-slate-500 font-semibold">ID Number:</span> <span className="font-semibold text-slate-800">{verification.idProofNumber || "Not Given"}</span></div>
+              <div><span className="text-slate-500 font-semibold">Father&apos;s Name:</span> <span className="font-semibold text-slate-800">{verification.candidateFatherName || "Not Given"}</span></div>
+              <div><span className="text-slate-500 font-semibold">Mother&apos;s Name:</span> <span className="font-semibold text-slate-800">{verification.candidateMotherName || "Not Given"}</span></div>
+              <div><span className="text-slate-500 font-semibold">Husband&apos;s Name:</span> <span className="font-semibold text-slate-800">{verification.candidateHusbandName || "Not Given"}</span></div>
             </div>
           </div>
           <div>
@@ -281,9 +272,9 @@ function CourtRecordReportContent() {
                   {verification.addresses.map((addr: any, i: number) => (
                     <tr key={i}>
                       <td className="p-2.5 border-r border-slate-200 bg-slate-50/50 text-center">{i + 1}</td>
-                      <td className="p-2.5 border-r border-slate-200">{addr.address || "-"}</td>
-                      <td className="p-2.5 border-r border-slate-200 font-bold">{addr.city}</td>
-                      <td className="p-2.5 border-r border-slate-200">{addr.state}</td>
+                      <td className="p-2.5 border-r border-slate-200">{addr.address || "Not Given"}</td>
+                      <td className="p-2.5 border-r border-slate-200 font-bold">{addr.city || "Not Given"}</td>
+                      <td className="p-2.5 border-r border-slate-200">{addr.state || "Not Given"}</td>
                       <td className="p-2">{addr.country || "India"}</td>
                     </tr>
                   ))}
@@ -500,19 +491,7 @@ function CourtRecordReportContent() {
           </div>
         )}
 
-        {/* Search Errors */}
-        {searchErrors.length > 0 && (
-          <div className="mb-8 print-avoid-break">
-            <h3 className="text-xs uppercase font-extrabold tracking-wider text-[#1B365D] mb-2">Search Notes</h3>
-            <div className="border border-amber-200 rounded-xl p-4 bg-amber-50/50">
-              <ul className="list-disc list-inside text-xs text-amber-800 font-semibold space-y-1">
-                {searchErrors.map((err: string, i: number) => (
-                  <li key={i}>{err}</li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        )}
+
 
         {/* Disclaimer */}
         <div className="border-t-2 border-slate-200 pt-5 mt-8 text-[10px] text-slate-500 leading-relaxed print-avoid-break">

@@ -106,7 +106,7 @@ function SearchProgressIndicator({ verification, now }: { verification: Verifica
 }
 
 export default function OrderSummaryPage() {
-  const { verifications, invoices, settings, organisation, submitPaymentProof, fetchVerificationDetail, refreshData } = usePortal();
+  const { verifications, invoices, settings, organisation, submitPaymentProof, fetchVerificationDetail, refreshData, retryCourtRecordSearch } = usePortal();
 
   // Tick state for live timer updates (re-renders every second when searches are active)
   const [tickNow, setTickNow] = useState(Date.now());
@@ -918,10 +918,12 @@ export default function OrderSummaryPage() {
                           <span className="font-bold">{v.name}</span>
                           <span className="text-[11px] text-[#475569] font-medium break-words">
                             {v.type === "court_record"
-                              ? (v.courtRecordSummary
-                                || (v.courtRecordProgress
-                                  ? v.courtRecordProgress
-                                  : "Search in progress..."))
+                              ? (v.courtRecordStatus === "error"
+                                ? "Connection failed — retry available"
+                                : (v.courtRecordSummary
+                                  || (v.courtRecordProgress
+                                    ? v.courtRecordProgress
+                                    : "Search in progress...")))
                               : v.email}
                           </span>
                         </div>
@@ -962,11 +964,14 @@ export default function OrderSummaryPage() {
                             </div>
                           ) : v.status === "Needs Attention" ? (
                             <button
-                              onClick={() => window.open(`/client/court-record-report?id=${v.id}`, "_blank")}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                retryCourtRecordSearch(v.id);
+                              }}
                               className="font-bold text-[11px] px-3 py-1.5 rounded-lg bg-[#FFF4CC] text-[#805b00] hover:bg-[#FFF4CC]/85 transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs"
                             >
-                              <span>View Details</span>
-                              <AlertTriangle className="w-3.5 h-3.5 text-[#805b00]" />
+                              <RotateCw className="w-3.5 h-3.5 text-[#805b00]" />
+                              <span>Retry Search</span>
                             </button>
                           ) : (
                             <SearchProgressIndicator verification={v} now={tickNow} />
@@ -1355,15 +1360,38 @@ export default function OrderSummaryPage() {
                   )}
 
                   {displayVerification.status === "Needs Attention" && (
-                    <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-xs text-red-800 mt-2 flex flex-col gap-1 shadow-2xs">
-                      <span className="font-bold flex items-center gap-1.5">
-                        <ShieldAlert className="w-4 h-4 text-red-600" />
-                        <span>Resolution Action Required:</span>
-                      </span>
-                      <p className="leading-relaxed font-semibold">
-                        Please contact the candidate to upload a high-resolution, uncropped copy of their passport bio page to resolve the identification check block.
-                      </p>
-                    </div>
+                    displayVerification.type === "court_record" ? (
+                      <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 mt-2 flex flex-col gap-2 shadow-2xs">
+                        <span className="font-bold flex items-center gap-1.5">
+                          <ShieldAlert className="w-4 h-4 text-amber-600" />
+                          <span>eCourts Connection Failed</span>
+                        </span>
+                        <p className="leading-relaxed font-semibold">
+                          The court record search could not connect to the eCourts India portal. This is usually a temporary issue. Please retry the search.
+                        </p>
+                        <button
+                          onClick={() => {
+                            retryCourtRecordSearch(displayVerification.id);
+                            setSelectedVerification(null);
+                            setSelectedDetail(null);
+                          }}
+                          className="mt-1 self-start px-4 py-2 bg-amber-600 text-white rounded-lg font-bold text-xs hover:bg-amber-700 cursor-pointer inline-flex items-center gap-1.5 transition-colors"
+                        >
+                          <RotateCw className="w-3.5 h-3.5" />
+                          <span>Retry Search</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-xs text-red-800 mt-2 flex flex-col gap-1 shadow-2xs">
+                        <span className="font-bold flex items-center gap-1.5">
+                          <ShieldAlert className="w-4 h-4 text-red-600" />
+                          <span>Resolution Action Required:</span>
+                        </span>
+                        <p className="leading-relaxed font-semibold">
+                          Please contact the candidate to upload a high-resolution, uncropped copy of their passport bio page to resolve the identification check block.
+                        </p>
+                      </div>
+                    )
                   )}
                 </div>
      

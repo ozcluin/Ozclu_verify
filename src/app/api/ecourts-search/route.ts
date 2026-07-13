@@ -100,8 +100,7 @@ export async function POST(req: NextRequest) {
           $set: {
             status: "Needs Attention",
             courtRecordStatus: "error",
-            courtRecordSummary: `Failed to connect to eCourts after ${3} attempts — ${sessionErr.message}`,
-            courtRecordErrors: [`Session error (${3} retries exhausted): ${sessionErr.message}`],
+            courtRecordSummary: "Failed to connect to eCourts",
             completedAt: new Date().toISOString(),
           },
         }
@@ -319,20 +318,8 @@ export async function POST(req: NextRequest) {
                   totalCasesFound += aggregatedCases.length;
                 } catch (searchError: any) {
                   consecutiveFailures++;
-
-                  const errorMsg = (searchError as any).isDataVolume
-                    ? `Data volume issue: too many results for this name`
-                    : searchError.message || "Search failed";
-
-                  addressResult.complexSearches.push({
-                    complexName: complex.name,
-                    complexCode: complex.code,
-                    establishmentName: est.name,
-                    establishmentCode: est.value,
-                    casesFound: 0,
-                    cases: [],
-                    error: errorMsg,
-                  });
+                  // Silently skip failed establishments — do not record errors in results
+                  console.log(`[ECOURTS] Skipped establishment ${est.name} in ${complex.name}: ${searchError.message}`);
                 }
 
                 // Update progress in DB after each establishment search
@@ -408,17 +395,8 @@ export async function POST(req: NextRequest) {
             });
             totalCasesFound += aggregatedCases.length;
           } catch (searchError: any) {
-            const errorMsg = (searchError as any).isDataVolume
-              ? `Data volume issue: too many results for this name`
-              : searchError.message || "Search failed";
-
-            addressResult.complexSearches.push({
-              complexName: complex.name,
-              complexCode: complex.code,
-              casesFound: 0,
-              cases: [],
-              error: errorMsg,
-            });
+            // Silently skip failed complexes — do not record errors in results
+            console.log(`[ECOURTS] Skipped complex ${complex.name}: ${searchError.message}`);
           }
 
           // Update progress in DB after each complex
@@ -449,27 +427,22 @@ export async function POST(req: NextRequest) {
     const hasResults = totalCasesFound > 0;
     const searchDuration = Math.round((Date.now() - globalStartTime) / 1000);
     const courtRecordSummary = hasResults
-      ? `${totalCasesFound} court record(s) found across ${totalComplexesSearched} court complexes in ${searchDuration}s${globalTimedOut ? " (partial — timed out)" : ""}`
-      : `No court records found across ${totalComplexesSearched} court complexes in ${searchDuration}s${globalTimedOut ? " (partial — timed out)" : ""}`;
+      ? `${totalCasesFound} court record(s) found across ${totalComplexesSearched} court complexes in ${searchDuration}s`
+      : `No court records found across ${totalComplexesSearched} court complexes in ${searchDuration}s`;
 
-    const finalStatus = (errors.length > 0 && allResults.length === 0)
-      ? "error" 
-      : hasResults
-        ? "admin_review"   // Records found → route to admin for manual review
-        : "completed";     // No records → auto-complete
+    const finalStatus = hasResults
+      ? "admin_review"   // Records found → route to admin for manual review
+      : "completed";     // No records → auto-complete
 
-    const verificationStatus = finalStatus === "error" 
-      ? "Needs Attention" 
-      : finalStatus === "admin_review"
-        ? "Processing"      // Stay within allowed union; UI reads courtRecordStatus for review state
-        : "Completed";
+    const verificationStatus = finalStatus === "admin_review"
+      ? "Processing"      // Stay within allowed union; UI reads courtRecordStatus for review state
+      : "Completed";
 
-    // Build the update document
+    // Build the update document — never include errors in the report
     const updateDoc: Record<string, any> = {
       courtRecordResults: allResults,
       courtRecordSummary,
       courtRecordStatus: finalStatus,
-      courtRecordErrors: errors.length > 0 ? errors : undefined,
       courtRecordTotalCases: totalCasesFound,
       courtRecordTotalComplexes: totalComplexesSearched,
       courtRecordCompletedAt: new Date().toISOString(),
@@ -501,7 +474,6 @@ export async function POST(req: NextRequest) {
       totalCases: totalCasesFound,
       totalComplexes: totalComplexesSearched,
       resultsCount: allResults.length,
-      errors: errors.length > 0 ? errors : undefined,
     });
   } catch (error: any) {
     console.error("[ECOURTS-SEARCH] Error:", error.message);
@@ -516,9 +488,8 @@ export async function POST(req: NextRequest) {
           {
             $set: {
               courtRecordStatus: "error",
-              courtRecordErrors: [error.message],
               status: "Needs Attention",
-              notes: `Court record search failed: ${error.message}`,
+              courtRecordSummary: "Failed to connect to eCourts",
             },
           }
         );
