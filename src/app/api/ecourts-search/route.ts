@@ -92,15 +92,16 @@ export async function POST(req: NextRequest) {
       sessionCookies = await getSession();
       console.log(`[ECOURTS] Session obtained for verification ${verificationId}`);
     } catch (sessionErr: any) {
-      // If session fails, mark verification as error and return
+      // If session fails after all retries, mark verification as error and return
+      console.error(`[ECOURTS] Session failed for verification ${verificationId} after ${3} retries: ${sessionErr.message}`);
       await db.collection("verifications").updateOne(
         { id: verificationId },
         {
           $set: {
             status: "Needs Attention",
             courtRecordStatus: "error",
-            courtRecordSummary: "Failed to connect to eCourts",
-            courtRecordErrors: [`Session error: ${sessionErr.message}`],
+            courtRecordSummary: `Failed to connect to eCourts after ${3} attempts — ${sessionErr.message}`,
+            courtRecordErrors: [`Session error (${3} retries exhausted): ${sessionErr.message}`],
             completedAt: new Date().toISOString(),
           },
         }

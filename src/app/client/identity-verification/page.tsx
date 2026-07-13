@@ -21,6 +21,8 @@ import {
   Calendar,
   Building,
   ChevronDown,
+  UploadCloud,
+  FileText,
 } from "lucide-react";
 import { INDIAN_STATES } from "src/lib/courts-mapping";
 
@@ -82,9 +84,14 @@ export default function IdentityVerification() {
   const [crFatherName, setCrFatherName] = useState("");
   const [crMotherName, setCrMotherName] = useState("");
   const [crIsMarried, setCrIsMarried] = useState(false);
+  const [crGender, setCrGender] = useState("Not required");
   const [crHusbandName, setCrHusbandName] = useState("");
   const [crRequestingOrgName, setCrRequestingOrgName] = useState("");
   const [crShowOrgDropdown, setCrShowOrgDropdown] = useState(false);
+  const [crIdProofType, setCrIdProofType] = useState("");
+  const [crIdProofNumber, setCrIdProofNumber] = useState("");
+  const [crIdProofFile, setCrIdProofFile] = useState<string | null>(null);
+  const [crIdProofFileName, setCrIdProofFileName] = useState("");
   const [crAddresses, setCrAddresses] = useState<
     Array<{ address: string; city: string; state: string; stateCode: string; districtCode: string; country: string; fromYear: number; toYear: number }>
   >([{ address: "", city: "", state: "", stateCode: "", districtCode: "", country: "India", fromYear: currentYear - 2, toYear: currentYear }]);
@@ -261,11 +268,7 @@ export default function IdentityVerification() {
       setCrErrorMsg("Father's Name is required");
       return;
     }
-    if (!crMotherName.trim()) {
-      setCrErrorMsg("Mother's Name is required");
-      return;
-    }
-    if (crIsMarried && !crHusbandName.trim()) {
+    if (crGender === "Female" && crIsMarried && !crHusbandName.trim()) {
       setCrErrorMsg("Husband's Name is required when the candidate is married");
       return;
     }
@@ -306,7 +309,11 @@ export default function IdentityVerification() {
         candidateFatherName: crFatherName.trim(),
         candidateMotherName: crMotherName.trim(),
         candidateIsMarried: crIsMarried,
-        candidateHusbandName: crIsMarried ? crHusbandName.trim() : undefined,
+        candidateHusbandName: (crGender === "Female" && crIsMarried) ? crHusbandName.trim() : undefined,
+        gender: crGender !== "Not required" ? crGender : undefined,
+        idProofType: crIdProofType || undefined,
+        idProofNumber: crIdProofNumber.trim() || undefined,
+        idProofFile: crIdProofFile || undefined,
         addresses: crAddresses,
         orgName: effectiveOrgName,
         requestingOrgName: crRequestingOrgName.trim(),
@@ -320,7 +327,12 @@ export default function IdentityVerification() {
         setCrFatherName("");
         setCrMotherName("");
         setCrIsMarried(false);
+        setCrGender("Not required");
         setCrHusbandName("");
+        setCrIdProofType("");
+        setCrIdProofNumber("");
+        setCrIdProofFile(null);
+        setCrIdProofFileName("");
         setCrAddresses([{ address: "", city: "", state: "", stateCode: "", districtCode: "", country: "India", fromYear: currentYear - 2, toYear: currentYear }]);
         setCrRequestingOrgName("");
       } else {
@@ -339,7 +351,12 @@ export default function IdentityVerification() {
     setCrFatherName("");
     setCrMotherName("");
     setCrIsMarried(false);
+    setCrGender("Not required");
     setCrHusbandName("");
+    setCrIdProofType("");
+    setCrIdProofNumber("");
+    setCrIdProofFile(null);
+    setCrIdProofFileName("");
     setCrAddresses([{ address: "", city: "", state: "", stateCode: "", districtCode: "", country: "India", fromYear: currentYear - 2, toYear: currentYear }]);
     setCrRequestingOrgName("");
     setCrErrorMsg("");
@@ -812,6 +829,127 @@ export default function IdentityVerification() {
                 })()}
               </div>
 
+              {/* ID Proof Section */}
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <span className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                    <FileText className="w-3.5 h-3.5 text-slate-500" />
+                    ID Proof (Optional)
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  {/* ID Type Dropdown */}
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider" htmlFor="cr-id-proof-type">
+                      ID Type
+                    </label>
+                    <div className="relative">
+                      <select
+                        id="cr-id-proof-type"
+                        value={crIdProofType}
+                        onChange={(e) => {
+                          setCrIdProofType(e.target.value);
+                          if (!e.target.value) {
+                            setCrIdProofNumber("");
+                            setCrIdProofFile(null);
+                            setCrIdProofFileName("");
+                          }
+                        }}
+                        disabled={isSettingsIncomplete}
+                        className={`w-full border border-slate-300 rounded-xl p-3 pr-8 font-body-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-650 transition-all bg-white font-semibold text-sm appearance-none ${
+                          isSettingsIncomplete ? "bg-slate-100 text-slate-500 cursor-not-allowed border-slate-200 opacity-80" : "cursor-pointer"
+                        } ${!crIdProofType ? "text-slate-400" : ""}`}
+                      >
+                        <option value="">Select ID type</option>
+                        <option value="Driving Licence">Driving Licence</option>
+                        <option value="Passport">Passport</option>
+                      </select>
+                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500">
+                        <ChevronDown className="w-4 h-4" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ID Number */}
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider" htmlFor="cr-id-proof-number">
+                      ID Number
+                    </label>
+                    <input
+                      id="cr-id-proof-number"
+                      type="text"
+                      value={crIdProofNumber}
+                      onChange={(e) => setCrIdProofNumber(e.target.value)}
+                      autoComplete="off"
+                      disabled={isSettingsIncomplete || !crIdProofType}
+                      className={`border border-slate-300 rounded-xl p-3 font-body-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-650 transition-all bg-white placeholder-slate-400 font-semibold text-sm shadow-2xs ${
+                        isSettingsIncomplete || !crIdProofType ? "bg-slate-100 text-slate-500 cursor-not-allowed border-slate-200 opacity-80" : ""
+                      }`}
+                      placeholder={crIdProofType ? `Enter ${crIdProofType} number` : "Select ID type first"}
+                    />
+                  </div>
+                </div>
+
+                {/* File Upload */}
+                {crIdProofType && (
+                  <div className="flex flex-col gap-1.5 animate-fade-in">
+                    <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                      Upload {crIdProofType} (PDF, JPG, PNG)
+                    </label>
+                    {!crIdProofFile ? (
+                      <label
+                        className={`border-2 border-dashed border-slate-300 rounded-xl p-5 flex flex-col items-center justify-center gap-2 transition-all hover:border-emerald-400 hover:bg-emerald-50/30 ${
+                          isSettingsIncomplete ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                        }`}
+                      >
+                        <UploadCloud className="w-7 h-7 text-slate-400" />
+                        <span className="text-xs font-semibold text-slate-500">Click to upload file</span>
+                        <span className="text-[10px] text-slate-400">PDF, JPG, or PNG — Max 2MB</span>
+                        <input
+                          type="file"
+                          accept=".pdf,.jpg,.jpeg,.png"
+                          className="hidden"
+                          disabled={isSettingsIncomplete}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            if (file.size > 2 * 1024 * 1024) {
+                              setCrErrorMsg("File size must be under 2MB.");
+                              return;
+                            }
+                            setCrIdProofFileName(file.name);
+                            const reader = new FileReader();
+                            reader.onloadend = () => {
+                              setCrIdProofFile(reader.result as string);
+                            };
+                            reader.readAsDataURL(file);
+                          }}
+                        />
+                      </label>
+                    ) : (
+                      <div className="border border-emerald-200 rounded-xl p-3 bg-emerald-50/30 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <FileText className="w-4 h-4 text-emerald-600" />
+                          <span className="text-xs font-semibold text-slate-700 truncate max-w-[200px]">{crIdProofFileName}</span>
+                          <Check className="w-3.5 h-3.5 text-emerald-600" />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCrIdProofFile(null);
+                            setCrIdProofFileName("");
+                          }}
+                          className="text-slate-400 hover:text-red-500 transition-colors p-1 rounded-lg hover:bg-red-50 cursor-pointer"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
               {/* Family Details Section */}
               <div className="flex flex-col gap-4">
                 <div className="flex items-center gap-1.5 mb-0.5">
@@ -842,7 +980,7 @@ export default function IdentityVerification() {
                   </div>
                   <div className="flex flex-col gap-1.5">
                     <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider" htmlFor="cr-mother-name">
-                      Mother's Name *
+                      Mother's Name
                     </label>
                     <input
                       id="cr-mother-name"
@@ -859,41 +997,75 @@ export default function IdentityVerification() {
                   </div>
                 </div>
 
-                {/* Marital Status Toggle */}
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">
-                    Marital Status
-                  </label>
-                  <div className="flex items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setCrIsMarried(!crIsMarried);
-                        if (crIsMarried) setCrHusbandName("");
-                      }}
-                      disabled={isSettingsIncomplete}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 ${
-                        isSettingsIncomplete ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
-                      } ${
-                        crIsMarried ? "bg-emerald-600" : "bg-slate-300"
-                      }`}
-                    >
-                      <span
-                        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-300 ${
-                          crIsMarried ? "translate-x-6" : "translate-x-1"
+                {/* Gender & Marital Status row */}
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Gender dropdown */}
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider" htmlFor="cr-gender">
+                      Gender
+                    </label>
+                    <div className="relative">
+                      <select
+                        id="cr-gender"
+                        value={crGender}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setCrGender(val);
+                          if (val === "Male" || val === "Not required") {
+                            setCrHusbandName("");
+                          }
+                        }}
+                        disabled={isSettingsIncomplete}
+                        className={`w-full border border-slate-300 rounded-xl p-3 pr-8 font-body-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-650 transition-all bg-white font-semibold text-sm appearance-none ${
+                          isSettingsIncomplete ? "bg-slate-100 text-slate-500 cursor-not-allowed border-slate-200 opacity-80" : "cursor-pointer"
                         }`}
-                      />
-                    </button>
-                    <span className={`text-xs font-semibold ${
-                      crIsMarried ? "text-emerald-800" : "text-slate-500"
-                    }`}>
-                      {crIsMarried ? "Married" : "Not Married"}
-                    </span>
+                      >
+                        <option value="Not required">Not required</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                      </select>
+                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500">
+                        <ChevronDown className="w-4 h-4" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Marital Status Toggle */}
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                      Marital Status
+                    </label>
+                    <div className="flex items-center gap-3 h-[46px]">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCrIsMarried(!crIsMarried);
+                          if (crIsMarried) setCrHusbandName("");
+                        }}
+                        disabled={isSettingsIncomplete}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 ${
+                          isSettingsIncomplete ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                        } ${
+                          crIsMarried ? "bg-emerald-600" : "bg-slate-300"
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-300 ${
+                            crIsMarried ? "translate-x-6" : "translate-x-1"
+                          }`}
+                        />
+                      </button>
+                      <span className={`text-xs font-semibold ${
+                        crIsMarried ? "text-emerald-800" : "text-slate-500"
+                      }`}>
+                        {crIsMarried ? "Married" : "Not Married"}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
                 {/* Husband's Name (conditional) */}
-                {crIsMarried && (
+                {crGender === "Female" && crIsMarried && (
                   <div className="flex flex-col gap-1.5 animate-fade-in">
                     <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider" htmlFor="cr-husband-name">
                       Husband's Name *

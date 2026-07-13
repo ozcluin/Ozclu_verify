@@ -41,6 +41,11 @@ export interface Verification {
   candidateMotherName?: string;
   candidateIsMarried?: boolean;
   candidateHusbandName?: string;
+  gender?: string;
+  idProofType?: string;
+  idProofNumber?: string;
+  hasIdProofFile?: boolean;
+  idProofFile?: string;
   addresses?: Array<{ address: string; city: string; state: string; country: string }>;
   courtRecordResults?: Array<{
     addressIndex: number;
@@ -176,6 +181,10 @@ interface PortalContextType {
     candidateMotherName: string;
     candidateIsMarried: boolean;
     candidateHusbandName?: string;
+    gender?: string;
+    idProofType?: string;
+    idProofNumber?: string;
+    idProofFile?: string;
     addresses: Array<{ address: string; city: string; state: string; country: string; fromYear?: number; toYear?: number }>;
     orgName: string;
     requestingOrgName: string;
@@ -599,6 +608,10 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     candidateMotherName: string;
     candidateIsMarried: boolean;
     candidateHusbandName?: string;
+    gender?: string;
+    idProofType?: string;
+    idProofNumber?: string;
+    idProofFile?: string;
     addresses: Array<{ address: string; city: string; state: string; country: string; fromYear?: number; toYear?: number }>;
     orgName: string;
     requestingOrgName: string;

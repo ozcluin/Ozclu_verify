@@ -7,7 +7,7 @@ import https from "https";
 
 const ECOURTS_HOST = "services.ecourts.gov.in";
 const USER_AGENT =
-  "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Mobile Safari/537.36";
+  "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Mobile Safari/537.36";
 
 const agent = new https.Agent({
   keepAlive: true,
@@ -114,8 +114,8 @@ function _post(
   });
 }
 
-// ─── 1. Get Session Cookies ───
-export async function getSession(): Promise<SessionCookies> {
+// ─── 1. Get Session Cookies (with retry) ───
+function _getSessionOnce(): Promise<SessionCookies> {
   return new Promise((resolve, reject) => {
     const req = https.request(
       {
@@ -125,8 +125,11 @@ export async function getSession(): Promise<SessionCookies> {
         agent,
         headers: {
           "User-Agent": USER_AGENT,
-          Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+          "Accept-Language": "en-US,en;q=0.9",
+          "Cache-Control": "max-age=0",
           Connection: "keep-alive",
+          "Upgrade-Insecure-Requests": "1",
         },
       },
       (res) => {
@@ -143,16 +146,40 @@ export async function getSession(): Promise<SessionCookies> {
               JSESSION: cookies.JSESSION,
             });
           } else {
-            reject(new Error("Failed to obtain eCourts session cookies"));
+            reject(new Error(`Failed to obtain eCourts session cookies (status ${res.statusCode}, got keys: ${Object.keys(cookies).join(",")})`));
           }
         });
       }
     );
 
-    req.setTimeout(15000, () => req.destroy(new Error("Session request timed out")));
+    req.setTimeout(20000, () => req.destroy(new Error("Session request timed out after 20s")));
     req.on("error", reject);
     req.end();
   });
+}
+
+const SESSION_MAX_RETRIES = 3;
+const SESSION_RETRY_DELAYS = [2000, 4000]; // delays between attempts
+
+export async function getSession(): Promise<SessionCookies> {
+  let lastError: Error | null = null;
+  for (let attempt = 1; attempt <= SESSION_MAX_RETRIES; attempt++) {
+    try {
+      const session = await _getSessionOnce();
+      if (attempt > 1) {
+        console.log(`[ECOURTS] Session obtained on attempt ${attempt}`);
+      }
+      return session;
+    } catch (err: any) {
+      lastError = err;
+      console.warn(`[ECOURTS] Session attempt ${attempt}/${SESSION_MAX_RETRIES} failed: ${err.message}`);
+      if (attempt < SESSION_MAX_RETRIES) {
+        const delayMs = SESSION_RETRY_DELAYS[attempt - 1] || 4000;
+        await delay(delayMs);
+      }
+    }
+  }
+  throw lastError || new Error("Failed to obtain eCourts session after retries");
 }
 
 // ─── 2. Search Court Orders by Party Name ───

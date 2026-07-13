@@ -519,7 +519,7 @@ export async function POST(req: NextRequest) {
         break;
       }
       case "addCourtRecordVerification": {
-        const { candidateName, candidateDob, candidateFatherName, candidateMotherName, candidateIsMarried, candidateHusbandName, addresses, orgName, requestingOrgName: reqOrgName } = payload;
+        const { candidateName, candidateDob, candidateFatherName, candidateMotherName, candidateIsMarried, candidateHusbandName, gender, idProofType, idProofNumber, idProofFile, addresses, orgName, requestingOrgName: reqOrgName } = payload;
 
         if (!candidateName?.trim() || !addresses || !Array.isArray(addresses) || addresses.length === 0) {
           return NextResponse.json({ error: "Candidate name and at least one address are required" }, { status: 400 });
@@ -566,6 +566,10 @@ export async function POST(req: NextRequest) {
           candidateMotherName: candidateMotherName?.trim() || "",
           candidateIsMarried: !!candidateIsMarried,
           candidateHusbandName: candidateIsMarried ? (candidateHusbandName?.trim() || "") : "",
+          gender: gender || "",
+          idProofType: idProofType || "",
+          idProofNumber: idProofNumber?.trim() || "",
+          idProofFile: idProofFile || "",
           addresses,
           courtRecordStatus: "pending",
           courtRecordSummary: "Search in progress...",
