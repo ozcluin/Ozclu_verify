@@ -956,9 +956,9 @@ export default function OrderSummaryPage() {
                             <div className="flex flex-col items-end gap-1 min-w-[140px]">
                               <div className="flex items-center gap-1.5">
                                 <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse shrink-0"></div>
-                                <span className="text-[11px] text-amber-700 font-bold">Under Review</span>
+                                <span className="text-[11px] text-amber-700 font-bold">Reviewing with attorney</span>
                               </div>
-                              <span className="text-[9px] text-[#475569] font-medium text-right leading-tight">Internal verification in progress. Will complete within 12 hours.</span>
+                              <span className="text-[9px] text-[#475569] font-medium text-right leading-tight">Will complete within<br/>24 hours.</span>
                             </div>
                           ) : (
                             <SearchProgressIndicator verification={v} now={tickNow} />
