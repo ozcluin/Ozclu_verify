@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { usePortal } from "src/context/PortalContext";
 import { useAuth } from "src/context/AuthContext";
@@ -27,6 +28,75 @@ import {
 import { INDIAN_STATES } from "src/lib/courts-mapping";
 
 type ServiceType = "identity" | "court_record";
+
+/** Portaled success modal — always renders at document.body so fixed positioning is correct */
+function SuccessModal({ crCreatedId, crCandidateName, onCreateAnother, onGoToSummary }: {
+  crCreatedId: string;
+  crCandidateName: string;
+  onCreateAnother: () => void;
+  onGoToSummary: () => void;
+}) {
+  useEffect(() => {
+    // Scroll the page to top so the modal is fully visible
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    // Prevent background scrolling
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+
+  return (
+    <div className="fixed inset-0 bg-slate-400/10 backdrop-blur-md flex items-center justify-center px-3 sm:px-4 z-[99999] animate-fade-in overflow-y-auto">
+      <div className="bg-white border border-[#eaf0e4] rounded-2xl sm:rounded-3xl p-5 sm:p-8 max-w-lg w-full shadow-2xl relative animate-scale-up">
+        <div className="flex flex-col items-center text-center gap-3 sm:gap-4">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[#E6F8F3] border border-[#A3EAD6] rounded-full flex items-center justify-center text-[#00684A] mb-1 sm:mb-2 animate-bounce-subtle">
+            <Scale className="w-6 h-6 sm:w-8 sm:h-8 text-[#00a877]" />
+          </div>
+          <h3 className="font-headline-md text-[#181d16] font-bold text-lg sm:text-xl">Search Initiated!</h3>
+          <p className="font-body-sm text-[#475569] leading-relaxed text-xs sm:text-sm">
+            Court record search has been started for <strong className="text-[#181d16] font-bold">{crCandidateName || "the candidate"}</strong>.
+            The search is running in the background and will complete in 1–3 minutes.
+          </p>
+
+          <div className="w-full mt-1 sm:mt-2 p-3 sm:p-4 bg-[#f0f5ea]/25 border border-[#eaf0e4] rounded-xl sm:rounded-2xl text-left flex flex-col gap-2 shadow-2xs">
+            <div className="flex justify-between items-center text-[11px] sm:text-xs">
+              <span className="text-[#475569] font-semibold">Verification ID</span>
+              <span className="font-mono text-[#181d16] font-bold">{crCreatedId}</span>
+            </div>
+            <div className="flex justify-between items-center text-[11px] sm:text-xs">
+              <span className="text-[#475569] font-semibold">Status</span>
+              <span className="text-amber-600 font-bold flex items-center gap-1">
+                <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></div>
+                Processing
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5 text-[9px] sm:text-[10px] text-[#64748B]">
+            <Sparkles className="w-3 h-3 text-[#00450e] shrink-0" />
+            <span>You can check the results in Order Summary once the search completes.</span>
+          </div>
+
+          <div className="flex gap-2 sm:gap-3 mt-3 sm:mt-4 w-full">
+            <button
+              type="button"
+              onClick={onCreateAnother}
+              className="flex-1 py-2.5 sm:py-3 border border-[#eaf0e4] rounded-xl font-semibold text-[11px] sm:text-xs text-[#334155] hover:bg-[#f6fbf0] transition-colors cursor-pointer bg-white"
+            >
+              Create Another
+            </button>
+            <button
+              type="button"
+              onClick={onGoToSummary}
+              className="flex-1 py-2.5 sm:py-3 bg-[#181d16] text-white rounded-xl font-semibold text-[11px] sm:text-xs hover:bg-[#1E293B] transition-all cursor-pointer shadow-sm"
+            >
+              Go to Summary
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function IdentityVerification() {
   const router = useRouter();
@@ -1425,66 +1495,15 @@ export default function IdentityVerification() {
             </form>
           </div>
 
-          {/* Success Modal for Court Record */}
-          {crCreatedId && (
-            <div
-              className="fixed inset-0 bg-slate-400/10 backdrop-blur-md flex items-start justify-center pt-[8vh] sm:pt-[12vh] px-3 sm:px-4 pb-4 z-[99999] animate-fade-in overflow-y-auto"
-            >
-              <div className="bg-white border border-[#eaf0e4] rounded-2xl sm:rounded-3xl p-5 sm:p-8 max-w-lg w-full shadow-2xl relative animate-scale-up">
-                <div className="flex flex-col items-center text-center gap-3 sm:gap-4">
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[#E6F8F3] border border-[#A3EAD6] rounded-full flex items-center justify-center text-[#00684A] mb-1 sm:mb-2 animate-bounce-subtle">
-                    <Scale className="w-6 h-6 sm:w-8 sm:h-8 text-[#00a877]" />
-                  </div>
-                  <h3 className="font-headline-md text-[#181d16] font-bold text-lg sm:text-xl">Search Initiated!</h3>
-                  <p className="font-body-sm text-[#475569] leading-relaxed text-xs sm:text-sm">
-                    Court record search has been started for <strong className="text-[#181d16] font-bold">{crCandidateName || "the candidate"}</strong>.
-                    The search is running in the background and will complete in 1–3 minutes.
-                  </p>
-
-                  <div className="w-full mt-1 sm:mt-2 p-3 sm:p-4 bg-[#f0f5ea]/25 border border-[#eaf0e4] rounded-xl sm:rounded-2xl text-left flex flex-col gap-2 shadow-2xs">
-                    <div className="flex justify-between items-center text-[11px] sm:text-xs">
-                      <span className="text-[#475569] font-semibold">Verification ID</span>
-                      <span className="font-mono text-[#181d16] font-bold">{crCreatedId}</span>
-                    </div>
-                    <div className="flex justify-between items-center text-[11px] sm:text-xs">
-                      <span className="text-[#475569] font-semibold">Status</span>
-                      <span className="text-amber-600 font-bold flex items-center gap-1">
-                        <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></div>
-                        Processing
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-1.5 text-[9px] sm:text-[10px] text-[#64748B]">
-                    <Sparkles className="w-3 h-3 text-[#00450e] shrink-0" />
-                    <span>You can check the results in Order Summary once the search completes.</span>
-                  </div>
-
-                  <div className="flex gap-2 sm:gap-3 mt-3 sm:mt-4 w-full">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setCrCreatedId(null);
-                        setCrSuccessMsg("");
-                      }}
-                      className="flex-1 py-2.5 sm:py-3 border border-[#eaf0e4] rounded-xl font-semibold text-[11px] sm:text-xs text-[#334155] hover:bg-[#f6fbf0] transition-colors cursor-pointer bg-white"
-                    >
-                      Create Another
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setCrCreatedId(null);
-                        router.push("/client/summary");
-                      }}
-                      className="flex-1 py-2.5 sm:py-3 bg-[#181d16] text-white rounded-xl font-semibold text-[11px] sm:text-xs hover:bg-[#1E293B] transition-all cursor-pointer shadow-sm"
-                    >
-                      Go to Summary
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
+          {/* Success Modal for Court Record — rendered via Portal to escape CSS transform ancestors */}
+          {crCreatedId && typeof document !== "undefined" && createPortal(
+            <SuccessModal
+              crCreatedId={crCreatedId}
+              crCandidateName={crCandidateName}
+              onCreateAnother={() => { setCrCreatedId(null); setCrSuccessMsg(""); }}
+              onGoToSummary={() => { setCrCreatedId(null); router.push("/client/summary"); }}
+            />,
+            document.body
           )}
         </>
       )}
