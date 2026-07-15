@@ -622,84 +622,8 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({ success: true, id: finalId });
       }
-      case "retryCourtRecordSearch": {
-        const { verificationId } = payload;
-        if (!verificationId) {
-          return NextResponse.json({ error: "verificationId is required" }, { status: 400 });
-        }
-
-        // Security: only allow retry on verifications belonging to this org
-        const verification = await db.collection("verifications").findOne({ id: verificationId, orgName: sessionOrgName });
-        if (!verification) {
-          console.warn(`[AUTH] Client ${user.email} attempted to retry ${verificationId} not belonging to org ${sessionOrgName}`);
-          return NextResponse.json({ error: "Verification not found" }, { status: 404 });
-        }
-
-        // Only allow retry if the search had a connection error
-        if (verification.courtRecordStatus !== "error") {
-          return NextResponse.json({ error: "This verification cannot be retried" }, { status: 400 });
-        }
-
-        // Reset the verification status for a fresh search
-        await db.collection("verifications").updateOne(
-          { id: verificationId, orgName: sessionOrgName },
-          {
-            $set: {
-              status: "Processing",
-              courtRecordStatus: "searching",
-              courtRecordSummary: "Retrying search...",
-              courtRecordSearchStartedAt: new Date().toISOString(),
-              courtRecordProgress: "Retrying eCourts search...",
-            },
-            $unset: {
-              courtRecordErrors: "",
-              courtRecordResults: "",
-              courtRecordTotalCases: "",
-              courtRecordTotalComplexes: "",
-              courtRecordCompletedAt: "",
-              courtRecordHasRecords: "",
-              completedAt: "",
-              notes: "",
-            },
-          }
-        );
-
-        await logAuditEvent(db, {
-          actorUserId: user.id,
-          actorEmail: user.email,
-          actorRole: user.role,
-          portal: "client",
-          action: "court_record_search_retried",
-          targetType: "verification",
-          targetId: verificationId,
-          ip,
-          userAgent,
-          outcome: "success",
-        });
-
-        // Fire and forget the eCourts search again
-        const baseUrl = req.headers.get("origin") || req.headers.get("host") || "";
-        const searchUrl = baseUrl.startsWith("http") ? `${baseUrl}/api/ecourts-search` : `http://${baseUrl}/api/ecourts-search`;
-        const cookieHeader = req.headers.get("cookie") || "";
-
-        fetch(searchUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Cookie": cookieHeader,
-          },
-          body: JSON.stringify({
-            verificationId,
-            candidateName: verification.name,
-            addresses: verification.addresses,
-          }),
-        }).catch((err) => {
-          console.error(`[ECOURTS] Failed to trigger retry search for ${verificationId}:`, err.message);
-        });
-
-        return NextResponse.json({ success: true });
-      }
       default:
+
         return NextResponse.json({ error: `Unsupported action: ${action}` }, { status: 400 });
     }
 

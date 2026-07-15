@@ -111,7 +111,7 @@ function CourtRecordReportContent() {
   const totalCases = verification.courtRecordTotalCases || 0;
   const totalComplexes = verification.courtRecordTotalComplexes || 0;
   const results = verification.courtRecordResults || [];
-  const isSearchComplete = verification.courtRecordStatus === "completed" || verification.courtRecordStatus === "error";
+  const isSearchComplete = verification.courtRecordStatus === "completed" || verification.courtRecordStatus === "error" || verification.courtRecordStatus === "needs_admin_retry";
 
   const getVerificationYear = () => {
     try {

@@ -198,7 +198,7 @@ interface PortalContextType {
   assignVerifier: (verificationId: string, verifierName: string | null) => Promise<void>;
   updateVerificationStatus: (verificationId: string, status: "Completed" | "Processing" | "Needs Attention", notes?: string) => Promise<void>;
   fetchVerificationDetail: (id: string) => Promise<Verification>;
-  retryCourtRecordSearch: (verificationId: string) => Promise<void>;
+
   refreshData: () => Promise<void>;
   removeRecentRequestingOrg: (orgName: string) => Promise<void>;
 }
@@ -638,37 +638,7 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return null;
   };
 
-  const retryCourtRecordSearch = async (verificationId: string) => {
-    // Optimistically update the local state
-    setVerifications((prev) =>
-      prev.map((v) => {
-        if (v.id === verificationId) {
-          return {
-            ...v,
-            status: "Processing" as const,
-            courtRecordStatus: "searching",
-            courtRecordSummary: "Retrying search...",
-            courtRecordProgress: "Retrying eCourts search...",
-          };
-        }
-        return v;
-      })
-    );
 
-    try {
-      await fetch("/api/portal-data", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "retryCourtRecordSearch",
-          payload: { verificationId },
-        }),
-      });
-    } catch (err) {
-      console.error("Failed retrying court record search:", err);
-    }
-    fetchAllData();
-  };
 
   return (
     <PortalContext.Provider
@@ -690,7 +660,7 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         assignVerifier,
         updateVerificationStatus,
         fetchVerificationDetail,
-        retryCourtRecordSearch,
+
         refreshData: fetchAllData,
         removeRecentRequestingOrg,
       }}
