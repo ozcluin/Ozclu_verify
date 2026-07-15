@@ -1428,12 +1428,9 @@ export default function IdentityVerification() {
           {/* Success Modal for Court Record */}
           {crCreatedId && (
             <div
-              className="fixed inset-0 bg-slate-400/10 backdrop-blur-md flex items-start sm:items-center justify-center p-3 sm:p-4 z-[99999] animate-fade-in overflow-y-auto"
-              ref={(el) => {
-                if (el) window.scrollTo({ top: 0, behavior: "smooth" });
-              }}
+              className="fixed inset-0 bg-slate-400/10 backdrop-blur-md flex items-start justify-center pt-[8vh] sm:pt-[12vh] px-3 sm:px-4 pb-4 z-[99999] animate-fade-in overflow-y-auto"
             >
-              <div className="bg-white border border-[#eaf0e4] rounded-2xl sm:rounded-3xl p-5 sm:p-8 max-w-lg w-full shadow-2xl relative animate-scale-up my-auto sm:my-0 mt-4 sm:mt-0">
+              <div className="bg-white border border-[#eaf0e4] rounded-2xl sm:rounded-3xl p-5 sm:p-8 max-w-lg w-full shadow-2xl relative animate-scale-up">
                 <div className="flex flex-col items-center text-center gap-3 sm:gap-4">
                   <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[#E6F8F3] border border-[#A3EAD6] rounded-full flex items-center justify-center text-[#00684A] mb-1 sm:mb-2 animate-bounce-subtle">
                     <Scale className="w-6 h-6 sm:w-8 sm:h-8 text-[#00a877]" />
