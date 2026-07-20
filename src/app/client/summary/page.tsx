@@ -658,7 +658,7 @@ export default function OrderSummaryPage() {
                   className="font-bold text-xs text-[#181d16] bg-white hover:bg-[#f0f5ea]/35 px-4 py-2.5 rounded-xl transition-all border border-[#eaf0e4] flex items-center gap-2 cursor-pointer shadow-2xs"
                 >
                   <Layers className="w-4 h-4 text-[#00450e]" />
-                  <span>Type: {typeFilter === "all" ? "ALL" : typeFilter === "court_record" ? "COURT RECORD" : typeFilter === "employment" ? "EMPLOYMENT" : typeFilter === "education" ? "EDUCATION" : "IDENTITY"}</span>
+                  <span>Type: {typeFilter === "all" ? "ALL" : typeFilter === "court_record" ? "COURT RECORD" : typeFilter === "interpol" ? "INTERPOL CHECK" : typeFilter === "employment" ? "EMPLOYMENT" : typeFilter === "education" ? "EDUCATION" : "IDENTITY"}</span>
                 </button>
 
                 {typeDropdownOpen && (
@@ -668,6 +668,7 @@ export default function OrderSummaryPage() {
                         { key: "all", label: "ALL" },
                         { key: "identity", label: "IDENTITY" },
                         { key: "court_record", label: "COURT RECORD" },
+                        { key: "interpol", label: "INTERPOL CHECK" },
                         { key: "employment", label: "EMPLOYMENT" },
                         { key: "education", label: "EDUCATION" }
                       ].map((item) => (
@@ -921,6 +922,8 @@ export default function OrderSummaryPage() {
                         <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[9px] font-bold tracking-wide uppercase border ${
                           v.type === "court_record"
                             ? "bg-amber-50 text-amber-700 border-amber-200"
+                            : v.type === "interpol"
+                            ? "bg-blue-50/70 text-blue-800 border-blue-200"
                             : v.type === "employment"
                             ? "bg-blue-50 text-blue-700 border-blue-200"
                             : v.type === "education"
@@ -929,6 +932,8 @@ export default function OrderSummaryPage() {
                         }`}>
                           {v.type === "court_record" 
                             ? "Court Record" 
+                            : v.type === "interpol"
+                            ? "Interpol Check"
                             : v.type === "employment" 
                             ? "Employment Check" 
                             : v.type === "education" 
@@ -945,6 +950,8 @@ export default function OrderSummaryPage() {
                                 || (v.courtRecordProgress
                                   ? v.courtRecordProgress
                                   : "Search in progress..."))
+                              : v.type === "interpol"
+                              ? `DOB: ${v.candidateDob || "Not Given"}${v.birthCity ? ` | City: ${v.birthCity}` : ""}`
                               : v.email}
                           </span>
                         </div>
@@ -966,10 +973,10 @@ export default function OrderSummaryPage() {
                         </span>
                       </td>
                       <td className="py-3.5 px-2.5 text-right">
-                        {v.type === "court_record" ? (
-                          v.status === "Completed" || v.courtRecordStatus === "completed" ? (
+                        {v.type === "court_record" || v.type === "interpol" ? (
+                          v.status === "Completed" || v.courtRecordStatus === "completed" || v.status === "Needs Attention" ? (
                             <button
-                              onClick={() => window.open(`/client/court-record-report?id=${v.id}`, "_blank")}
+                              onClick={() => window.open(v.type === "interpol" ? `/client/interpol-report?id=${v.id}` : `/client/court-record-report?id=${v.id}`, "_blank")}
                               className="font-bold text-[11px] px-3 py-1.5 rounded-lg bg-[#eaf0e4]/40 text-[#181d16] hover:bg-[#eaf0e4] transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs"
                             >
                               <span>View Report</span>
@@ -1422,11 +1429,13 @@ export default function OrderSummaryPage() {
                   >
                     Close
                   </button>
-                  {((displayVerification.status === "Completed" || displayVerification.status === "Verified" || displayVerification.status === "Needs Attention" || displayVerification.status === "Discrepancy") && (displayVerification.type === "court_record" || displayVerification.sendToCustomer)) && (
+                  {((displayVerification.status === "Completed" || displayVerification.status === "Verified" || displayVerification.status === "Needs Attention" || displayVerification.status === "Discrepancy") && (displayVerification.type === "court_record" || displayVerification.type === "interpol" || displayVerification.sendToCustomer)) && (
                     <button
                       onClick={() => {
                         const reportPath = displayVerification.type === "court_record"
                           ? `/client/court-record-report?id=${displayVerification.id}`
+                          : displayVerification.type === "interpol"
+                          ? `/client/interpol-report?id=${displayVerification.id}`
                           : displayVerification.type === "employment"
                           ? `/client/employment-report?id=${displayVerification.id}`
                           : displayVerification.type === "education"

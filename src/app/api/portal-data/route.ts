@@ -834,6 +834,147 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({ success: true, id: finalId });
       }
+      case "addInterpolVerification": {
+        const { candidateName, candidateDob, birthCity, orgName, requestingOrgName: reqOrgName } = payload;
+
+        if (!candidateName?.trim() || !candidateDob?.trim()) {
+          return NextResponse.json({ error: "Candidate name and date of birth are required" }, { status: 400 });
+        }
+
+        const isAdminSession = sessionOrgName?.toLowerCase() === "ozclu" || sessionOrgName?.toLowerCase() === "admin";
+        const safeOrgName = isAdminSession ? (orgName || sessionOrgName) : (sessionOrgName || orgName);
+
+        const cleanOrg = (safeOrgName || "XXX").replace(/[^a-zA-Z]/g, "").slice(0, 3).padEnd(3, "X").toUpperCase();
+        const nowTime = new Date();
+        const dd = String(nowTime.getDate()).padStart(2, "0");
+        const mm = String(nowTime.getMonth() + 1).padStart(2, "0");
+        const yy = String(nowTime.getFullYear()).slice(-2);
+        const dateStr = `${dd}${mm}${yy}`;
+        const prefix = `INT${dateStr}-`;
+
+        const count = await db.collection("verifications").countDocuments({
+          id: { $regex: `^${prefix}` }
+        });
+        const finalId = `${prefix}${String(count + 1).padStart(4, "0")}`;
+
+        const extractBirthYear = (dobStr: string) => {
+          if (!dobStr) return null;
+          const match = dobStr.toString().match(/\b(19\d\d|20\d\d)\b/);
+          return match ? parseInt(match[0], 10) : null;
+        };
+        const dobYear = extractBirthYear(candidateDob);
+
+        const normalizeName = (str: string) => {
+          if (!str) return "";
+          return str
+            .toLowerCase()
+            .replace(/[^a-z0-9\s]/g, "")
+            .replace(/\s+/g, " ")
+            .trim();
+        };
+        const searchNormalized = normalizeName(candidateName);
+
+        let query: any = {};
+        if (dobYear) {
+          query.dobYear = dobYear;
+        }
+
+        const potentialMatches = await db.collection("interpol_notices").find(query).toArray();
+
+        const inputWords = searchNormalized.split(" ").filter(w => w.length > 2);
+        const matchedNotices = potentialMatches.filter((notice: any) => {
+          const noticeNormalized = notice.normalizedName || "";
+          
+          // 1. Exact match
+          if (searchNormalized === noticeNormalized) return true;
+          
+          // 2. Substring match
+          if (searchNormalized.includes(noticeNormalized) || noticeNormalized.includes(searchNormalized)) return true;
+          
+          // 3. Word overlap
+          const noticeWords = noticeNormalized.split(" ").filter((w: any) => w.length > 2);
+          const commonWords = inputWords.filter(w => noticeWords.includes(w));
+          
+          if (commonWords.length >= 2) return true;
+          if (inputWords.length > 0 && noticeWords.every((w: any) => inputWords.includes(w))) return true;
+          if (noticeWords.length > 0 && inputWords.every((w: any) => noticeWords.includes(w))) return true;
+          
+          return false;
+        });
+
+        const sanitizedMatches = matchedNotices.map((m: any) => {
+          const rawDetails = m.details?.details || m.details || {};
+          const arrestWarrants = rawDetails.arrest_warrants || m.details?.arrest_warrants || [];
+          return {
+            name: m.name || rawDetails.forename || "",
+            dateOfBirth: m.dateOfBirth || String(rawDetails.date_of_birth || ""),
+            placeOfBirth: m.placeOfBirth || rawDetails.place_of_birth || "",
+            noticeType: m.noticeType || "",
+            noticeId: m.noticeId || rawDetails.entity_id || "",
+            link: m.link || "",
+            details: {
+              arrest_warrants: arrestWarrants.map((w: any) => ({
+                charge: typeof w.charge === "string" ? w.charge : JSON.stringify(w.charge || ""),
+                issuing_country_id: w.issuing_country_id || "",
+              })),
+              details: typeof rawDetails.details === "string" ? rawDetails.details : (rawDetails.case_details || ""),
+              sex: rawDetails.sex_id || "",
+              nationalities: Array.isArray(rawDetails.nationalities) ? rawDetails.nationalities.join(", ") : "",
+              distinguishing_marks: typeof rawDetails.distinguishing_marks === "string" ? rawDetails.distinguishing_marks : "",
+            },
+          };
+        });
+
+        const hasRecords = sanitizedMatches.length > 0;
+        const status = hasRecords ? "Needs Attention" : "Completed";
+        const notes = hasRecords
+          ? `Potential similarity match(es) found in Interpol database: ${sanitizedMatches.length} record(s).`
+          : "No records found in Interpol database. Clean record verified.";
+
+        const dateFormatted = new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
+
+        await db.collection("verifications").insertOne({
+          id: finalId,
+          name: candidateName.trim(),
+          email: "",
+          orgName: safeOrgName,
+          requestingOrgName: reqOrgName || safeOrgName,
+          date: dateFormatted,
+          status: status,
+          verifier: "System",
+          notes: notes,
+          type: "interpol",
+          candidateDob: candidateDob,
+          birthCity: birthCity?.trim() || "",
+          interpolHasRecords: hasRecords,
+          interpolMatches: sanitizedMatches,
+          interpolCompletedAt: new Date().toISOString(),
+          createdAt: new Date().toISOString()
+        });
+
+        if (reqOrgName && reqOrgName.trim()) {
+          await db.collection("settings").updateOne(
+            { companyName: safeOrgName },
+            { $addToSet: { recentRequestingOrgs: reqOrgName.trim() } },
+            { upsert: true }
+          );
+        }
+
+        await logAuditEvent(db, {
+          actorUserId: user.id,
+          actorEmail: user.email,
+          actorRole: user.role,
+          portal: "client",
+          action: "interpol_verification_created",
+          targetType: "verification",
+          targetId: finalId,
+          ip,
+          userAgent,
+          outcome: "success"
+        });
+
+        return NextResponse.json({ success: true, id: finalId });
+      }
       default:
 
         return NextResponse.json({ error: `Unsupported action: ${action}` }, { status: 400 });

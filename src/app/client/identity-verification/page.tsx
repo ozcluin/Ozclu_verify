@@ -26,11 +26,12 @@ import {
   FileText,
   Briefcase,
   GraduationCap,
+  Globe,
 } from "lucide-react";
 import { INDIAN_STATES } from "src/lib/courts-mapping";
 import { Country, State, City } from "country-state-city";
 
-type ServiceType = "identity" | "court_record" | "employment" | "education";
+type ServiceType = "identity" | "court_record" | "employment" | "education" | "interpol";
 
 /** Portaled success modal — always renders at document.body so fixed positioning is correct */
 function SuccessModal({ crCreatedId, crCandidateName, onCreateAnother, onGoToSummary }: {
@@ -101,10 +102,313 @@ function SuccessModal({ crCreatedId, crCandidateName, onCreateAnother, onGoToSum
   );
 }
 
+function InterpolSuccessModal({ interpolCreatedId, candidateName, hasRecords, onCreateAnother, onGoToSummary }: {
+  interpolCreatedId: string;
+  candidateName: string;
+  hasRecords: boolean;
+  onCreateAnother: () => void;
+  onGoToSummary: () => void;
+}) {
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+
+  return (
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-999 animate-fade-in">
+      <div className="bg-white border border-slate-200 rounded-3xl p-8 max-w-md w-full shadow-2xl relative flex flex-col items-center gap-6 animate-scale-in">
+        <div className={`relative w-20 h-20 flex items-center justify-center rounded-full border-2 ${
+          hasRecords 
+            ? "bg-rose-50 border-rose-200 text-rose-600" 
+            : "bg-emerald-50 border-emerald-200 text-emerald-600"
+        }`}>
+          {hasRecords ? (
+            <svg className="w-10 h-10 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          ) : (
+            <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.952 11.952 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-2 text-center">
+          <h2 className="text-xl font-extrabold text-slate-800">
+            {hasRecords ? "Attention Required" : "Verification Completed"}
+          </h2>
+          <p className="text-xs font-semibold text-slate-500 leading-relaxed max-w-xs">
+            Interpol database search completed for <strong className="text-slate-800">{candidateName}</strong>.
+          </p>
+          <div className={`mt-2 py-2 px-4 rounded-xl text-xs font-bold border ${
+            hasRecords 
+              ? "bg-rose-50 text-rose-700 border-rose-200" 
+              : "bg-emerald-50 text-emerald-700 border-emerald-200"
+          }`}>
+            {hasRecords ? "Potential matches or similarities found." : "0 records found. Clean record verified."}
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2.5 w-full">
+          <button
+            onClick={() => {
+              window.open(`/client/interpol-report?id=${interpolCreatedId}`, "_blank");
+            }}
+            className="w-full py-3 bg-[#181d16] hover:bg-[#1E293B] text-white font-bold rounded-xl transition-all cursor-pointer text-xs shadow-xs inline-flex items-center justify-center gap-1.5"
+          >
+            <span>View Verification Report</span>
+            <ExternalLink className="w-4 h-4" />
+          </button>
+          
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={onCreateAnother}
+              className="py-3 border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-xl transition-all cursor-pointer text-xs bg-white"
+            >
+              Check Another
+            </button>
+            <button
+              onClick={onGoToSummary}
+              className="py-3 border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-xl transition-all cursor-pointer text-xs bg-white"
+            >
+              Summary Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FlowIllustration({ activeService }: { activeService: ServiceType }) {
+  let primaryColor = "#4f46e5";
+  let secondaryColor = "#10b981";
+  let dbLabel = "Data Registries";
+  let clientLabel = "Initiate Request";
+  let candidateLabel = "Candidate Input";
+  
+  if (activeService === "identity") {
+    primaryColor = "#059669";
+    secondaryColor = "#10b981";
+    dbLabel = "DigiLocker / UIDAI";
+    clientLabel = "Initiate Request";
+    candidateLabel = "OTP Consent";
+  } else if (activeService === "court_record") {
+    primaryColor = "#d97706";
+    secondaryColor = "#f59e0b";
+    dbLabel = "eCourts Database";
+    clientLabel = "Initiate Request";
+    candidateLabel = "Address Records";
+  } else if (activeService === "employment") {
+    primaryColor = "#2563eb";
+    secondaryColor = "#3b82f6";
+    dbLabel = "Employer Inquiries";
+    clientLabel = "Initiate Request";
+    candidateLabel = "Tenure Details";
+  } else if (activeService === "education") {
+    primaryColor = "#7c3aed";
+    secondaryColor = "#8b5cf6";
+    dbLabel = "Registrar Records";
+    clientLabel = "Initiate Request";
+    candidateLabel = "Degree Uploads";
+  } else if (activeService === "interpol") {
+    primaryColor = "#1d4ed8";
+    secondaryColor = "#4f46e5";
+    dbLabel = "Red & Yellow DB";
+    clientLabel = "Initiate Search";
+    candidateLabel = "Notice Match Check";
+  }
+
+  return (
+    <div className="w-full flex justify-center py-6 bg-slate-50 border border-slate-100 rounded-3xl mb-1 relative overflow-hidden group">
+      <div className="absolute top-0 right-0 w-32 h-32 bg-slate-200/15 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-32 h-32 bg-slate-200/15 rounded-full blur-2xl pointer-events-none" />
+
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes flowDash {
+          to {
+            stroke-dashoffset: -20;
+          }
+        }
+        .flow-line {
+          stroke-dasharray: 6, 4;
+          animation: flowDash 1.5s linear infinite;
+        }
+        @keyframes rotateOrbit {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        @keyframes rotateOrbitRev {
+          from { transform: rotate(360deg); }
+          to { transform: rotate(0deg); }
+        }
+        .orbit-ring {
+          transform-origin: 200px 130px;
+          animation: rotateOrbit 20s linear infinite;
+        }
+        .orbit-ring-rev {
+          transform-origin: 200px 130px;
+          animation: rotateOrbitRev 15s linear infinite;
+        }
+        @keyframes pulseGlow {
+          0%, 100% {
+            filter: drop-shadow(0 0 2px var(--glow-color, rgba(79, 70, 229, 0.35)));
+          }
+          50% {
+            filter: drop-shadow(0 0 8px var(--glow-color, rgba(79, 70, 229, 0.7)));
+          }
+        }
+        .pulse-shield {
+          animation: pulseGlow 2.5s ease-in-out infinite;
+        }
+      `}} />
+
+      <svg 
+        width="100%" 
+        height="230" 
+        viewBox="0 0 400 260" 
+        fill="none" 
+        xmlns="http://www.w3.org/2000/svg"
+        className="max-w-[350px] select-none"
+        style={{ '--glow-color': primaryColor } as any}
+      >
+        <defs>
+          <filter id="cardShadow" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#0f172a" floodOpacity="0.05" />
+          </filter>
+        </defs>
+
+        {/* Dynamic Curved Flow Paths */}
+        {/* Flow 1: Client Card -> Candidate Card */}
+        <path d="M 145 60 C 180 35, 220 35, 255 60" stroke="#cbd5e1" strokeWidth="2.2" strokeLinecap="round" />
+        <path d="M 145 60 C 180 35, 220 35, 255 60" stroke={primaryColor} strokeWidth="2.2" strokeLinecap="round" className="flow-line" />
+
+        {/* Flow 2: Candidate Card -> Central Engine */}
+        <path d="M 275 90 C 260 108, 245 120, 225 125" stroke="#cbd5e1" strokeWidth="2.2" strokeLinecap="round" />
+        <path d="M 275 90 C 260 108, 245 120, 225 125" stroke={primaryColor} strokeWidth="2.2" strokeLinecap="round" className="flow-line" />
+
+        {/* Flow 3: Central Engine -> DB cylinder */}
+        <path d="M 225 137 C 240 150, 250 165, 265 180" stroke="#cbd5e1" strokeWidth="2.2" strokeLinecap="round" />
+        <path d="M 225 137 C 240 150, 250 165, 265 180" stroke={primaryColor} strokeWidth="2.2" strokeLinecap="round" className="flow-line" />
+
+        {/* Flow 4: DB cylinder -> Central Engine */}
+        <path d="M 260 195 C 240 195, 220 180, 200 155" stroke="#cbd5e1" strokeWidth="2.2" strokeLinecap="round" />
+        <path d="M 260 195 C 240 195, 220 180, 200 155" stroke={secondaryColor} strokeWidth="2.2" strokeLinecap="round" className="flow-line" style={{ animationDirection: 'reverse' }} />
+
+        {/* Flow 5: Central Engine -> Report Badge */}
+        <path d="M 175 137 C 160 150, 150 165, 135 180" stroke="#cbd5e1" strokeWidth="2.2" strokeLinecap="round" />
+        <path d="M 175 137 C 160 150, 150 165, 135 180" stroke={secondaryColor} strokeWidth="2.2" strokeLinecap="round" className="flow-line" style={{ animationDirection: 'reverse' }} />
+
+        {/* Flow 6: Report Badge -> Client Card */}
+        <path d="M 85 175 C 70 145, 70 118, 85 95" stroke="#cbd5e1" strokeWidth="2.2" strokeLinecap="round" />
+        <path d="M 85 175 C 70 145, 70 118, 85 95" stroke={secondaryColor} strokeWidth="2.2" strokeLinecap="round" className="flow-line" style={{ animationDirection: 'reverse' }} />
+
+        {/* Node 1: Client Card (Top Left) */}
+        <g transform="translate(25, 25)" filter="url(#cardShadow)">
+          <rect width="120" height="70" rx="16" fill="white" stroke="#f1f5f9" strokeWidth="1.5" />
+          <circle cx="60" cy="26" r="11" fill="#eff6ff" />
+          <path d="M 55 24 L 59 28 L 66 21" stroke={primaryColor} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+          <rect x="52" y="11" width="16" height="3" rx="1.5" fill={primaryColor} opacity="0.4" />
+          <text x="60" y="54" textAnchor="middle" fill="#1e293b" fontSize="10" fontWeight="extrabold" fontFamily="sans-serif">{clientLabel}</text>
+        </g>
+
+        {/* Node 2: Candidate Card (Top Right) */}
+        <g transform="translate(255, 25)" filter="url(#cardShadow)">
+          <rect width="120" height="70" rx="16" fill="white" stroke="#f1f5f9" strokeWidth="1.5" />
+          <circle cx="60" cy="26" r="11" fill="#f0fdf4" />
+          <circle cx="60" cy="23" r="4.5" fill={primaryColor} />
+          <path d="M 52 33 C 52 29.5, 68 29.5, 68 33 Z" fill={primaryColor} />
+          <rect x="52" y="11" width="16" height="3" rx="1.5" fill={primaryColor} opacity="0.4" />
+          <text x="60" y="54" textAnchor="middle" fill="#1e293b" fontSize="10" fontWeight="extrabold" fontFamily="sans-serif">{candidateLabel}</text>
+        </g>
+
+        {/* Node 3: Central Engine Hub */}
+        <g>
+          {/* Rotating Dotted Outer Ring */}
+          <circle cx="200" cy="130" r="42" stroke={primaryColor} strokeWidth="1.5" strokeDasharray="5 7" opacity="0.3" className="orbit-ring" />
+          {/* Rotating Dotted Inner Ring */}
+          <circle cx="200" cy="130" r="32" stroke={secondaryColor} strokeWidth="1.5" strokeDasharray="3 5" opacity="0.25" className="orbit-ring-rev" />
+          {/* Glowing Base */}
+          <circle cx="200" cy="130" r="24" fill="white" stroke="#f1f5f9" strokeWidth="1" filter="url(#cardShadow)" />
+          {/* Glowing Shield */}
+          <g className="pulse-shield" transform="translate(186, 116)">
+            <path d="M 14 0 C 23 2, 25 5, 25 12 C 25 21, 14 27, 14 27 C 14 27, 3 21, 3 12 C 3 5, 5 2, 14 0 Z" fill={primaryColor} />
+            <path d="M 10 13 L 13 16 L 19 10" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </g>
+        </g>
+
+        {/* Node 4: DB Cylinders (Bottom Right) */}
+        <g transform="translate(255, 165)" filter="url(#cardShadow)">
+          <rect width="120" height="70" rx="16" fill="white" stroke="#f1f5f9" strokeWidth="1.5" />
+          <circle cx="60" cy="26" r="11" fill="#faf5ff" />
+          {/* Stacked database disks */}
+          <ellipse cx="60" cy="21" rx="7" ry="2.2" fill="none" stroke={primaryColor} strokeWidth="1.5" />
+          <path d="M 53 21 L 53 26 A 7 2.2 0 0 0 67 26 L 67 21" fill="none" stroke={primaryColor} strokeWidth="1.5" />
+          <path d="M 53 26 L 53 31 A 7 2.2 0 0 0 67 31 L 67 26" fill="none" stroke={primaryColor} strokeWidth="1.5" />
+          <circle cx="60" cy="26" r="1.5" fill="#10b981" />
+          <text x="60" y="54" textAnchor="middle" fill="#1e293b" fontSize="10" fontWeight="extrabold" fontFamily="sans-serif">{dbLabel}</text>
+        </g>
+
+        {/* Node 5: Success Report Card (Bottom Left) */}
+        <g transform="translate(25, 165)" filter="url(#cardShadow)">
+          <rect width="120" height="70" rx="16" fill="white" stroke="#f1f5f9" strokeWidth="1.5" />
+          <circle cx="60" cy="26" r="11" fill="#fff7ed" />
+          {/* File checklist report icon */}
+          <path d="M 56 19 L 64 19 L 64 33 L 56 33 Z" fill="none" stroke={secondaryColor} strokeWidth="1.5" strokeLinejoin="round" />
+          <line x1="59" y1="24" x2="62" y2="24" stroke={secondaryColor} strokeWidth="1.5" strokeLinecap="round" />
+          <line x1="59" y1="28" x2="61" y2="28" stroke={secondaryColor} strokeWidth="1.5" strokeLinecap="round" />
+          <circle cx="65" cy="31" r="3" fill="#10b981" />
+          <path d="M 64 31 L 65 32 L 66.5 30" stroke="white" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
+          <text x="60" y="54" textAnchor="middle" fill="#1e293b" fontSize="10" fontWeight="extrabold" fontFamily="sans-serif">Verified Report</text>
+        </g>
+      </svg>
+    </div>
+  );
+}
+function FlowDiagram({ title, activeService }: { title: string; activeService: ServiceType }) {
+  let colorTheme = "linear-gradient(to right, #4f46e5, #6366f1)";
+  if (activeService === "identity") colorTheme = "linear-gradient(to right, #059669, #10b981)";
+  else if (activeService === "court_record") colorTheme = "linear-gradient(to right, #d97706, #f59e0b)";
+  else if (activeService === "employment") colorTheme = "linear-gradient(to right, #2563eb, #3b82f6)";
+  else if (activeService === "education") colorTheme = "linear-gradient(to right, #7c3aed, #8b5cf6)";
+  else if (activeService === "interpol") colorTheme = "linear-gradient(to right, #1d4ed8, #4f46e5)";
+
+  return (
+    <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-lg relative overflow-hidden transition-all duration-300 hover:shadow-xl w-full">
+      <div className="absolute top-0 left-0 right-0 h-1.5" style={{ background: colorTheme }}></div>
+      <div className="flex flex-col gap-4 mt-1">
+        <div>
+          <h3 className="font-extrabold text-slate-800 text-xs uppercase tracking-wider flex items-center gap-2">
+            <Globe className="w-4 h-4 text-slate-700 animate-pulse" />
+            <span>{title}</span>
+          </h3>
+          <p className="text-[10px] text-slate-500 font-semibold mt-1">
+            Visual data-flow path from input to verified verification report.
+          </p>
+        </div>
+
+        {/* Dynamic Modern Vector Data Flow Illustration */}
+        <FlowIllustration activeService={activeService} />
+      </div>
+    </div>
+  );
+}
 export default function IdentityVerification() {
   const router = useRouter();
   const { user, profile } = useAuth();
-  const { addVerification, addEmploymentVerification, addEducationVerification, addCourtRecordVerification, settings, removeRecentRequestingOrg, organisation } = usePortal();
+  const { addVerification, addEmploymentVerification, addEducationVerification, addCourtRecordVerification, addInterpolVerification, settings, removeRecentRequestingOrg, organisation } = usePortal();
+
+  // ─── Interpol Check States ───
+  const [interpolCandidateName, setInterpolCandidateName] = useState("");
+  const [interpolCandidateDob, setInterpolCandidateDob] = useState("");
+  const [interpolBirthCity, setInterpolBirthCity] = useState("");
+  const [interpolRequestingOrgName, setInterpolRequestingOrgName] = useState("");
+  const [interpolShowOrgDropdown, setInterpolShowOrgDropdown] = useState(false);
+  const [interpolSuccessMsg, setInterpolSuccessMsg] = useState("");
+  const [interpolErrorMsg, setInterpolErrorMsg] = useState("");
+  const [interpolSubmitting, setInterpolSubmitting] = useState(false);
+  const [interpolCreatedId, setInterpolCreatedId] = useState<string | null>(null);
 
   // Service active switches based on admin config
   const identityEnabled = organisation?.identityEnabled !== false;
@@ -163,6 +467,10 @@ export default function IdentityVerification() {
 
   const eduFilteredOrgs = recentOrgs.filter(org =>
     org.toLowerCase().includes(eduRequestingOrgName.toLowerCase())
+  );
+
+  const interpolFilteredOrgs = recentOrgs.filter(org =>
+    org.toLowerCase().includes(interpolRequestingOrgName.toLowerCase())
   );
 
   // ─── Identity Check States (existing) ───
@@ -628,6 +936,70 @@ export default function IdentityVerification() {
     setCrCreatedId(null);
   };
 
+  // ─── Interpol Check Handlers ───
+  const handleInterpolSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setInterpolErrorMsg("");
+    setInterpolSuccessMsg("");
+
+    const isSettingsIncomplete = !settings ||
+      !settings.contactFirstName?.trim() ||
+      !settings.contactLastName?.trim() ||
+      !settings.address?.trim() ||
+      !settings.city?.trim() ||
+      !settings.postalCode?.trim();
+
+    if (isSettingsIncomplete) {
+      setInterpolErrorMsg("Please complete your profile settings before creating requests.");
+      return;
+    }
+
+    if (!interpolCandidateName.trim()) {
+      setInterpolErrorMsg("Candidate Full Name is required");
+      return;
+    }
+    if (!interpolCandidateDob.trim()) {
+      setInterpolErrorMsg("Candidate Date of Birth is required");
+      return;
+    }
+    if (!interpolRequestingOrgName.trim()) {
+      setInterpolErrorMsg("Requesting ORG Name is required");
+      return;
+    }
+
+    setInterpolSubmitting(true);
+    try {
+      const effectiveOrgName = isAdmin ? (orgName || profile?.org_name || "Ozclu") : (profile?.org_name || orgName);
+      const res = await addInterpolVerification({
+        candidateName: interpolCandidateName.trim(),
+        candidateDob: interpolCandidateDob.trim(),
+        birthCity: interpolBirthCity.trim(),
+        orgName: effectiveOrgName,
+        requestingOrgName: interpolRequestingOrgName.trim(),
+      });
+      if (res && res.success) {
+        setInterpolSuccessMsg(res.interpolHasRecords ? "Potential similarity match(es) found." : "Interpol database check completed successfully!");
+        setInterpolCreatedId(res.id);
+      } else {
+        setInterpolErrorMsg(res?.error || "Failed to run Interpol database check");
+      }
+    } catch (err: any) {
+      setInterpolErrorMsg("Failed to run Interpol database check");
+    } finally {
+      setInterpolSubmitting(false);
+    }
+  };
+
+  const handleInterpolCancel = () => {
+    setInterpolCandidateName("");
+    setInterpolCandidateDob("");
+    setInterpolBirthCity("");
+    setInterpolRequestingOrgName("");
+    setInterpolErrorMsg("");
+    setInterpolSuccessMsg("");
+    setInterpolCreatedId(null);
+  };
+
   const isSettingsIncomplete = !settings ||
     !settings.contactFirstName?.trim() ||
     !settings.contactLastName?.trim() ||
@@ -752,7 +1124,31 @@ export default function IdentityVerification() {
           </button>
         )}
 
-        {!identityEnabled && !courtRecordEnabled && !employmentEnabled && !educationEnabled && (
+        <button
+          type="button"
+          onClick={() => setActiveService("interpol")}
+          className={`flex-1 flex items-center gap-3 p-4 rounded-2xl border-2 transition-all duration-300 cursor-pointer group ${
+            activeService === "interpol"
+              ? "border-[#181d16] bg-white shadow-md"
+              : "border-[#eaf0e4] bg-[#f6fbf0]/50 hover:border-[#d0dbc6] hover:bg-white/80"
+          }`}
+        >
+          <div className={`p-2.5 rounded-xl transition-all ${
+            activeService === "interpol"
+              ? "bg-[#181d16] text-white"
+              : "bg-[#f0f5ea]/60 text-[#00450e] group-hover:bg-[#e0e8d8]"
+          }`}>
+            <Globe className="w-5 h-5" />
+          </div>
+          <div className="text-left">
+            <div className={`font-semibold text-sm ${activeService === "interpol" ? "text-[#181d16]" : "text-[#475569]"}`}>
+              Interpol Check
+            </div>
+            <div className="text-[11px] text-[#64748B] mt-0.5">Red, Yellow, CBI Check</div>
+          </div>
+        </button>
+
+        {!identityEnabled && !courtRecordEnabled && !employmentEnabled && !educationEnabled && activeService !== "interpol" && (
           <div className="flex-1 bg-rose-50 border border-rose-100 rounded-2xl p-4 text-center">
             <p className="text-xs font-bold text-rose-800">All verification services are currently deactivated by the administrator.</p>
           </div>
@@ -782,24 +1178,25 @@ export default function IdentityVerification() {
       {/* IDENTITY CHECK FORM (existing functionality) */}
       {/* ═══════════════════════════════════════════════════ */}
       {activeService === "identity" && identityEnabled && (
-        <>
-          {/* Form Alerts */}
-          {successMsg && !createdCredentials && (
-            <div className="bg-[#E6F8F3] text-[#00684A] border border-[#A3EAD6] rounded-xl p-4 font-body-sm flex items-center gap-3 max-w-2xl animate-fade-in shadow-2xs">
-              <CheckCircle className="w-5 h-5 text-[#00a877] shrink-0" />
-              <span className="font-semibold">{successMsg}</span>
-            </div>
-          )}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start max-w-6xl w-full">
+          <div className="lg:col-span-7 flex flex-col gap-6 w-full">
+            {/* Form Alerts */}
+            {successMsg && !createdCredentials && (
+              <div className="bg-[#E6F8F3] text-[#00684A] border border-[#A3EAD6] rounded-xl p-4 font-body-sm flex items-center gap-3 max-w-2xl animate-fade-in shadow-2xs">
+                <CheckCircle className="w-5 h-5 text-[#00a877] shrink-0" />
+                <span className="font-semibold">{successMsg}</span>
+              </div>
+            )}
 
-          {errorMsg && (
-            <div className="bg-red-50 text-red-800 border border-red-200 rounded-xl p-4 font-body-sm flex items-center gap-3 max-w-2xl animate-fade-in shadow-2xs">
-              <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
-              <span className="font-semibold">{errorMsg}</span>
-            </div>
-          )}
+            {errorMsg && (
+              <div className="bg-red-50 text-red-800 border border-red-200 rounded-xl p-4 font-body-sm flex items-center gap-3 max-w-2xl animate-fade-in shadow-2xs">
+                <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
+                <span className="font-semibold">{errorMsg}</span>
+              </div>
+            )}
 
-          {/* Form Card */}
-          <div className="bg-white border border-[#eaf0e4] rounded-3xl p-8 max-w-2xl shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+            {/* Form Card */}
+            <div className="bg-white border border-[#eaf0e4] rounded-3xl p-8 shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1 w-full">
             {/* Top gradient line */}
             <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#eaf0e4] via-[#FFF4CC] to-[#f0f5ea]"></div>
 
@@ -1039,31 +1436,40 @@ export default function IdentityVerification() {
               </div>
             </div>
           )}
-        </>
+          </div>
+          
+          <div className="lg:col-span-5 w-full">
+            <FlowDiagram 
+              title="Identity Check Data Flow" 
+              activeService="identity" 
+            />
+          </div>
+        </div>
       )}
 
       {/* ═══════════════════════════════════════════════════ */}
       {/* COURT RECORD CHECK FORM (new) */}
       {/* ═══════════════════════════════════════════════════ */}
       {activeService === "court_record" && courtRecordEnabled && (
-        <>
-          {/* Form Alerts */}
-          {crSuccessMsg && !crCreatedId && (
-            <div className="bg-[#E6F8F3] text-[#00684A] border border-[#A3EAD6] rounded-xl p-4 font-body-sm flex items-center gap-3 max-w-2xl animate-fade-in shadow-2xs">
-              <CheckCircle className="w-5 h-5 text-[#00a877] shrink-0" />
-              <span className="font-semibold">{crSuccessMsg}</span>
-            </div>
-          )}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start max-w-6xl w-full">
+          <div className="lg:col-span-7 flex flex-col gap-6 w-full">
+            {/* Form Alerts */}
+            {crSuccessMsg && !crCreatedId && (
+              <div className="bg-[#E6F8F3] text-[#00684A] border border-[#A3EAD6] rounded-xl p-4 font-body-sm flex items-center gap-3 max-w-2xl animate-fade-in shadow-2xs">
+                <CheckCircle className="w-5 h-5 text-[#00a877] shrink-0" />
+                <span className="font-semibold">{crSuccessMsg}</span>
+              </div>
+            )}
 
-          {crErrorMsg && (
-            <div className="bg-red-50 text-red-800 border border-red-200 rounded-xl p-4 font-body-sm flex items-center gap-3 max-w-2xl animate-fade-in shadow-2xs">
-              <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
-              <span className="font-semibold">{crErrorMsg}</span>
-            </div>
-          )}
+            {crErrorMsg && (
+              <div className="bg-red-50 text-red-800 border border-red-200 rounded-xl p-4 font-body-sm flex items-center gap-3 max-w-2xl animate-fade-in shadow-2xs">
+                <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
+                <span className="font-semibold">{crErrorMsg}</span>
+              </div>
+            )}
 
-          {/* Court Record Form Card */}
-          <div className="bg-white border border-slate-200 rounded-3xl p-8 max-w-2xl shadow-lg relative overflow-hidden transition-all duration-300 hover:shadow-xl">
+            {/* Court Record Form Card */}
+            <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-lg relative overflow-hidden transition-all duration-300 hover:shadow-xl w-full">
             {/* Top gradient line */}
             <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-emerald-600 via-teal-500 to-green-500"></div>
 
@@ -1845,6 +2251,15 @@ export default function IdentityVerification() {
             </form>
           </div>
 
+          </div>
+          
+          <div className="lg:col-span-5 w-full">
+            <FlowDiagram 
+              title="Court Record Search Data Flow" 
+              activeService="court_record" 
+            />
+          </div>
+
           {/* Success Modal for Court Record — rendered via Portal to escape CSS transform ancestors */}
           {crCreatedId && typeof document !== "undefined" && createPortal(
             <SuccessModal
@@ -1855,30 +2270,31 @@ export default function IdentityVerification() {
             />,
             document.body
           )}
-        </>
+        </div>
       )}
       {/* ═══════════════════════════════════════════════════ */}
       {/* EMPLOYMENT VERIFICATION FORM */}
       {/* ═══════════════════════════════════════════════════ */}
       {activeService === "employment" && employmentEnabled && (
-        <>
-          {/* Form Alerts */}
-          {empSuccessMsg && !empCreatedCredentials && (
-            <div className="bg-[#E6F8F3] text-[#00684A] border border-[#A3EAD6] rounded-xl p-4 font-body-sm flex items-center gap-3 max-w-2xl animate-fade-in shadow-2xs">
-              <CheckCircle className="w-5 h-5 text-[#00a877] shrink-0" />
-              <span className="font-semibold">{empSuccessMsg}</span>
-            </div>
-          )}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start max-w-6xl w-full">
+          <div className="lg:col-span-7 flex flex-col gap-6 w-full">
+            {/* Form Alerts */}
+            {empSuccessMsg && !empCreatedCredentials && (
+              <div className="bg-[#E6F8F3] text-[#00684A] border border-[#A3EAD6] rounded-xl p-4 font-body-sm flex items-center gap-3 max-w-2xl animate-fade-in shadow-2xs">
+                <CheckCircle className="w-5 h-5 text-[#00a877] shrink-0" />
+                <span className="font-semibold">{empSuccessMsg}</span>
+              </div>
+            )}
 
-          {empErrorMsg && (
-            <div className="bg-red-50 text-red-800 border border-red-200 rounded-xl p-4 font-body-sm flex items-center gap-3 max-w-2xl animate-fade-in shadow-2xs">
-              <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
-              <span className="font-semibold">{empErrorMsg}</span>
-            </div>
-          )}
+            {empErrorMsg && (
+              <div className="bg-red-50 text-red-800 border border-red-200 rounded-xl p-4 font-body-sm flex items-center gap-3 max-w-2xl animate-fade-in shadow-2xs">
+                <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
+                <span className="font-semibold">{empErrorMsg}</span>
+              </div>
+            )}
 
-          {/* Employment Form Card */}
-          <div className="bg-white border border-[#eaf0e4] rounded-3xl p-8 max-w-2xl shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+            {/* Employment Form Card */}
+            <div className="bg-white border border-[#eaf0e4] rounded-3xl p-8 shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1 w-full">
             {/* Top gradient line */}
             <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#eaf0e4] via-[#dbeafe] to-[#f0f5ea]"></div>
 
@@ -2154,31 +2570,40 @@ export default function IdentityVerification() {
               </div>
             </div>
           )}
-        </>
+          </div>
+          
+          <div className="lg:col-span-5 w-full">
+            <FlowDiagram 
+              title="Employment Verification Flow" 
+              activeService="employment" 
+            />
+          </div>
+        </div>
       )}
 
       {/* ═══════════════════════════════════════════════════ */}
       {/* EDUCATION VERIFICATION FORM */}
       {/* ═══════════════════════════════════════════════════ */}
       {activeService === "education" && educationEnabled && (
-        <>
-          {/* Form Alerts */}
-          {eduSuccessMsg && !eduCreatedCredentials && (
-            <div className="bg-[#E6F8F3] text-[#00684A] border border-[#A3EAD6] rounded-xl p-4 font-body-sm flex items-center gap-3 max-w-2xl animate-fade-in shadow-2xs">
-              <CheckCircle className="w-5 h-5 text-[#00a877] shrink-0" />
-              <span className="font-semibold">{eduSuccessMsg}</span>
-            </div>
-          )}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start max-w-6xl w-full">
+          <div className="lg:col-span-7 flex flex-col gap-6 w-full">
+            {/* Form Alerts */}
+            {eduSuccessMsg && !eduCreatedCredentials && (
+              <div className="bg-[#E6F8F3] text-[#00684A] border border-[#A3EAD6] rounded-xl p-4 font-body-sm flex items-center gap-3 max-w-2xl animate-fade-in shadow-2xs">
+                <CheckCircle className="w-5 h-5 text-[#00a877] shrink-0" />
+                <span className="font-semibold">{eduSuccessMsg}</span>
+              </div>
+            )}
 
-          {eduErrorMsg && (
-            <div className="bg-red-50 text-red-800 border border-red-200 rounded-xl p-4 font-body-sm flex items-center gap-3 max-w-2xl animate-fade-in shadow-2xs">
-              <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
-              <span className="font-semibold">{eduErrorMsg}</span>
-            </div>
-          )}
+            {eduErrorMsg && (
+              <div className="bg-red-50 text-red-800 border border-red-200 rounded-xl p-4 font-body-sm flex items-center gap-3 max-w-2xl animate-fade-in shadow-2xs">
+                <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
+                <span className="font-semibold">{eduErrorMsg}</span>
+              </div>
+            )}
 
-          {/* Form Card */}
-          <div className="bg-white border border-[#eaf0e4] rounded-3xl p-8 max-w-2xl shadow-lg relative overflow-hidden transition-all duration-300 hover:shadow-xl">
+            {/* Education Form Card */}
+            <div className="bg-white border border-[#eaf0e4] rounded-3xl p-8 shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1 w-full">
             {/* Top gradient line */}
             <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-purple-650 via-indigo-500 to-blue-500"></div>
 
@@ -2453,7 +2878,213 @@ export default function IdentityVerification() {
               </div>
             </div>
           )}
-        </>
+          </div>
+          
+          <div className="lg:col-span-5 w-full">
+            <FlowDiagram 
+              title="Education Verification Flow" 
+              activeService="education" 
+            />
+          </div>
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════════ */}
+      {/* INTERPOL CHECK FORM */}
+      {/* ═══════════════════════════════════════════════════ */}
+      {activeService === "interpol" && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start max-w-6xl w-full">
+          <div className="lg:col-span-7 flex flex-col gap-6 w-full">
+            {/* Form Alerts */}
+            {interpolSuccessMsg && !interpolCreatedId && (
+              <div className="bg-[#E6F8F3] text-[#00684A] border border-[#A3EAD6] rounded-xl p-4 font-body-sm flex items-center gap-3 max-w-2xl animate-fade-in shadow-2xs">
+                <CheckCircle className="w-5 h-5 text-[#00a877] shrink-0" />
+                <span className="font-semibold">{interpolSuccessMsg}</span>
+              </div>
+            )}
+
+            {interpolErrorMsg && (
+              <div className="bg-red-50 text-red-800 border border-red-200 rounded-xl p-4 font-body-sm flex items-center gap-3 max-w-2xl animate-fade-in shadow-2xs">
+                <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
+                <span className="font-semibold">{interpolErrorMsg}</span>
+              </div>
+            )}
+
+            {/* Interpol Form Card */}
+            <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-lg relative overflow-hidden transition-all duration-300 hover:shadow-xl w-full">
+            {/* Top gradient line */}
+            <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-blue-700 via-indigo-600 to-sky-500"></div>
+
+            {/* Subtle decorative background shapes */}
+            <div className="absolute -right-12 -bottom-12 w-32 h-32 bg-blue-50/20 rounded-full blur-2xl pointer-events-none"></div>
+            <div className="absolute -left-12 -top-12 w-32 h-32 bg-indigo-500/5 rounded-full blur-2xl pointer-events-none"></div>
+
+            <form onSubmit={handleInterpolSubmit} className="flex flex-col gap-6 mt-2 relative z-10">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2.5 bg-gradient-to-br from-blue-700 to-indigo-800 rounded-xl shadow-md text-white">
+                  <Globe className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-800 text-lg leading-tight">Interpol Database Check</h3>
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">
+                    Query international notices and rewards database
+                  </p>
+                </div>
+              </div>
+
+              {/* Candidate Full Name */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
+                  <span>Candidate Full Name</span>
+                  <span className="text-rose-500 font-bold">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={interpolCandidateName}
+                    onChange={(e) => setInterpolCandidateName(e.target.value)}
+                    placeholder="Enter candidate's full name"
+                    disabled={interpolSubmitting}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-hidden disabled:opacity-60"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Date of Birth */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
+                  <span>Date of Birth</span>
+                  <span className="text-rose-500 font-bold">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="date"
+                    value={interpolCandidateDob}
+                    onChange={(e) => setInterpolCandidateDob(e.target.value)}
+                    disabled={interpolSubmitting}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-hidden disabled:opacity-60"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Place of Birth City (Optional) */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
+                  <span>Place of Birth (City)</span>
+                  <span className="text-slate-400 font-bold">(Optional)</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={interpolBirthCity}
+                    onChange={(e) => setInterpolBirthCity(e.target.value)}
+                    placeholder="e.g. Silchar, Bishnupur, Mumbai"
+                    disabled={interpolSubmitting}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-hidden disabled:opacity-60"
+                  />
+                </div>
+              </div>
+
+              {/* Requesting ORG Name */}
+              <div className="flex flex-col gap-1.5 relative">
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
+                  <span>Requesting ORG Name</span>
+                  <span className="text-rose-500 font-bold">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={interpolRequestingOrgName}
+                  onChange={(e) => {
+                    setInterpolRequestingOrgName(e.target.value);
+                    setInterpolShowOrgDropdown(true);
+                  }}
+                  onFocus={() => setInterpolShowOrgDropdown(true)}
+                  onBlur={() => setTimeout(() => setInterpolShowOrgDropdown(false), 200)}
+                  placeholder="Type or select organization name"
+                  disabled={interpolSubmitting}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-hidden disabled:opacity-60"
+                  required
+                />
+                {interpolShowOrgDropdown && interpolFilteredOrgs.length > 0 && (
+                  <div className="absolute top-[calc(100%+4px)] left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-lg z-50 max-h-40 overflow-y-auto">
+                    {interpolFilteredOrgs.map((org, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => {
+                          setInterpolRequestingOrgName(org);
+                          setInterpolShowOrgDropdown(false);
+                        }}
+                        className="w-full px-4 py-2.5 text-left text-xs font-semibold text-slate-700 hover:bg-[#f6fbf0] transition-colors flex items-center justify-between group"
+                      >
+                        <span>{org}</span>
+                        <Trash2
+                          className="w-3.5 h-3.5 text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            await removeRecentRequestingOrg(org);
+                          }}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-4 mt-4">
+                <button
+                  type="button"
+                  onClick={handleInterpolCancel}
+                  disabled={interpolSubmitting}
+                  className="flex-1 py-3 border border-slate-200 hover:bg-slate-50 rounded-xl font-bold text-xs text-slate-700 transition-colors cursor-pointer bg-white disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={interpolSubmitting}
+                  className="flex-1 py-3 bg-[#181d16] hover:bg-[#1E293B] text-white font-bold rounded-xl transition-all cursor-pointer text-xs flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-60"
+                >
+                  {interpolSubmitting ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Querying DB...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Check Database</span>
+                      <Send className="w-4 h-4" />
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+
+          </div>
+          
+          <div className="lg:col-span-5 w-full">
+            <FlowDiagram 
+              title="Interpol Database Check Flow" 
+              activeService="interpol" 
+            />
+          </div>
+
+          {/* Success Modal for Interpol Check — rendered via Portal */}
+          {interpolCreatedId && typeof document !== "undefined" && createPortal(
+            <InterpolSuccessModal
+              interpolCreatedId={interpolCreatedId}
+              candidateName={interpolCandidateName || "Candidate"}
+              hasRecords={interpolSuccessMsg.includes("match")}
+              onCreateAnother={() => { setInterpolCreatedId(null); setInterpolSuccessMsg(""); }}
+              onGoToSummary={() => { setInterpolCreatedId(null); router.push("/client/summary"); }}
+            />,
+            document.body
+          )}
+        </div>
       )}
     </div>
   );

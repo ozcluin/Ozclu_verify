@@ -35,8 +35,12 @@ export interface Verification {
   setupUrl?: string;
   createdAt?: string;
   // Court Record Verification fields
-  type?: "identity" | "court_record" | "employment" | "education";
+  type?: "identity" | "court_record" | "employment" | "education" | "interpol";
   candidateDob?: string;
+  birthCity?: string;
+  interpolHasRecords?: boolean;
+  interpolMatches?: any[];
+  interpolCompletedAt?: string;
   candidateFatherName?: string;
   candidateMotherName?: string;
   candidateIsMarried?: boolean;
@@ -249,6 +253,13 @@ interface PortalContextType {
   settings: CompanySettings;
   organisation: Organisation | null;
   ozcluSettings: CompanySettings | null;
+  addInterpolVerification: (params: {
+    candidateName: string;
+    candidateDob: string;
+    birthCity?: string;
+    orgName: string;
+    requestingOrgName: string;
+  }) => Promise<any>;
   addVerification: (name: string, email: string, orgName: string, requestingOrgName?: string) => Promise<any>;
   addEmploymentVerification: (name: string, mobile: string, email: string, orgName: string, requestingOrgName?: string) => Promise<any>;
   addEducationVerification: (name: string, mobile: string, email: string, orgName: string, requestingOrgName?: string) => Promise<any>;
@@ -716,6 +727,34 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return null;
   };
 
+  const addInterpolVerification = async (params: {
+    candidateName: string;
+    candidateDob: string;
+    birthCity?: string;
+    orgName: string;
+    requestingOrgName: string;
+  }) => {
+    try {
+      const res = await fetch("/api/portal-data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "addInterpolVerification",
+          payload: params,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        fetchAllData();
+        return data;
+      }
+    } catch (err) {
+      console.error("Failed creating interpol verification:", err);
+    }
+    fetchAllData();
+    return null;
+  };
+
   const addEmploymentVerification = async (name: string, mobile: string, email: string, orgName: string, requestingOrgName?: string) => {
     try {
       const res = await fetch("/api/portal-data", {
@@ -769,6 +808,7 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         settings,
         organisation,
         ozcluSettings,
+        addInterpolVerification,
         addVerification,
         addEmploymentVerification,
         addEducationVerification,
