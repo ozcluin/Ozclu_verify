@@ -35,6 +35,14 @@ export async function GET(req: NextRequest) {
     // Decrypt all encrypted PII fields for detail view
     const decrypted: any = { ...verification, _id: verification._id.toString() };
 
+    // Sanitization: If manual check is unpublished, hide attempts and force Processing status
+    if ((decrypted.type === "employment" || decrypted.type === "education") && !decrypted.sendToCustomer) {
+      decrypted.status = "Processing";
+      delete decrypted.employmentAttempts;
+      delete decrypted.educationAttempts;
+      delete decrypted.reportDetails;
+    }
+
     // Generate setupUrl on-the-fly if missing but email and tempPassword exist
     if (!decrypted.setupUrl && decrypted.tempPassword && decrypted.email) {
       const candidatePortalUrl = process.env.CANDIDATE_PORTAL_URL || "https://candidate.verify.ozclu.in";

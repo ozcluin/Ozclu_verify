@@ -24,10 +24,13 @@ import {
   ChevronDown,
   UploadCloud,
   FileText,
+  Briefcase,
+  GraduationCap,
 } from "lucide-react";
 import { INDIAN_STATES } from "src/lib/courts-mapping";
+import { Country, State, City } from "country-state-city";
 
-type ServiceType = "identity" | "court_record";
+type ServiceType = "identity" | "court_record" | "employment" | "education";
 
 /** Portaled success modal — always renders at document.body so fixed positioning is correct */
 function SuccessModal({ crCreatedId, crCandidateName, onCreateAnother, onGoToSummary }: {
@@ -101,11 +104,13 @@ function SuccessModal({ crCreatedId, crCandidateName, onCreateAnother, onGoToSum
 export default function IdentityVerification() {
   const router = useRouter();
   const { user, profile } = useAuth();
-  const { addVerification, addCourtRecordVerification, settings, removeRecentRequestingOrg, organisation } = usePortal();
+  const { addVerification, addEmploymentVerification, addEducationVerification, addCourtRecordVerification, settings, removeRecentRequestingOrg, organisation } = usePortal();
 
   // Service active switches based on admin config
   const identityEnabled = organisation?.identityEnabled !== false;
   const courtRecordEnabled = organisation?.courtRecordEnabled !== false;
+  const employmentEnabled = true; // always enabled for now
+  const educationEnabled = true; // always enabled for now
 
   // Service selector state
   const [activeService, setActiveService] = useState<ServiceType>("identity");
@@ -117,6 +122,48 @@ export default function IdentityVerification() {
       setActiveService("identity");
     }
   }, [identityEnabled, courtRecordEnabled, activeService]);
+
+  // ─── Employment Check States ───
+  const [empCandidateName, setEmpCandidateName] = useState("");
+  const [empCandidateMobile, setEmpCandidateMobile] = useState("");
+  const [empCandidateEmail, setEmpCandidateEmail] = useState("");
+  const [empRequestingOrgName, setEmpRequestingOrgName] = useState("");
+  const [empShowOrgDropdown, setEmpShowOrgDropdown] = useState(false);
+  const [empSuccessMsg, setEmpSuccessMsg] = useState("");
+  const [empErrorMsg, setEmpErrorMsg] = useState("");
+  const [empCreatedCredentials, setEmpCreatedCredentials] = useState<{
+    name: string;
+    email: string;
+    setupUrl?: string;
+  } | null>(null);
+  const [empCopiedUrl, setEmpCopiedUrl] = useState(false);
+  const [empSubmitting, setEmpSubmitting] = useState(false);
+
+  // ─── Education Check States ───
+  const [eduCandidateName, setEduCandidateName] = useState("");
+  const [eduCandidateMobile, setEduCandidateMobile] = useState("");
+  const [eduCandidateEmail, setEduCandidateEmail] = useState("");
+  const [eduRequestingOrgName, setEduRequestingOrgName] = useState("");
+  const [eduShowOrgDropdown, setEduShowOrgDropdown] = useState(false);
+  const [eduSuccessMsg, setEduSuccessMsg] = useState("");
+  const [eduErrorMsg, setEduErrorMsg] = useState("");
+  const [eduCreatedCredentials, setEduCreatedCredentials] = useState<{
+    name: string;
+    email: string;
+    setupUrl?: string;
+  } | null>(null);
+  const [eduCopiedUrl, setEduCopiedUrl] = useState(false);
+  const [eduSubmitting, setEduSubmitting] = useState(false);
+
+  const recentOrgs = settings?.recentRequestingOrgs || [];
+
+  const empFilteredOrgs = recentOrgs.filter(org =>
+    org.toLowerCase().includes(empRequestingOrgName.toLowerCase())
+  );
+
+  const eduFilteredOrgs = recentOrgs.filter(org =>
+    org.toLowerCase().includes(eduRequestingOrgName.toLowerCase())
+  );
 
   // ─── Identity Check States (existing) ───
   const [candidateName, setCandidateName] = useState("");
@@ -142,7 +189,6 @@ export default function IdentityVerification() {
   } | null>(null);
   const [copiedUrl, setCopiedUrl] = useState(false);
 
-  const recentOrgs = settings?.recentRequestingOrgs || [];
   const filteredOrgs = recentOrgs.filter(org =>
     org.toLowerCase().includes(requestingOrgName.toLowerCase())
   );
@@ -291,6 +337,148 @@ export default function IdentityVerification() {
     setRequestingOrgName("");
   };
 
+  // ─── Employment Check Handlers ───
+  const handleEmploymentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setEmpErrorMsg("");
+    setEmpSuccessMsg("");
+
+    const isSettingsIncomplete = !settings ||
+      !settings.contactFirstName?.trim() ||
+      !settings.contactLastName?.trim() ||
+      !settings.address?.trim() ||
+      !settings.city?.trim() ||
+      !settings.postalCode?.trim();
+
+    if (isSettingsIncomplete) {
+      setEmpErrorMsg("Please complete your profile settings before creating requests.");
+      return;
+    }
+
+    if (!empCandidateName.trim()) {
+      setEmpErrorMsg("Candidate Full Name is required");
+      return;
+    }
+    if (!empCandidateEmail.trim()) {
+      setEmpErrorMsg("Candidate Email is required");
+      return;
+    }
+    if (!empRequestingOrgName.trim()) {
+      setEmpErrorMsg("Requesting ORG Name is required");
+      return;
+    }
+
+    setEmpSubmitting(true);
+    try {
+      const effectiveOrgName = isAdmin ? (orgName || profile?.org_name || "Ozclu") : (profile?.org_name || orgName);
+      const res = await addEmploymentVerification(
+        empCandidateName.trim(),
+        empCandidateMobile.trim(),
+        empCandidateEmail.trim(),
+        effectiveOrgName,
+        empRequestingOrgName.trim()
+      );
+      if (res && res.success) {
+        setEmpSuccessMsg("Employment verification request initiated successfully!");
+        setEmpCreatedCredentials({
+          name: empCandidateName,
+          email: empCandidateEmail.toLowerCase().trim(),
+          setupUrl: res.setupUrl
+        });
+        setEmpCandidateName("");
+        setEmpCandidateMobile("");
+        setEmpCandidateEmail("");
+        setEmpRequestingOrgName("");
+      } else {
+        setEmpErrorMsg("Failed to initiate employment verification request");
+      }
+    } catch (err: any) {
+      setEmpErrorMsg("Failed to initiate employment verification request");
+    } finally {
+      setEmpSubmitting(false);
+    }
+  };
+
+  const handleEmploymentCancel = () => {
+    setEmpCandidateName("");
+    setEmpCandidateMobile("");
+    setEmpCandidateEmail("");
+    setEmpRequestingOrgName("");
+    setEmpErrorMsg("");
+    setEmpSuccessMsg("");
+  };
+
+  // ─── Education Check Handlers ───
+  const handleEducationSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setEduErrorMsg("");
+    setEduSuccessMsg("");
+
+    const isSettingsIncomplete = !settings ||
+      !settings.contactFirstName?.trim() ||
+      !settings.contactLastName?.trim() ||
+      !settings.address?.trim() ||
+      !settings.city?.trim() ||
+      !settings.postalCode?.trim();
+
+    if (isSettingsIncomplete) {
+      setEduErrorMsg("Please complete your profile settings before creating requests.");
+      return;
+    }
+
+    if (!eduCandidateName.trim()) {
+      setEduErrorMsg("Candidate Full Name is required");
+      return;
+    }
+    if (!eduCandidateEmail.trim()) {
+      setEduErrorMsg("Candidate Email is required");
+      return;
+    }
+    if (!eduRequestingOrgName.trim()) {
+      setEduErrorMsg("Requesting ORG Name is required");
+      return;
+    }
+
+    setEduSubmitting(true);
+    try {
+      const effectiveOrgName = isAdmin ? (orgName || profile?.org_name || "Ozclu") : (profile?.org_name || orgName);
+      const res = await addEducationVerification(
+        eduCandidateName.trim(),
+        eduCandidateMobile.trim(),
+        eduCandidateEmail.trim(),
+        effectiveOrgName,
+        eduRequestingOrgName.trim()
+      );
+      if (res && res.success) {
+        setEduSuccessMsg("Education verification request initiated successfully!");
+        setEduCreatedCredentials({
+          name: eduCandidateName,
+          email: eduCandidateEmail.toLowerCase().trim(),
+          setupUrl: res.setupUrl
+        });
+        setEduCandidateName("");
+        setEduCandidateMobile("");
+        setEduCandidateEmail("");
+        setEduRequestingOrgName("");
+      } else {
+        setEduErrorMsg("Failed to initiate education verification request");
+      }
+    } catch (err: any) {
+      setEduErrorMsg("Failed to initiate education verification request");
+    } finally {
+      setEduSubmitting(false);
+    }
+  };
+
+  const handleEducationCancel = () => {
+    setEduCandidateName("");
+    setEduCandidateMobile("");
+    setEduCandidateEmail("");
+    setEduRequestingOrgName("");
+    setEduErrorMsg("");
+    setEduSuccessMsg("");
+  };
+
   // ─── Court Record Check Handlers ───
   const addAddress = () => {
     setCrAddresses((prev) => [...prev, { address: "", city: "", state: "", stateCode: "", districtCode: "", country: "India", fromYear: currentYear - 2, toYear: currentYear }]);
@@ -384,7 +572,13 @@ export default function IdentityVerification() {
         idProofType: crIdProofType || undefined,
         idProofNumber: crIdProofNumber.trim() || undefined,
         idProofFile: crIdProofFile || undefined,
-        addresses: crAddresses,
+        addresses: crAddresses.map(addr => ({
+          ...addr,
+          state: addr.stateCode.startsWith("Other:") ? addr.stateCode.substring(6) : addr.state,
+          stateCode: addr.stateCode.startsWith("Other:") ? addr.stateCode.substring(6) : addr.stateCode,
+          city: addr.districtCode.startsWith("Other:") ? addr.districtCode.substring(6) : addr.city,
+          districtCode: addr.districtCode.startsWith("Other:") ? addr.districtCode.substring(6) : addr.districtCode
+        })),
         orgName: effectiveOrgName,
         requestingOrgName: crRequestingOrgName.trim(),
       });
@@ -506,7 +700,59 @@ export default function IdentityVerification() {
           </button>
         )}
 
-        {!identityEnabled && !courtRecordEnabled && (
+        {employmentEnabled && (
+          <button
+            type="button"
+            onClick={() => setActiveService("employment")}
+            className={`flex-1 flex items-center gap-3 p-4 rounded-2xl border-2 transition-all duration-300 cursor-pointer group ${
+              activeService === "employment"
+                ? "border-[#181d16] bg-white shadow-md"
+                : "border-[#eaf0e4] bg-[#f6fbf0]/50 hover:border-[#d0dbc6] hover:bg-white/80"
+            }`}
+          >
+            <div className={`p-2.5 rounded-xl transition-all ${
+              activeService === "employment"
+                ? "bg-[#181d16] text-white"
+                : "bg-[#f0f5ea]/60 text-[#00450e] group-hover:bg-[#e0e8d8]"
+            }`}>
+              <Briefcase className="w-5 h-5" />
+            </div>
+            <div className="text-left">
+              <div className={`font-semibold text-sm ${activeService === "employment" ? "text-[#181d16]" : "text-[#475569]"}`}>
+                Employment Verification
+              </div>
+              <div className="text-[11px] text-[#64748B] mt-0.5">Verify past employment</div>
+            </div>
+          </button>
+        )}
+
+        {educationEnabled && (
+          <button
+            type="button"
+            onClick={() => setActiveService("education")}
+            className={`flex-1 flex items-center gap-3 p-4 rounded-2xl border-2 transition-all duration-300 cursor-pointer group ${
+              activeService === "education"
+                ? "border-[#181d16] bg-white shadow-md"
+                : "border-[#eaf0e4] bg-[#f6fbf0]/50 hover:border-[#d0dbc6] hover:bg-white/80"
+            }`}
+          >
+            <div className={`p-2.5 rounded-xl transition-all ${
+              activeService === "education"
+                ? "bg-[#181d16] text-white"
+                : "bg-[#f0f5ea]/60 text-[#00450e] group-hover:bg-[#e0e8d8]"
+            }`}>
+              <GraduationCap className="w-5 h-5" />
+            </div>
+            <div className="text-left">
+              <div className={`font-semibold text-sm ${activeService === "education" ? "text-[#181d16]" : "text-[#475569]"}`}>
+                Education Verification
+              </div>
+              <div className="text-[11px] text-[#64748B] mt-0.5">Verify degree & credentials</div>
+            </div>
+          </button>
+        )}
+
+        {!identityEnabled && !courtRecordEnabled && !employmentEnabled && !educationEnabled && (
           <div className="flex-1 bg-rose-50 border border-rose-100 rounded-2xl p-4 text-center">
             <p className="text-xs font-bold text-rose-800">All verification services are currently deactivated by the administrator.</p>
           </div>
@@ -1201,107 +1447,211 @@ export default function IdentityVerification() {
                       />
 
                       {/* State + District Row (cascading dropdowns) */}
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="flex flex-col gap-1.5">
-                          <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">
-                            State *
-                          </label>
-                          <div className="relative">
-                            <select
-                              value={addr.stateCode}
-                              onChange={(e) => {
-                                const selectedCode = e.target.value;
-                                const selectedState = INDIAN_STATES.find((s) => s.code === selectedCode);
-                                setCrAddresses((prev) =>
-                                  prev.map((a, i) =>
-                                    i === index
-                                      ? { ...a, state: selectedState?.name || "", stateCode: selectedCode, city: "", districtCode: "" }
-                                      : a
-                                  )
-                                );
-                                if (selectedCode) {
-                                  fetchDistrictsForState(selectedCode);
-                                }
-                              }}
-                              disabled={isSettingsIncomplete}
-                              className={`w-full border border-slate-300 rounded-xl p-3 pr-8 font-body-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-650 transition-all bg-white font-semibold text-sm appearance-none ${
-                                isSettingsIncomplete ? "bg-slate-100 text-slate-500 cursor-not-allowed border-slate-200 opacity-80" : "cursor-pointer"
-                              } ${!addr.stateCode ? "text-slate-400" : ""}`}
-                            >
-                              <option value="">Select state</option>
-                              {sortedStates.map((state) => (
-                                <option key={state.code} value={state.code}>
-                                  {state.name}
-                                </option>
-                              ))}
-                            </select>
-                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500">
-                              <ChevronDown className="w-4 h-4" />
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex flex-col gap-1.5">
-                          <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                            District *
-                            {addr.stateCode && districtsCache[addr.stateCode]?.loading && (
-                              <span className="inline-block w-3 h-3 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
-                            )}
-                          </label>
-                          <div className="relative">
-                            <select
-                              value={addr.districtCode}
-                              onChange={(e) => {
-                                const selectedDistCode = e.target.value;
-                                const distEntry = districtsCache[addr.stateCode]?.districts?.find((d) => d.value === selectedDistCode);
-                                setCrAddresses((prev) =>
-                                  prev.map((a, i) =>
-                                    i === index
-                                      ? { ...a, city: distEntry?.name || "", districtCode: selectedDistCode }
-                                      : a
-                                  )
-                                );
-                              }}
-                              disabled={isSettingsIncomplete || !addr.stateCode || districtsCache[addr.stateCode]?.loading}
-                              className={`w-full border border-slate-300 rounded-xl p-3 pr-8 font-body-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-650 transition-all bg-white font-semibold text-sm appearance-none ${
-                                isSettingsIncomplete || !addr.stateCode
-                                  ? "bg-slate-100 text-slate-500 cursor-not-allowed border-slate-200 opacity-80"
-                                  : "cursor-pointer"
-                              } ${!addr.districtCode ? "text-slate-400" : ""}`}
-                            >
-                              <option value="">
-                                {!addr.stateCode
-                                  ? "Select state first"
-                                  : districtsCache[addr.stateCode]?.loading
-                                    ? "Loading districts..."
-                                    : districtsCache[addr.stateCode]?.districts?.length === 0
-                                      ? "No districts found"
-                                      : "Select district"}
-                              </option>
-                              {(districtsCache[addr.stateCode]?.districts || []).map((dist) => (
-                                <option key={dist.value} value={dist.value}>
-                                  {dist.name}
-                                </option>
-                              ))}
-                            </select>
-                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500">
-                              <ChevronDown className="w-4 h-4" />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                      {(() => {
+                        const matchedCountryObj = Country.getAllCountries().find(c => c.name === addr.country);
+                        const countryStates = matchedCountryObj 
+                          ? State.getStatesOfCountry(matchedCountryObj.isoCode).sort((a, b) => a.name.localeCompare(b.name)) 
+                          : [];
+                        const matchedStateObj = countryStates.find(s => s.isoCode === addr.stateCode);
+                        const countryStateCities = (matchedCountryObj && matchedStateObj)
+                          ? City.getCitiesOfState(matchedCountryObj.isoCode, matchedStateObj.isoCode).sort((a, b) => a.name.localeCompare(b.name))
+                          : [];
 
-                      {/* Country (auto-filled) */}
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">
-                          Country
-                        </label>
-                        <input
-                          type="text"
-                          value="India"
-                          disabled
-                          className="border border-slate-300 rounded-xl p-3 font-body-sm bg-slate-50 text-slate-500 font-semibold text-sm cursor-not-allowed shadow-2xs"
-                        />
-                      </div>
+                        return (
+                          <>
+                            <div className="grid grid-cols-2 gap-3">
+                              {/* State Select */}
+                              <div className="flex flex-col gap-1.5">
+                                <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                                  State *
+                                </label>
+                                <div className="relative">
+                                  <select
+                                    value={addr.stateCode.startsWith("Other:") ? "Other" : addr.stateCode}
+                                    onChange={(e) => {
+                                      const selectedCode = e.target.value;
+                                      const selectedState = addr.country === "India" 
+                                        ? INDIAN_STATES.find((s) => s.code === selectedCode)
+                                        : countryStates.find((s) => s.isoCode === selectedCode);
+                                      
+                                      setCrAddresses((prev) =>
+                                        prev.map((a, i) =>
+                                          i === index
+                                            ? { ...a, state: selectedCode === "Other" ? "Other" : (selectedState?.name || ""), stateCode: selectedCode, city: "", districtCode: "" }
+                                            : a
+                                        )
+                                      );
+                                      if (addr.country === "India" && selectedCode) {
+                                        fetchDistrictsForState(selectedCode);
+                                      }
+                                    }}
+                                    disabled={isSettingsIncomplete || !addr.country}
+                                    className={`w-full border border-slate-300 rounded-xl p-3 pr-8 font-body-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-650 transition-all bg-white font-semibold text-sm appearance-none ${
+                                      isSettingsIncomplete || !addr.country ? "bg-slate-100 text-slate-500 cursor-not-allowed border-slate-200 opacity-80" : "cursor-pointer"
+                                    } ${!addr.stateCode ? "text-slate-400" : ""}`}
+                                  >
+                                    <option value="">Select state</option>
+                                    {addr.country === "India" ? (
+                                      sortedStates.map((state) => (
+                                        <option key={state.code} value={state.code}>
+                                          {state.name}
+                                        </option>
+                                      ))
+                                    ) : (
+                                      countryStates.map((state) => (
+                                        <option key={state.isoCode} value={state.isoCode}>
+                                          {state.name}
+                                        </option>
+                                      ))
+                                    )}
+                                    {addr.country && (
+                                      <option value="Other">Other / Enter Manually</option>
+                                    )}
+                                  </select>
+                                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500">
+                                    <ChevronDown className="w-4 h-4" />
+                                  </div>
+                                </div>
+                                {(addr.stateCode === "Other" || addr.stateCode.startsWith("Other:")) && (
+                                  <input
+                                    type="text"
+                                    value={addr.stateCode.startsWith("Other:") ? addr.stateCode.substring(6) : ""}
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      setCrAddresses((prev) =>
+                                        prev.map((a, i) =>
+                                          i === index
+                                            ? { ...a, state: val, stateCode: "Other:" + val }
+                                            : a
+                                        )
+                                      );
+                                    }}
+                                    placeholder="Enter custom state name"
+                                    className="border border-slate-300 rounded-xl p-3 mt-1.5 font-body-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-650 transition-all bg-white placeholder-slate-400 font-semibold text-sm shadow-2xs animate-fade-in"
+                                  />
+                                )}
+                              </div>
+
+                              {/* City/District Select */}
+                              <div className="flex flex-col gap-1.5">
+                                <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                                  District/City *
+                                  {addr.country === "India" && addr.stateCode && districtsCache[addr.stateCode]?.loading && (
+                                    <span className="inline-block w-3 h-3 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+                                  )}
+                                </label>
+                                <div className="relative">
+                                  <select
+                                    value={addr.districtCode.startsWith("Other:") ? "Other" : addr.districtCode}
+                                    onChange={(e) => {
+                                      const selectedDistCode = e.target.value;
+                                      const distEntry = addr.country === "India"
+                                        ? districtsCache[addr.stateCode]?.districts?.find((d) => d.value === selectedDistCode)
+                                        : countryStateCities.find((c) => c.name === selectedDistCode);
+                                      const distName = selectedDistCode === "Other" ? "Other" : (distEntry?.name || selectedDistCode);
+                                      
+                                      setCrAddresses((prev) =>
+                                        prev.map((a, i) =>
+                                          i === index
+                                            ? { ...a, city: distName, districtCode: selectedDistCode }
+                                            : a
+                                        )
+                                      );
+                                    }}
+                                    disabled={isSettingsIncomplete || !addr.stateCode || (addr.country === "India" && districtsCache[addr.stateCode]?.loading)}
+                                    className={`w-full border border-slate-300 rounded-xl p-3 pr-8 font-body-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-650 transition-all bg-white font-semibold text-sm appearance-none ${
+                                      isSettingsIncomplete || !addr.stateCode || (addr.country === "India" && districtsCache[addr.stateCode]?.loading)
+                                        ? "bg-slate-100 text-slate-500 cursor-not-allowed border-slate-200 opacity-80"
+                                        : "cursor-pointer"
+                                    } ${!addr.districtCode ? "text-slate-400" : ""}`}
+                                  >
+                                    <option value="">
+                                      {addr.country === "India" && districtsCache[addr.stateCode]?.loading
+                                        ? "Loading districts..."
+                                        : !addr.stateCode
+                                          ? "Select state first"
+                                          : addr.country === "India" && districtsCache[addr.stateCode]?.districts?.length === 0
+                                            ? "No districts found"
+                                            : "Select district/city"}
+                                    </option>
+                                    {addr.country === "India" ? (
+                                      (districtsCache[addr.stateCode]?.districts || []).map((dist) => (
+                                        <option key={dist.value} value={dist.value}>
+                                          {dist.name}
+                                        </option>
+                                      ))
+                                    ) : (
+                                      countryStateCities.map((city) => (
+                                        <option key={city.name} value={city.name}>
+                                          {city.name}
+                                        </option>
+                                      ))
+                                    )}
+                                    {addr.stateCode && (
+                                      <option value="Other">Other / Enter Manually</option>
+                                    )}
+                                  </select>
+                                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500">
+                                    <ChevronDown className="w-4 h-4" />
+                                  </div>
+                                </div>
+                                {(addr.districtCode === "Other" || addr.districtCode.startsWith("Other:")) && (
+                                  <input
+                                    type="text"
+                                    value={addr.districtCode.startsWith("Other:") ? addr.districtCode.substring(6) : ""}
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      setCrAddresses((prev) =>
+                                        prev.map((a, i) =>
+                                          i === index
+                                            ? { ...a, city: val, districtCode: "Other:" + val }
+                                            : a
+                                        )
+                                      );
+                                    }}
+                                    placeholder="Enter custom city name"
+                                    className="border border-slate-300 rounded-xl p-3 mt-1.5 font-body-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-650 transition-all bg-white placeholder-slate-400 font-semibold text-sm shadow-2xs animate-fade-in"
+                                  />
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Country Select */}
+                            <div className="flex flex-col gap-1.5">
+                              <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                                Country *
+                              </label>
+                              <div className="relative">
+                                <select
+                                  value={addr.country}
+                                  onChange={(e) => {
+                                    const selectedCountry = e.target.value;
+                                    setCrAddresses((prev) =>
+                                      prev.map((a, i) =>
+                                        i === index
+                                          ? { ...a, country: selectedCountry, state: "", stateCode: "", city: "", districtCode: "" }
+                                          : a
+                                      )
+                                    );
+                                  }}
+                                  disabled={isSettingsIncomplete}
+                                  className={`w-full border border-slate-300 rounded-xl p-3 pr-8 font-body-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-650 transition-all bg-white font-semibold text-sm appearance-none ${
+                                    isSettingsIncomplete ? "bg-slate-100 text-slate-500 cursor-not-allowed border-slate-200 opacity-80" : "cursor-pointer"
+                                  }`}
+                                >
+                                  <option value="">Select country</option>
+                                  {[...Country.getAllCountries()].sort((a, b) => a.name.localeCompare(b.name)).map((c) => (
+                                    <option key={c.isoCode} value={c.name}>{c.name}</option>
+                                  ))}
+                                </select>
+                                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500">
+                                  <ChevronDown className="w-4 h-4" />
+                                </div>
+                              </div>
+                            </div>
+                          </>
+                        );
+                      })()}
 
                       {/* Year Range (FROM → TO) */}
                       <div className="grid grid-cols-2 gap-3">
@@ -1504,6 +1854,604 @@ export default function IdentityVerification() {
               onGoToSummary={() => { setCrCreatedId(null); router.push("/client/summary"); }}
             />,
             document.body
+          )}
+        </>
+      )}
+      {/* ═══════════════════════════════════════════════════ */}
+      {/* EMPLOYMENT VERIFICATION FORM */}
+      {/* ═══════════════════════════════════════════════════ */}
+      {activeService === "employment" && employmentEnabled && (
+        <>
+          {/* Form Alerts */}
+          {empSuccessMsg && !empCreatedCredentials && (
+            <div className="bg-[#E6F8F3] text-[#00684A] border border-[#A3EAD6] rounded-xl p-4 font-body-sm flex items-center gap-3 max-w-2xl animate-fade-in shadow-2xs">
+              <CheckCircle className="w-5 h-5 text-[#00a877] shrink-0" />
+              <span className="font-semibold">{empSuccessMsg}</span>
+            </div>
+          )}
+
+          {empErrorMsg && (
+            <div className="bg-red-50 text-red-800 border border-red-200 rounded-xl p-4 font-body-sm flex items-center gap-3 max-w-2xl animate-fade-in shadow-2xs">
+              <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
+              <span className="font-semibold">{empErrorMsg}</span>
+            </div>
+          )}
+
+          {/* Employment Form Card */}
+          <div className="bg-white border border-[#eaf0e4] rounded-3xl p-8 max-w-2xl shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+            {/* Top gradient line */}
+            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#eaf0e4] via-[#dbeafe] to-[#f0f5ea]"></div>
+
+            {/* Subtle decorative background shapes */}
+            <div className="absolute -right-12 -bottom-12 w-32 h-32 bg-[#f0f5ea]/35 rounded-full blur-2xl pointer-events-none"></div>
+            <div className="absolute -left-12 -top-12 w-32 h-32 bg-[#dbeafe]/20 rounded-full blur-2xl pointer-events-none"></div>
+
+            <form onSubmit={handleEmploymentSubmit} className="flex flex-col gap-6 mt-2 relative z-10">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="p-2 bg-[#f0f5ea]/40 rounded-xl border border-[#eaf0e4]/60">
+                  <Briefcase className="w-5 h-5 text-[#00450e]" />
+                </div>
+                <h3 className="font-semibold text-[#181d16] text-lg">Employment Verification</h3>
+              </div>
+
+              {/* Candidate Full Name Field */}
+              <div className="flex flex-col gap-2">
+                <label className="font-label-caps text-[#475569] text-xs font-semibold uppercase tracking-wider" htmlFor="emp-candidate-name">
+                  Candidate Full Name
+                </label>
+                <input
+                  id="emp-candidate-name"
+                  type="text"
+                  value={empCandidateName}
+                  onChange={(e) => setEmpCandidateName(e.target.value)}
+                  autoComplete="off"
+                  disabled={isSettingsIncomplete}
+                  className={`border border-[#eaf0e4] rounded-xl p-3.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] focus:border-[#181d16] transition-all bg-[#f6fbf0]/50 placeholder-slate-400 font-semibold ${
+                    isSettingsIncomplete ? "bg-slate-100/60 text-slate-500 cursor-not-allowed border-slate-200 opacity-80" : ""
+                  }`}
+                  placeholder="Enter the candidate's full name"
+                />
+              </div>
+
+              {/* Candidate Mobile Number */}
+              <div className="flex flex-col gap-2">
+                <label className="font-label-caps text-[#475569] text-xs font-semibold uppercase tracking-wider" htmlFor="emp-candidate-mobile">
+                  Mobile Number
+                </label>
+                <input
+                  id="emp-candidate-mobile"
+                  type="tel"
+                  value={empCandidateMobile}
+                  onChange={(e) => setEmpCandidateMobile(e.target.value)}
+                  autoComplete="off"
+                  disabled={isSettingsIncomplete}
+                  className={`border border-[#eaf0e4] rounded-xl p-3.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] focus:border-[#181d16] transition-all bg-[#f6fbf0]/50 placeholder-slate-400 font-semibold ${
+                    isSettingsIncomplete ? "bg-slate-100/60 text-slate-500 cursor-not-allowed border-slate-200 opacity-80" : ""
+                  }`}
+                  placeholder="Enter mobile number (e.g. +91 9876543210)"
+                />
+              </div>
+
+              {/* Candidate Email */}
+              <div className="flex flex-col gap-2">
+                <label className="font-label-caps text-[#475569] text-xs font-semibold uppercase tracking-wider" htmlFor="emp-candidate-email">
+                  Email
+                </label>
+                <input
+                  id="emp-candidate-email"
+                  type="email"
+                  value={empCandidateEmail}
+                  onChange={(e) => setEmpCandidateEmail(e.target.value)}
+                  autoComplete="off"
+                  disabled={isSettingsIncomplete}
+                  className={`border border-[#eaf0e4] rounded-xl p-3.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] focus:border-[#181d16] transition-all bg-[#f6fbf0]/50 placeholder-slate-400 font-semibold ${
+                    isSettingsIncomplete ? "bg-slate-100/60 text-slate-500 cursor-not-allowed border-slate-200 opacity-80" : ""
+                  }`}
+                  placeholder="Enter the candidate email ID"
+                />
+              </div>
+
+              {/* Requesting ORG Name */}
+              <div className="flex flex-col gap-2 relative">
+                <label className="font-label-caps text-[#475569] text-xs font-semibold uppercase tracking-wider" htmlFor="emp-org-name">
+                  {isAdmin ? "Target Client ORG Name" : "Requesting ORG Name"}
+                </label>
+                <div className="relative">
+                  <input
+                    id="emp-org-name"
+                    type="text"
+                    value={empRequestingOrgName}
+                    onChange={(e) => {
+                      setEmpRequestingOrgName(e.target.value);
+                      setEmpShowOrgDropdown(true);
+                    }}
+                    onFocus={() => setEmpShowOrgDropdown(true)}
+                    onBlur={() => {
+                      setTimeout(() => setEmpShowOrgDropdown(false), 200);
+                    }}
+                    autoComplete="off"
+                    disabled={isSettingsIncomplete}
+                    className={`w-full border border-[#eaf0e4] rounded-xl p-3.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] focus:border-[#181d16] transition-all bg-[#f6fbf0]/50 placeholder-slate-400 font-semibold ${
+                      isSettingsIncomplete ? "bg-slate-100/60 text-slate-500 cursor-not-allowed border-slate-200 opacity-80" : ""
+                    }`}
+                    placeholder={isAdmin ? "Enter target client organization name" : "Enter the organization name requiring the verification"}
+                  />
+
+                  {empShowOrgDropdown && empFilteredOrgs.length > 0 && (
+                    <div className="absolute left-0 right-0 mt-1 bg-white border border-[#eaf0e4] rounded-xl shadow-lg z-30 overflow-hidden max-h-48 overflow-y-auto animate-fade-in">
+                      <div className="p-1 flex flex-col gap-1 font-body-sm">
+                        {empFilteredOrgs.map((org) => (
+                          <div
+                            key={org}
+                            className="flex items-center justify-between px-3 py-2 rounded-lg text-xs hover:bg-[#f0f5ea]/35 text-[#181d16] font-semibold cursor-pointer group/item"
+                            onMouseDown={() => {
+                              setEmpRequestingOrgName(org);
+                              setEmpShowOrgDropdown(false);
+                            }}
+                          >
+                            <span className="flex-1 text-left">{org}</span>
+                            <button
+                              type="button"
+                              onMouseDown={(e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                                if (typeof removeRecentRequestingOrg === 'function') removeRecentRequestingOrg(org);
+                              }}
+                              title="Remove from history"
+                              className="p-1 rounded-md text-slate-400 hover:bg-slate-100 hover:text-red-650 transition-colors"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Info Note */}
+              <div className="bg-blue-50/40 border border-blue-100 rounded-xl p-4 flex items-start gap-3 shadow-2xs">
+                <Briefcase className="w-4 h-4 text-blue-700 shrink-0 mt-0.5" />
+                <div className="text-[11px] text-slate-600 leading-relaxed font-semibold">
+                  <strong className="text-slate-800">How it works:</strong> A link will be generated for the candidate to fill their employment details. Once submitted, the admin team will verify the information with the previous employer.
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-3 mt-6 justify-end">
+                <button
+                  type="button"
+                  onClick={handleEmploymentCancel}
+                  disabled={isSettingsIncomplete || empSubmitting}
+                  className={`px-6 py-3 border border-[#eaf0e4] rounded-xl font-semibold text-sm text-[#334155] hover:bg-[#f6fbf0] hover:text-[#181d16] transition-all bg-white ${
+                    isSettingsIncomplete || empSubmitting ? "opacity-50 cursor-not-allowed hover:bg-white hover:text-[#334155]" : "cursor-pointer"
+                  }`}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSettingsIncomplete || empSubmitting}
+                  className={`px-6 py-3 bg-[#181d16] text-white hover:bg-[#1E293B] active:scale-95 rounded-xl font-semibold text-sm transition-all flex items-center gap-2 shadow-sm group ${
+                    isSettingsIncomplete || empSubmitting ? "opacity-50 cursor-not-allowed hover:bg-[#181d16] active:scale-100" : "cursor-pointer"
+                  }`}
+                >
+                  {empSubmitting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></div>
+                      <span>Creating...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Create Request</span>
+                      <Send className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* Credentials Modal */}
+          {empCreatedCredentials && (
+            <div className="fixed inset-0 bg-slate-400/10 backdrop-blur-md flex items-center justify-center p-4 z-[99999] animate-fade-in">
+              <div className="bg-white border border-[#eaf0e4] rounded-3xl p-8 max-w-lg w-full shadow-2xl relative animate-scale-up">
+                <div className="flex flex-col items-center text-center gap-4">
+                  <div className="w-16 h-16 bg-[#E6F8F3] border border-[#A3EAD6] rounded-full flex items-center justify-center text-[#00684A] mb-2 animate-bounce-subtle">
+                    <Briefcase className="w-8 h-8 text-[#00a877]" />
+                  </div>
+                  <h3 className="font-headline-md text-[#181d16] font-bold text-xl">Employment Verification Initiated!</h3>
+                  <p className="font-body-sm text-[#475569] leading-relaxed">
+                    A verification request has been successfully created for <strong className="text-[#181d16] font-bold">{empCreatedCredentials.name}</strong>.
+                  </p>
+
+                  {/* Credentials Box */}
+                  <div className="w-full mt-4 p-5 bg-[#f0f5ea]/25 border border-[#eaf0e4] rounded-2xl text-left flex flex-col gap-3 relative overflow-hidden shadow-2xs">
+                    <div className="absolute right-3 top-3">
+                      <span className="text-[9px] uppercase font-bold tracking-wider text-[#181d16] bg-white border border-[#eaf0e4] px-2 py-0.5 rounded">
+                        Direct Login Link
+                      </span>
+                    </div>
+
+                    {empCreatedCredentials.setupUrl ? (
+                      <div className="flex flex-col gap-1 pt-3">
+                        <span className="font-label-caps text-[#334155] text-[10px] uppercase font-semibold tracking-wider">Candidate Direct Login Link</span>
+                        <p className="text-[11px] text-[#475569] leading-relaxed mb-2">
+                          Share this link with the candidate. They will be able to log in and fill their employment details.
+                        </p>
+                        <div className="flex items-center justify-between bg-white px-3 py-2.5 rounded-xl border border-[#eaf0e4]/60 gap-3 mt-1 shadow-2xs">
+                          <span className="font-mono text-xs text-[#181d16] truncate max-w-[65%]" title={empCreatedCredentials.setupUrl}>
+                            {empCreatedCredentials.setupUrl}
+                          </span>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText(empCreatedCredentials.setupUrl || "");
+                                setEmpCopiedUrl(true);
+                                setTimeout(() => setEmpCopiedUrl(false), 2000);
+                              }}
+                              className="text-xs px-3 py-1.5 bg-[#181d16] text-white rounded-lg font-semibold hover:bg-[#1E293B] transition-all flex items-center gap-1.5 cursor-pointer"
+                            >
+                              {empCopiedUrl ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                              <span>{empCopiedUrl ? "Copied" : "Copy"}</span>
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Pre-filled credentials detail */}
+                        {(() => {
+                          const params = getUrlParams(empCreatedCredentials.setupUrl);
+                          return (
+                            <div className="mt-3 p-4 bg-white/70 border border-[#eaf0e4]/40 rounded-2xl text-xs flex flex-col gap-2.5 shadow-2xs">
+                              <div className="flex justify-between items-center">
+                                <span className="text-[#475569] font-semibold uppercase tracking-wider text-[10px] font-label-caps">Candidate Email ID</span>
+                                <span className="font-mono text-[#181d16] font-bold text-xs select-all">{params.email}</span>
+                              </div>
+                              <div className="flex justify-between items-center border-t border-[#f0f5ea]/30 pt-2">
+                                <span className="text-[#475569] font-semibold uppercase tracking-wider text-[10px] font-label-caps">Temporary Password</span>
+                                <span className="font-mono text-[#181d16] font-bold text-xs select-all">{params.password}</span>
+                              </div>
+                            </div>
+                          );
+                        })()}
+
+                        <div className="flex items-center gap-1.5 mt-2.5 text-[10px] text-[#64748B]">
+                          <Sparkles className="w-3 h-3 text-[#00450e]" />
+                          <span>The candidate can log in and fill their employment details using this link.</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-xs text-[#475569] pt-3">Login link generation failed. Please try again.</div>
+                    )}
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-3 mt-6 w-full">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEmpCreatedCredentials(null);
+                        setEmpSuccessMsg("");
+                      }}
+                      className="flex-1 py-3 border border-[#eaf0e4] rounded-xl font-semibold text-xs text-[#334155] hover:bg-[#f6fbf0] transition-colors cursor-pointer bg-white"
+                    >
+                      Create Another
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEmpCreatedCredentials(null);
+                        router.push("/client/summary");
+                      }}
+                      className="flex-1 py-3 bg-[#181d16] text-white rounded-xl font-semibold text-xs hover:bg-[#1E293B] transition-all cursor-pointer shadow-sm"
+                    >
+                      Go to Summary
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* ═══════════════════════════════════════════════════ */}
+      {/* EDUCATION VERIFICATION FORM */}
+      {/* ═══════════════════════════════════════════════════ */}
+      {activeService === "education" && educationEnabled && (
+        <>
+          {/* Form Alerts */}
+          {eduSuccessMsg && !eduCreatedCredentials && (
+            <div className="bg-[#E6F8F3] text-[#00684A] border border-[#A3EAD6] rounded-xl p-4 font-body-sm flex items-center gap-3 max-w-2xl animate-fade-in shadow-2xs">
+              <CheckCircle className="w-5 h-5 text-[#00a877] shrink-0" />
+              <span className="font-semibold">{eduSuccessMsg}</span>
+            </div>
+          )}
+
+          {eduErrorMsg && (
+            <div className="bg-red-50 text-red-800 border border-red-200 rounded-xl p-4 font-body-sm flex items-center gap-3 max-w-2xl animate-fade-in shadow-2xs">
+              <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
+              <span className="font-semibold">{eduErrorMsg}</span>
+            </div>
+          )}
+
+          {/* Form Card */}
+          <div className="bg-white border border-[#eaf0e4] rounded-3xl p-8 max-w-2xl shadow-lg relative overflow-hidden transition-all duration-300 hover:shadow-xl">
+            {/* Top gradient line */}
+            <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-purple-650 via-indigo-500 to-blue-500"></div>
+
+            <form onSubmit={handleEducationSubmit} className="flex flex-col gap-6 mt-2 relative z-10">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2.5 bg-gradient-to-br from-purple-700 to-indigo-850 rounded-xl shadow-md text-white">
+                  <GraduationCap className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-800 text-lg leading-tight">Education Verification</h3>
+                  <p className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider">Initiate Candidate Degree Verification</p>
+                </div>
+              </div>
+
+              {/* Candidate Full Name */}
+              <div className="flex flex-col gap-2">
+                <label className="font-label-caps text-[#475569] text-xs font-semibold uppercase tracking-wider" htmlFor="edu-candidate-name">
+                  Candidate Full Name
+                </label>
+                <input
+                  id="edu-candidate-name"
+                  type="text"
+                  value={eduCandidateName}
+                  onChange={(e) => setEduCandidateName(e.target.value)}
+                  autoComplete="off"
+                  disabled={isSettingsIncomplete}
+                  className={`border border-[#eaf0e4] rounded-xl p-3.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] focus:border-[#181d16] transition-all bg-[#f6fbf0]/50 placeholder-slate-400 font-semibold ${
+                    isSettingsIncomplete ? "bg-slate-100/60 text-slate-500 cursor-not-allowed border-slate-200 opacity-80" : ""
+                  }`}
+                  placeholder="Enter candidate's full legal name"
+                />
+              </div>
+
+              {/* Candidate Mobile Number */}
+              <div className="flex flex-col gap-2">
+                <label className="font-label-caps text-[#475569] text-xs font-semibold uppercase tracking-wider" htmlFor="edu-candidate-mobile">
+                  Mobile Number
+                </label>
+                <input
+                  id="edu-candidate-mobile"
+                  type="tel"
+                  value={eduCandidateMobile}
+                  onChange={(e) => setEduCandidateMobile(e.target.value)}
+                  autoComplete="off"
+                  disabled={isSettingsIncomplete}
+                  className={`border border-[#eaf0e4] rounded-xl p-3.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] focus:border-[#181d16] transition-all bg-[#f6fbf0]/50 placeholder-slate-400 font-semibold ${
+                    isSettingsIncomplete ? "bg-slate-100/60 text-slate-500 cursor-not-allowed border-slate-200 opacity-80" : ""
+                  }`}
+                  placeholder="Enter mobile number (e.g. +91 9876543210)"
+                />
+              </div>
+
+              {/* Candidate Email */}
+              <div className="flex flex-col gap-2">
+                <label className="font-label-caps text-[#475569] text-xs font-semibold uppercase tracking-wider" htmlFor="edu-candidate-email">
+                  Email
+                </label>
+                <input
+                  id="edu-candidate-email"
+                  type="email"
+                  value={eduCandidateEmail}
+                  onChange={(e) => setEduCandidateEmail(e.target.value)}
+                  autoComplete="off"
+                  disabled={isSettingsIncomplete}
+                  className={`border border-[#eaf0e4] rounded-xl p-3.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] focus:border-[#181d16] transition-all bg-[#f6fbf0]/50 placeholder-slate-400 font-semibold ${
+                    isSettingsIncomplete ? "bg-slate-100/60 text-slate-500 cursor-not-allowed border-slate-200 opacity-80" : ""
+                  }`}
+                  placeholder="Enter the candidate email ID"
+                />
+              </div>
+
+              {/* Requesting ORG Name */}
+              <div className="flex flex-col gap-2 relative">
+                <label className="font-label-caps text-[#475569] text-xs font-semibold uppercase tracking-wider" htmlFor="edu-org-name">
+                  {isAdmin ? "Target Client ORG Name" : "Requesting ORG Name"}
+                </label>
+                <div className="relative">
+                  <input
+                    id="edu-org-name"
+                    type="text"
+                    value={eduRequestingOrgName}
+                    onChange={(e) => {
+                      setEduRequestingOrgName(e.target.value);
+                      setEduShowOrgDropdown(true);
+                    }}
+                    onFocus={() => setEduShowOrgDropdown(true)}
+                    onBlur={() => {
+                      setTimeout(() => setEduShowOrgDropdown(false), 200);
+                    }}
+                    autoComplete="off"
+                    disabled={isSettingsIncomplete}
+                    className={`w-full border border-[#eaf0e4] rounded-xl p-3.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] focus:border-[#181d16] transition-all bg-[#f6fbf0]/50 placeholder-slate-400 font-semibold ${
+                      isSettingsIncomplete ? "bg-slate-100/60 text-slate-500 cursor-not-allowed border-slate-200 opacity-80" : ""
+                    }`}
+                    placeholder={isAdmin ? "Enter target client organization name" : "Enter the organization name requiring the verification"}
+                  />
+
+                  {eduShowOrgDropdown && eduFilteredOrgs.length > 0 && (
+                    <div className="absolute left-0 right-0 mt-1 bg-white border border-[#eaf0e4] rounded-xl shadow-lg z-30 overflow-hidden max-h-48 overflow-y-auto animate-fade-in">
+                      <div className="p-1 flex flex-col gap-1 font-body-sm">
+                        {eduFilteredOrgs.map((org) => (
+                          <div
+                            key={org}
+                            className="flex items-center justify-between px-3 py-2 rounded-lg text-xs hover:bg-[#f0f5ea]/35 text-[#181d16] font-semibold cursor-pointer group/item"
+                            onMouseDown={() => {
+                              setEduRequestingOrgName(org);
+                              setEduShowOrgDropdown(false);
+                            }}
+                          >
+                            <span className="flex-1 text-left">{org}</span>
+                            <button
+                              type="button"
+                              onMouseDown={(e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                                if (typeof removeRecentRequestingOrg === 'function') removeRecentRequestingOrg(org);
+                              }}
+                              title="Remove from history"
+                              className="p-1 rounded-md text-slate-400 hover:bg-slate-100 hover:text-red-650 transition-colors"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Info Note */}
+              <div className="bg-[#eaf0e4]/30 border border-[#eaf0e4] rounded-xl p-4 flex items-start gap-3 shadow-2xs">
+                <GraduationCap className="w-4 h-4 text-emerald-800 shrink-0 mt-0.5" />
+                <div className="text-[11px] text-slate-650 leading-relaxed font-semibold">
+                  <strong className="text-slate-800">How it works:</strong> A link will be generated for the candidate to fill their education details. Once submitted, the admin team will verify the information with their Board / University.
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-3 mt-6 justify-end">
+                <button
+                  type="button"
+                  onClick={handleEducationCancel}
+                  disabled={isSettingsIncomplete || eduSubmitting}
+                  className={`px-6 py-3 border border-[#eaf0e4] rounded-xl font-semibold text-sm text-[#334155] hover:bg-[#f6fbf0] hover:text-[#181d16] transition-all bg-white ${
+                    isSettingsIncomplete || eduSubmitting ? "opacity-50 cursor-not-allowed hover:bg-white hover:text-[#334155]" : "cursor-pointer"
+                  }`}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSettingsIncomplete || eduSubmitting}
+                  className={`px-6 py-3 bg-[#181d16] text-white hover:bg-[#1E293B] active:scale-95 rounded-xl font-semibold text-sm transition-all flex items-center gap-2 shadow-sm group ${
+                    isSettingsIncomplete || eduSubmitting ? "opacity-50 cursor-not-allowed hover:bg-[#181d16] active:scale-100" : "cursor-pointer"
+                  }`}
+                >
+                  {eduSubmitting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></div>
+                      <span>Creating...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Create Request</span>
+                      <Send className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* Credentials Modal */}
+          {eduCreatedCredentials && (
+            <div className="fixed inset-0 bg-slate-400/10 backdrop-blur-md flex items-center justify-center p-4 z-[99999] animate-fade-in">
+              <div className="bg-white border border-[#eaf0e4] rounded-3xl p-8 max-w-lg w-full shadow-2xl relative animate-scale-up">
+                <div className="flex flex-col items-center text-center gap-4">
+                  <div className="w-16 h-16 bg-[#E6F8F3] border border-[#A3EAD6] rounded-full flex items-center justify-center text-[#00684A] mb-2 animate-bounce-subtle">
+                    <GraduationCap className="w-8 h-8 text-[#00a877]" />
+                  </div>
+                  <h3 className="font-headline-md text-[#181d16] font-bold text-xl">Education Verification Initiated!</h3>
+                  <p className="font-body-sm text-[#475569] leading-relaxed">
+                    A verification request has been successfully created for <strong className="text-[#181d16] font-bold">{eduCreatedCredentials.name}</strong>.
+                  </p>
+
+                  {/* Credentials Box */}
+                  <div className="w-full mt-4 p-5 bg-[#f0f5ea]/25 border border-[#eaf0e4] rounded-2xl text-left flex flex-col gap-3 relative overflow-hidden shadow-2xs">
+                    <div className="absolute right-3 top-3">
+                      <span className="text-[9px] uppercase font-bold tracking-wider text-[#181d16] bg-white border border-[#eaf0e4] px-2 py-0.5 rounded">
+                        Direct Login Link
+                      </span>
+                    </div>
+
+                    {eduCreatedCredentials.setupUrl ? (
+                      <div className="flex flex-col gap-1 pt-3">
+                        <span className="font-label-caps text-[#334155] text-[10px] uppercase font-semibold tracking-wider">Candidate Direct Login Link</span>
+                        <p className="text-[11px] text-[#475569] leading-relaxed mb-2">
+                          Share this link with the candidate. They will be able to log in and fill their education details.
+                        </p>
+                        <div className="flex items-center justify-between bg-white px-3 py-2.5 rounded-xl border border-[#eaf0e4]/60 gap-3 mt-1 shadow-2xs">
+                          <span className="font-mono text-xs text-[#181d16] truncate max-w-[65%]" title={eduCreatedCredentials.setupUrl}>
+                            {eduCreatedCredentials.setupUrl}
+                          </span>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText(eduCreatedCredentials.setupUrl || "");
+                                setEduCopiedUrl(true);
+                                setTimeout(() => setEduCopiedUrl(false), 2000);
+                              }}
+                              className="text-xs px-3 py-1.5 bg-[#181d16] text-white rounded-lg font-semibold hover:bg-[#1E293B] transition-all flex items-center gap-1.5 cursor-pointer"
+                            >
+                              {eduCopiedUrl ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                              <span>{eduCopiedUrl ? "Copied" : "Copy"}</span>
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Pre-filled credentials detail */}
+                        {(() => {
+                          const params = getUrlParams(eduCreatedCredentials.setupUrl);
+                          return (
+                            <div className="mt-3 p-4 bg-white/70 border border-[#eaf0e4]/40 rounded-2xl text-xs flex flex-col gap-2.5 shadow-2xs">
+                              <div className="flex justify-between items-center">
+                                <span className="text-[#475569] font-semibold uppercase tracking-wider text-[10px] font-label-caps">Candidate Email ID</span>
+                                <span className="font-mono text-[#181d16] font-bold text-xs select-all">{params.email}</span>
+                              </div>
+                              <div className="flex justify-between items-center border-t border-[#f0f5ea]/30 pt-2">
+                                <span className="text-[#475569] font-semibold uppercase tracking-wider text-[10px] font-label-caps">Temporary Password</span>
+                                <span className="font-mono text-[#181d16] font-bold text-xs select-all">{params.password}</span>
+                              </div>
+                            </div>
+                          );
+                        })()}
+
+                        <div className="flex items-center gap-1.5 mt-2.5 text-[10px] text-[#64748B]">
+                          <Sparkles className="w-3 h-3 text-[#00450e]" />
+                          <span>The candidate can log in and fill their education details using this link.</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-xs text-[#475569] pt-3">Login link generation failed. Please try again.</div>
+                    )}
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-3 mt-6 w-full">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEduCreatedCredentials(null);
+                        setEduSuccessMsg("");
+                      }}
+                      className="flex-1 py-3 border border-[#eaf0e4] rounded-xl font-semibold text-xs text-[#334155] hover:bg-[#f6fbf0] transition-colors cursor-pointer bg-white"
+                    >
+                      Create Another
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEduCreatedCredentials(null);
+                        router.push("/client/summary");
+                      }}
+                      className="flex-1 py-3 bg-[#181d16] text-white rounded-xl font-semibold text-xs hover:bg-[#1E293B] transition-all cursor-pointer shadow-sm"
+                    >
+                      Go to Summary
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           )}
         </>
       )}

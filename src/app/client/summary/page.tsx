@@ -406,22 +406,33 @@ export default function OrderSummaryPage() {
     .reduce((sum, inv) => sum + inv.amount, 0);
 
   // Real-time: count all COMPLETED verifications that have NOT been invoiced yet
-  const totalCompletedCount = clientVerifications.filter((v) => v.status === "Completed").length;
+  const completedVerifications = clientVerifications.filter((v) => v.status === "Completed");
+
+  // Check which completed verifications do not have an invoice generated for their completion month and year
+  const uninvoicedVerifications = completedVerifications.filter((v) => {
+    try {
+      const d = new Date(v.completedAt || v.date);
+      if (isNaN(d.getTime())) return true;
+      const mName = d.toLocaleDateString("en-US", { month: "long" }).toLowerCase();
+      const yVal = d.getFullYear();
+
+      // Look for an invoice matching this month and year
+      const hasInvoice = clientInvoices.some(
+        (inv) => {
+          const invMonth = inv.month?.toLowerCase();
+          return invMonth === mName && inv.year === yVal && (inv as any).isDeleted !== true;
+        }
+      );
+      return !hasInvoice;
+    } catch {
+      return true;
+    }
+  });
+
+  const currentMonthCompleted = uninvoicedVerifications.length;
   const perVerificationRate = organisation?.monthlyRate || 0;
   const courtRecordRate = organisation?.courtRecordRate !== undefined ? organisation.courtRecordRate : perVerificationRate;
 
-  // Calculate total invoiced amount
-  const totalInvoicedAmount = clientInvoices.reduce((sum, inv) => sum + inv.amount, 0);
-  
-  // Estimate total invoiced verifications count based on invoice amounts
-  const totalInvoicedCount = perVerificationRate > 0 ? Math.round(totalInvoicedAmount / perVerificationRate) : 0;
-  
-  // Uninvoiced completed verifications count
-  const currentMonthCompleted = Math.max(0, totalCompletedCount - totalInvoicedCount);
-
-  // Calculate running total using service-specific rates
-  const completedVerifications = clientVerifications.filter((v) => v.status === "Completed");
-  const uninvoicedVerifications = completedVerifications.slice(totalInvoicedCount);
   const currentMonthRunningTotal = uninvoicedVerifications.reduce((sum, v) => {
     const rate = v.type === "court_record" ? courtRecordRate : perVerificationRate;
     return sum + rate;
@@ -533,8 +544,8 @@ export default function OrderSummaryPage() {
     } else if (sortField === "id") {
       comparison = (a.id || "").localeCompare(b.id || "");
     } else if (sortField === "type") {
-      const typeA = a.type === "court_record" ? "court record" : "identity";
-      const typeB = b.type === "court_record" ? "court record" : "identity";
+      const typeA = a.type || "identity";
+      const typeB = b.type || "identity";
       comparison = typeA.localeCompare(typeB);
     } else if (sortField === "status") {
       const statusA = (a.type === "court_record" && a.courtRecordStatus === "admin_review") ? "under review" : a.status.toLowerCase();
@@ -647,7 +658,7 @@ export default function OrderSummaryPage() {
                   className="font-bold text-xs text-[#181d16] bg-white hover:bg-[#f0f5ea]/35 px-4 py-2.5 rounded-xl transition-all border border-[#eaf0e4] flex items-center gap-2 cursor-pointer shadow-2xs"
                 >
                   <Layers className="w-4 h-4 text-[#00450e]" />
-                  <span>Type: {typeFilter === "all" ? "ALL" : typeFilter === "court_record" ? "COURT RECORD" : "IDENTITY"}</span>
+                  <span>Type: {typeFilter === "all" ? "ALL" : typeFilter === "court_record" ? "COURT RECORD" : typeFilter === "employment" ? "EMPLOYMENT" : typeFilter === "education" ? "EDUCATION" : "IDENTITY"}</span>
                 </button>
 
                 {typeDropdownOpen && (
@@ -656,7 +667,9 @@ export default function OrderSummaryPage() {
                       {[
                         { key: "all", label: "ALL" },
                         { key: "identity", label: "IDENTITY" },
-                        { key: "court_record", label: "COURT RECORD" }
+                        { key: "court_record", label: "COURT RECORD" },
+                        { key: "employment", label: "EMPLOYMENT" },
+                        { key: "education", label: "EDUCATION" }
                       ].map((item) => (
                         <button
                           key={item.key}
@@ -908,9 +921,19 @@ export default function OrderSummaryPage() {
                         <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[9px] font-bold tracking-wide uppercase border ${
                           v.type === "court_record"
                             ? "bg-amber-50 text-amber-700 border-amber-200"
+                            : v.type === "employment"
+                            ? "bg-blue-50 text-blue-700 border-blue-200"
+                            : v.type === "education"
+                            ? "bg-purple-50 text-purple-700 border-purple-200"
                             : "bg-[#E6F8F3] text-[#00684A] border-[#A3EAD6]"
                         }`}>
-                          {v.type === "court_record" ? "Court Record" : "Identity"}
+                          {v.type === "court_record" 
+                            ? "Court Record" 
+                            : v.type === "employment" 
+                            ? "Employment Check" 
+                            : v.type === "education" 
+                            ? "Education Check" 
+                            : "Identity Check"}
                         </span>
                       </td>
                       <td className="py-3.5 px-2.5 text-[#181d16] text-xs whitespace-normal max-w-[450px]">
@@ -930,16 +953,16 @@ export default function OrderSummaryPage() {
                       <td className="py-3.5 px-2.5">
                         <span
                           className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold tracking-wide uppercase border ${
-                            v.status === "Completed"
-                              ? "bg-[#E6F8F3] text-[#00684A] border-[#A3EAD6]"
-                              : (v.type === "court_record" && (v.courtRecordStatus === "admin_review" || v.courtRecordStatus === "needs_admin_retry"))
+                            ((v.type === "court_record" && (v.courtRecordStatus === "admin_review" || v.courtRecordStatus === "needs_admin_retry")) || ((v.type === "employment" || v.type === "education") && !v.sendToCustomer))
                               ? "bg-amber-100/60 text-amber-700 border-amber-300/50"
+                              : v.status === "Completed"
+                              ? "bg-[#E6F8F3] text-[#00684A] border-[#A3EAD6]"
                               : v.status === "Processing"
                               ? "bg-[#f0f5ea]/40 text-[#181d16] border-[#eaf0e4]/70"
                               : "bg-[#FFF4CC]/40 text-[#805b00] border-[#FFF4CC]"
                           }`}
                         >
-                          {(v.type === "court_record" && (v.courtRecordStatus === "admin_review" || v.courtRecordStatus === "needs_admin_retry")) ? "Under Review" : v.status}
+                          {((v.type === "court_record" && (v.courtRecordStatus === "admin_review" || v.courtRecordStatus === "needs_admin_retry")) || ((v.type === "employment" || v.type === "education") && !v.sendToCustomer)) ? "Under Review" : v.status}
                         </span>
                       </td>
                       <td className="py-3.5 px-2.5 text-right">
@@ -962,6 +985,24 @@ export default function OrderSummaryPage() {
                             </div>
                           ) : (
                             <SearchProgressIndicator verification={v} now={tickNow} />
+                          )
+                        ) : ((v.type === "employment" || v.type === "education") && !v.sendToCustomer) ? (
+                          (v.type === "employment" ? v.employmentDataSubmitted : v.educationDataSubmitted) ? (
+                            <button
+                              onClick={() => handleViewReport(v)}
+                              className="font-bold text-[11px] px-3 py-1.5 rounded-lg bg-[#FFF4CC]/60 text-[#805b00] hover:bg-[#FFF4CC]/80 transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs"
+                            >
+                              <span>Under Review</span>
+                              <Clock className="w-3.5 h-3.5 text-[#805b00]" />
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleViewReport(v)}
+                              className="font-bold text-[11px] px-3 py-1.5 rounded-lg bg-[#f0f5ea]/65 text-[#181d16] hover:bg-[#f0f5ea] transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs"
+                            >
+                              <span>Credentials</span>
+                              <Key className="w-3.5 h-3.5 text-[#181d16]" />
+                            </button>
                           )
                         ) : v.status === "Completed" ? (
                           <button
@@ -1381,11 +1422,15 @@ export default function OrderSummaryPage() {
                   >
                     Close
                   </button>
-                  {displayVerification.status === "Completed" && (
+                  {((displayVerification.status === "Completed" || displayVerification.status === "Verified" || displayVerification.status === "Needs Attention" || displayVerification.status === "Discrepancy") && (displayVerification.type === "court_record" || displayVerification.sendToCustomer)) && (
                     <button
                       onClick={() => {
                         const reportPath = displayVerification.type === "court_record"
                           ? `/client/court-record-report?id=${displayVerification.id}`
+                          : displayVerification.type === "employment"
+                          ? `/client/employment-report?id=${displayVerification.id}`
+                          : displayVerification.type === "education"
+                          ? `/client/education-report?id=${displayVerification.id}`
                           : `/client/report?id=${displayVerification.id}`;
                         window.open(reportPath, "_blank");
                         setSelectedVerification(null);

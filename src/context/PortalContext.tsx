@@ -11,7 +11,7 @@ export interface Verification {
   orgName: string;
   requestingOrgName?: string;
   date: string;
-  status: "Completed" | "Processing" | "Needs Attention";
+  status: "Completed" | "Processing" | "Needs Attention" | "Verified" | "Discrepancy";
   verifier: string | null;
   reportDetails?: string;
   notes?: string;
@@ -35,7 +35,7 @@ export interface Verification {
   setupUrl?: string;
   createdAt?: string;
   // Court Record Verification fields
-  type?: "identity" | "court_record";
+  type?: "identity" | "court_record" | "employment" | "education";
   candidateDob?: string;
   candidateFatherName?: string;
   candidateMotherName?: string;
@@ -80,6 +80,81 @@ export interface Verification {
   courtRecordSearchStartedAt?: string;
   courtRecordAdminReview?: boolean;
   attempts?: Array<{ date: string; verifier: string; status: string; notes?: string }>;
+  // Employment Verification fields
+  candidateMobile?: string;
+  employmentData?: {
+    country?: string;
+    state?: string;
+    city?: string;
+    companyName?: string;
+    addressLine1?: string;
+    addressLine2?: string;
+    companyTelephoneCode?: string;
+    companyTelephone?: string;
+    department?: string;
+    position?: string;
+    employmentPeriodFrom?: string;
+    employmentPeriodTo?: string;
+    employeeCode?: string;
+    reportingManagerName?: string;
+    reportingManagerDepartment?: string;
+    reportingManagerContactCode?: string;
+    reportingManagerContact?: string;
+    reportingManagerEmail?: string;
+    annualCTC?: string;
+    employmentType?: string;
+    agencyDetails?: string;
+    reasonForLeaving?: string;
+    remarks?: string;
+  };
+  employmentDataSubmitted?: boolean;
+  employmentDataSubmittedAt?: string;
+  employmentAttempts?: Array<{
+    date: string;
+    verificationMode: string;
+    result: string;
+    comment?: string;
+    verifierNote?: string;
+    respondentName?: string;
+    respondentEmail?: string;
+    respondentComment?: string;
+    extraPayment?: boolean;
+    markAsPaid?: boolean;
+    askCustomerApproval?: boolean;
+    screenshot?: string;
+    sendEmail?: boolean;
+    loggedBy?: string;
+  }>;
+  // Education Verification fields
+  educationData?: {
+    degreeType?: string;
+    courseName?: string;
+    boardUniversity?: string;
+    institutionName?: string;
+    rollNumber?: string;
+    passingYear?: string;
+    certificateFile?: string;
+    certificateFileName?: string;
+  };
+  educationDataSubmitted?: boolean;
+  educationDataSubmittedAt?: string;
+  educationAttempts?: Array<{
+    date: string;
+    verificationMode: string;
+    result: string;
+    comment?: string;
+    verifierNote?: string;
+    respondentName?: string;
+    respondentEmail?: string;
+    respondentComment?: string;
+    extraPayment?: boolean;
+    markAsPaid?: boolean;
+    askCustomerApproval?: boolean;
+    screenshot?: string;
+    sendEmail?: boolean;
+    loggedBy?: string;
+  }>;
+  sendToCustomer?: boolean;
 }
 
 export interface InvoiceActivity {
@@ -164,6 +239,7 @@ export interface Organisation {
   identityEnabled?: boolean;
   courtRecordEnabled?: boolean;
   courtRecordRate?: number;
+  educationRate?: number;
 }
 
 interface PortalContextType {
@@ -174,6 +250,8 @@ interface PortalContextType {
   organisation: Organisation | null;
   ozcluSettings: CompanySettings | null;
   addVerification: (name: string, email: string, orgName: string, requestingOrgName?: string) => Promise<any>;
+  addEmploymentVerification: (name: string, mobile: string, email: string, orgName: string, requestingOrgName?: string) => Promise<any>;
+  addEducationVerification: (name: string, mobile: string, email: string, orgName: string, requestingOrgName?: string) => Promise<any>;
   addCourtRecordVerification: (params: {
     candidateName: string;
     candidateDob: string;
@@ -638,7 +716,49 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return null;
   };
 
+  const addEmploymentVerification = async (name: string, mobile: string, email: string, orgName: string, requestingOrgName?: string) => {
+    try {
+      const res = await fetch("/api/portal-data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "addEmploymentVerification",
+          payload: { name, mobile, email, orgName, requestingOrgName: requestingOrgName || orgName },
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        fetchAllData();
+        return data;
+      }
+    } catch (err) {
+      console.error("Failed creating employment verification:", err);
+    }
+    fetchAllData();
+    return null;
+  };
 
+  const addEducationVerification = async (name: string, mobile: string, email: string, orgName: string, requestingOrgName?: string) => {
+    try {
+      const res = await fetch("/api/portal-data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "addEducationVerification",
+          payload: { name, mobile, email, orgName, requestingOrgName: requestingOrgName || orgName },
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        fetchAllData();
+        return data;
+      }
+    } catch (err) {
+      console.error("Failed creating education verification:", err);
+    }
+    fetchAllData();
+    return null;
+  };
 
   return (
     <PortalContext.Provider
@@ -650,6 +770,8 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         organisation,
         ozcluSettings,
         addVerification,
+        addEmploymentVerification,
+        addEducationVerification,
         addCourtRecordVerification,
         updateSettings,
         inviteVerifier,

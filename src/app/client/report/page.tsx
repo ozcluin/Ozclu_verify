@@ -40,7 +40,7 @@ function ReportContent() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-slate-100 p-6">
-        <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
         <span className="mt-4 text-sm font-semibold text-slate-600 animate-pulse">Generating Report...</span>
       </div>
     );
@@ -142,7 +142,7 @@ function ReportContent() {
         <div className="flex gap-2">
           <button
             onClick={() => window.print()}
-            className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white rounded-lg font-bold text-xs hover:bg-indigo-700 cursor-pointer shadow-sm transition-all"
+            className="flex items-center gap-1.5 px-4 py-2 bg-primary text-white rounded-lg font-bold text-xs hover:bg-sky-700 cursor-pointer shadow-sm transition-all"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <polyline points="6 9 6 2 18 2 18 9"></polyline>
@@ -313,7 +313,7 @@ function ReportContent() {
                         <span className="font-bold text-xs text-slate-900">{doc.name}</span>
                         <span className="text-[10px] text-slate-500 font-semibold">{doc.issuer}</span>
                         <div className="flex justify-between items-center mt-1 pt-1 border-t border-slate-200">
-                          <span className="text-[9px] font-mono text-slate-400 truncate max-w-[150px]">{doc.uri}</span>
+                           <span className="text-[9px] font-mono text-slate-400 truncate max-w-[150px]">{doc.uri}</span>
                           <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
                             {doc.status}
                           </span>
@@ -352,7 +352,7 @@ function ReportContent() {
                               </span>
                             </td>
                             <td className="p-2 border-r border-slate-200 font-medium text-slate-700">{att.mode || "Digital"}</td>
-                            <td className="p-2 text-[10px] text-slate-600 whitespace-pre-line font-medium leading-normal">
+                            <td className="p-2 text-[10px] text-slate-660 whitespace-pre-line font-medium leading-normal">
                               {att.notes || `Verifier: ${att.verifier || "System Analyst"}`}
                             </td>
                           </tr>
@@ -374,11 +374,17 @@ function ReportContent() {
         {/* Signatures */}
         <div className="flex justify-between items-center my-10 px-4 text-xs font-bold text-slate-700 print-avoid-break">
           <div className="text-center">
-            <div className="border-b border-slate-300 w-40 sm:w-44 pb-1 mb-1 font-semibold italic text-slate-900">{generatedBy}</div>
+            <div className="border-b border-slate-300 w-40 sm:w-44 pb-1 mb-1 font-semibold italic text-slate-900 min-h-[24px] flex items-center justify-center">{generatedBy}</div>
             <div>Created By</div>
           </div>
           <div className="text-center">
-            <div className="border-b border-slate-300 w-40 sm:w-44 pb-1 mb-1 font-semibold italic text-slate-900">{verifiedBy}</div>
+            <div className="border-b border-slate-300 w-40 sm:w-44 pb-1 mb-1 font-semibold italic text-slate-900 min-h-[24px] flex items-center justify-center">
+              {verifiedBy === "DigiLocker" ? (
+                <img src="/DigilockerLogo.svg" alt="DigiLocker" className="h-6 object-contain" />
+              ) : (
+                verifiedBy
+              )}
+            </div>
             <div>Verified By</div>
           </div>
         </div>
@@ -398,7 +404,7 @@ function ReportContent() {
           </p>
           <div className="border-t border-slate-200 pt-2 flex justify-between items-center text-[9px] font-semibold text-slate-500">
             <div>
-              <span className="font-bold text-slate-800">QUESTIONS?</span> If you have any questions about this report, please feel free to contact us: <span className="text-indigo-600 font-bold hover:underline">support@ozclu.com</span>
+              <span className="font-bold text-slate-800">QUESTIONS?</span> If you have any questions about this report, please feel free to contact us: <span className="text-primary font-bold hover:underline">support@ozclu.com</span>
             </div>
             <div className="font-mono">Rev 3.2 (15322)</div>
           </div>

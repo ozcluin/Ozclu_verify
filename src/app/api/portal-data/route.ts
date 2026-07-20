@@ -518,6 +518,218 @@ export async function POST(req: NextRequest) {
         });
         break;
       }
+      case "addEmploymentVerification": {
+        const { name, mobile, email, orgName, requestingOrgName: empReqOrgName } = payload;
+
+        if (!name?.trim() || !email?.trim()) {
+          return NextResponse.json({ error: "Candidate name and email are required" }, { status: 400 });
+        }
+
+        const isAdminSession = sessionOrgName?.toLowerCase() === "ozclu" || sessionOrgName?.toLowerCase() === "admin";
+        const safeOrgName = isAdminSession ? (orgName || sessionOrgName) : (sessionOrgName || orgName);
+
+        const cleanOrg = (safeOrgName || "XXX").replace(/[^a-zA-Z]/g, "").slice(0, 3).padEnd(3, "X").toUpperCase();
+        const nowTime = new Date();
+        const dd = String(nowTime.getDate()).padStart(2, "0");
+        const mm = String(nowTime.getMonth() + 1).padStart(2, "0");
+        const yy = String(nowTime.getFullYear()).slice(-2);
+        const dateStr = `${dd}${mm}${yy}`;
+        const prefix = `${cleanOrg}${dateStr}-`;
+
+        const count = await db.collection("verifications").countDocuments({
+          id: { $regex: `^${prefix}` }
+        });
+        const finalId = `${prefix}${String(count + 1).padStart(4, "0")}`;
+
+        const { randomBytes } = await import("crypto");
+        const bcrypt = await import("bcryptjs");
+
+        const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        let randStr = "";
+        const randomBytesArr = randomBytes(8);
+        for (let i = 0; i < 8; i++) {
+          randStr += charset.charAt(randomBytesArr[i] % charset.length);
+        }
+        const tempPassword = `Ozclu@${randStr}`;
+        const hashedTempPassword = bcrypt.hashSync(tempPassword, 10);
+
+        const existingUser = await db.collection("users").findOne({ email: email.toLowerCase().trim() });
+        if (!existingUser) {
+          await db.collection("users").insertOne({
+            email: email.toLowerCase().trim(),
+            password: hashedTempPassword,
+            fullName: name,
+            role: "candidate",
+            orgName: safeOrgName,
+            createdAt: new Date()
+          });
+        } else {
+          await db.collection("users").updateOne(
+            { email: email.toLowerCase().trim() },
+            { $set: { password: hashedTempPassword, role: "candidate", fullName: name } }
+          );
+        }
+
+        const candidatePortalUrl = process.env.CANDIDATE_PORTAL_URL || "https://candidate.verify.ozclu.in";
+        const setupUrl = `${candidatePortalUrl}/?email=${encodeURIComponent(email.toLowerCase().trim())}&password=${encodeURIComponent(tempPassword)}`;
+
+        const dateFormatted = new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
+
+        const initialAttempt = {
+          date: new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata", hour12: true }).replace(/\u202f/g, " ").toLowerCase(),
+          verifier: "Client Init",
+          status: "Processing",
+          notes: "Employment verification request created by client."
+        };
+
+        await db.collection("verifications").insertOne({
+          id: finalId,
+          name,
+          email: email.toLowerCase().trim(),
+          orgName: safeOrgName,
+          requestingOrgName: empReqOrgName || safeOrgName,
+          date: dateFormatted,
+          status: "Processing",
+          verifier: null,
+          notes: "Awaiting candidate employment data submission.",
+          type: "employment",
+          candidateMobile: mobile || "",
+          onboardingStatus: "active",
+          tempPassword,
+          attempts: [initialAttempt],
+          setupUrl,
+          createdAt: new Date().toISOString()
+        });
+
+        if (empReqOrgName && empReqOrgName.trim()) {
+          await db.collection("settings").updateOne(
+            { companyName: safeOrgName },
+            { $addToSet: { recentRequestingOrgs: empReqOrgName.trim() } },
+            { upsert: true }
+          );
+        }
+
+        await logAuditEvent(db, {
+          actorUserId: user.id,
+          actorEmail: user.email,
+          actorRole: user.role,
+          portal: "client",
+          action: "employment_verification_created",
+          targetType: "verification",
+          targetId: finalId,
+          ip,
+          userAgent,
+          outcome: "success"
+        });
+
+        return NextResponse.json({ success: true, id: finalId, setupUrl });
+      }
+      case "addEducationVerification": {
+        const { name, mobile, email, orgName, requestingOrgName: eduReqOrgName } = payload;
+
+        if (!name?.trim() || !email?.trim()) {
+          return NextResponse.json({ error: "Candidate name and email are required" }, { status: 400 });
+        }
+
+        const isAdminSession = sessionOrgName?.toLowerCase() === "ozclu" || sessionOrgName?.toLowerCase() === "admin";
+        const safeOrgName = isAdminSession ? (orgName || sessionOrgName) : (sessionOrgName || orgName);
+
+        const cleanOrg = (safeOrgName || "XXX").replace(/[^a-zA-Z]/g, "").slice(0, 3).padEnd(3, "X").toUpperCase();
+        const nowTime = new Date();
+        const dd = String(nowTime.getDate()).padStart(2, "0");
+        const mm = String(nowTime.getMonth() + 1).padStart(2, "0");
+        const yy = String(nowTime.getFullYear()).slice(-2);
+        const dateStr = `${dd}${mm}${yy}`;
+        const prefix = `${cleanOrg}${dateStr}-`;
+
+        const count = await db.collection("verifications").countDocuments({
+          id: { $regex: `^${prefix}` }
+        });
+        const finalId = `${prefix}${String(count + 1).padStart(4, "0")}`;
+
+        const { randomBytes } = await import("crypto");
+        const bcrypt = await import("bcryptjs");
+
+        const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        let randStr = "";
+        const randomBytesArr = randomBytes(8);
+        for (let i = 0; i < 8; i++) {
+          randStr += charset.charAt(randomBytesArr[i] % charset.length);
+        }
+        const tempPassword = `Ozclu@${randStr}`;
+        const hashedTempPassword = bcrypt.hashSync(tempPassword, 10);
+
+        const existingUser = await db.collection("users").findOne({ email: email.toLowerCase().trim() });
+        if (!existingUser) {
+          await db.collection("users").insertOne({
+            email: email.toLowerCase().trim(),
+            password: hashedTempPassword,
+            fullName: name,
+            role: "candidate",
+            orgName: safeOrgName,
+            createdAt: new Date()
+          });
+        } else {
+          await db.collection("users").updateOne(
+            { email: email.toLowerCase().trim() },
+            { $set: { password: hashedTempPassword, role: "candidate", fullName: name } }
+          );
+        }
+
+        const candidatePortalUrl = process.env.CANDIDATE_PORTAL_URL || "https://candidate.verify.ozclu.in";
+        const setupUrl = `${candidatePortalUrl}/?email=${encodeURIComponent(email.toLowerCase().trim())}&password=${encodeURIComponent(tempPassword)}`;
+
+        const dateFormatted = new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
+
+        const initialAttempt = {
+          date: new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata", hour12: true }).replace(/\u202f/g, " ").toLowerCase(),
+          verifier: "Client Init",
+          status: "Processing",
+          notes: "Education verification request created by client."
+        };
+
+        await db.collection("verifications").insertOne({
+          id: finalId,
+          name,
+          email: email.toLowerCase().trim(),
+          orgName: safeOrgName,
+          requestingOrgName: eduReqOrgName || safeOrgName,
+          date: dateFormatted,
+          status: "Processing",
+          verifier: null,
+          notes: "Awaiting candidate education data submission.",
+          type: "education",
+          candidateMobile: mobile || "",
+          onboardingStatus: "active",
+          tempPassword,
+          attempts: [initialAttempt],
+          setupUrl,
+          createdAt: new Date().toISOString()
+        });
+
+        if (eduReqOrgName && eduReqOrgName.trim()) {
+          await db.collection("settings").updateOne(
+            { companyName: safeOrgName },
+            { $addToSet: { recentRequestingOrgs: eduReqOrgName.trim() } },
+            { upsert: true }
+          );
+        }
+
+        await logAuditEvent(db, {
+          actorUserId: user.id,
+          actorEmail: user.email,
+          actorRole: user.role,
+          portal: "client",
+          action: "education_verification_created",
+          targetType: "verification",
+          targetId: finalId,
+          ip,
+          userAgent,
+          outcome: "success"
+        });
+
+        return NextResponse.json({ success: true, id: finalId, setupUrl });
+      }
       case "addCourtRecordVerification": {
         const { candidateName, candidateDob, candidateFatherName, candidateMotherName, candidateIsMarried, candidateHusbandName, gender, idProofType, idProofNumber, idProofFile, addresses, orgName, requestingOrgName: reqOrgName } = payload;
 
