@@ -33,6 +33,7 @@ export interface Verification {
   digilockerDocuments?: any[];
   completedAt?: Date | string;
   setupUrl?: string;
+  skipCandidateLogin?: boolean;
   createdAt?: string;
   // Court Record Verification fields
   type?: "identity" | "court_record" | "employment" | "education" | "interpol";
@@ -261,8 +262,10 @@ interface PortalContextType {
     requestingOrgName: string;
   }) => Promise<any>;
   addVerification: (name: string, email: string, orgName: string, requestingOrgName?: string) => Promise<any>;
-  addEmploymentVerification: (name: string, mobile: string, email: string, orgName: string, requestingOrgName?: string) => Promise<any>;
-  addEducationVerification: (name: string, mobile: string, email: string, orgName: string, requestingOrgName?: string) => Promise<any>;
+  addEmploymentVerification: (name: string, mobile: string, email: string, orgName: string, requestingOrgName?: string, skipCandidateLogin?: boolean) => Promise<any>;
+  addEducationVerification: (name: string, mobile: string, email: string, orgName: string, requestingOrgName?: string, skipCandidateLogin?: boolean) => Promise<any>;
+  submitEmploymentData: (verificationId: string, employmentData: any) => Promise<any>;
+  submitEducationData: (verificationId: string, educationData: any) => Promise<any>;
   addCourtRecordVerification: (params: {
     candidateName: string;
     candidateDob: string;
@@ -755,14 +758,14 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return null;
   };
 
-  const addEmploymentVerification = async (name: string, mobile: string, email: string, orgName: string, requestingOrgName?: string) => {
+  const addEmploymentVerification = async (name: string, mobile: string, email: string, orgName: string, requestingOrgName?: string, skipCandidateLogin?: boolean) => {
     try {
       const res = await fetch("/api/portal-data", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "addEmploymentVerification",
-          payload: { name, mobile, email, orgName, requestingOrgName: requestingOrgName || orgName },
+          payload: { name, mobile, email, orgName, requestingOrgName: requestingOrgName || orgName, skipCandidateLogin: !!skipCandidateLogin },
         }),
       });
       if (res.ok) {
@@ -777,14 +780,14 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return null;
   };
 
-  const addEducationVerification = async (name: string, mobile: string, email: string, orgName: string, requestingOrgName?: string) => {
+  const addEducationVerification = async (name: string, mobile: string, email: string, orgName: string, requestingOrgName?: string, skipCandidateLogin?: boolean) => {
     try {
       const res = await fetch("/api/portal-data", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "addEducationVerification",
-          payload: { name, mobile, email, orgName, requestingOrgName: requestingOrgName || orgName },
+          payload: { name, mobile, email, orgName, requestingOrgName: requestingOrgName || orgName, skipCandidateLogin: !!skipCandidateLogin },
         }),
       });
       if (res.ok) {
@@ -794,6 +797,50 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }
     } catch (err) {
       console.error("Failed creating education verification:", err);
+    }
+    fetchAllData();
+    return null;
+  };
+
+  const submitEmploymentData = async (verificationId: string, employmentData: any) => {
+    try {
+      const res = await fetch("/api/portal-data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "submitEmploymentData",
+          payload: { verificationId, employmentData },
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        fetchAllData();
+        return data;
+      }
+    } catch (err) {
+      console.error("Failed submitting employment data:", err);
+    }
+    fetchAllData();
+    return null;
+  };
+
+  const submitEducationData = async (verificationId: string, educationData: any) => {
+    try {
+      const res = await fetch("/api/portal-data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "submitEducationData",
+          payload: { verificationId, educationData },
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        fetchAllData();
+        return data;
+      }
+    } catch (err) {
+      console.error("Failed submitting education data:", err);
     }
     fetchAllData();
     return null;
@@ -812,6 +859,8 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         addVerification,
         addEmploymentVerification,
         addEducationVerification,
+        submitEmploymentData,
+        submitEducationData,
         addCourtRecordVerification,
         updateSettings,
         inviteVerifier,

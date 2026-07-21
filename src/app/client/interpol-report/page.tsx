@@ -90,9 +90,94 @@ function InterpolReportContent() {
     : "No Similarity Matches Found (Clear Record)";
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900 print:bg-white print:p-0 p-4 sm:p-6 md:p-8 flex flex-col items-center print:block font-sans">
-      {/* Printable page double border */}
-      <div className="hidden print:block fixed inset-0 border-[6px] border-double border-[#1e3a8a] pointer-events-none z-50" />
+    <div className="min-h-screen bg-slate-100 text-[#181d16] print:bg-white print:p-0 p-4 sm:p-6 md:p-8 flex flex-col items-center justify-start font-sans">
+      <style>{`
+        @media print {
+          @page {
+            size: A4 portrait;
+            margin: 10mm;
+          }
+          html, body {
+            background: white !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          .no-print {
+            display: none !important;
+          }
+          .print-card {
+            border: none !important;
+            margin: 0 auto !important;
+            padding: 0 !important;
+            box-shadow: none !important;
+            max-width: 100% !important;
+            width: 100% !important;
+          }
+          .print-page-block {
+            border: 5px double #1e3a8a !important;
+            padding: 22px 26px !important;
+            margin-bottom: 0 !important;
+            box-sizing: border-box !important;
+            break-inside: avoid !important;
+            page-break-inside: avoid !important;
+            background: white !important;
+            min-height: 265mm !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: space-between !important;
+          }
+          .print-card h1 {
+            font-size: 16px !important;
+            margin-bottom: 5px !important;
+          }
+          .print-card h2 {
+            font-size: 17px !important;
+          }
+          .print-card h3 {
+            font-size: 11px !important;
+          }
+          .print-card .grid {
+            gap: 10px !important;
+          }
+          .print-card p, .print-card div, .print-card span {
+            line-height: 1.45 !important;
+          }
+          .print-card .mb-8 {
+            margin-bottom: 18px !important;
+          }
+          .print-card .mb-6 {
+            margin-bottom: 12px !important;
+          }
+          .print-card .p-8, .print-card .p-6, .print-card .p-5 {
+            padding: 12px !important;
+          }
+          .print-card .pb-6 {
+            padding-bottom: 10px !important;
+          }
+          .print-card .pt-6 {
+            padding-top: 10px !important;
+          }
+          .print-card .mt-8 {
+            margin-top: 16px !important;
+          }
+          .print-card .gap-6 {
+            gap: 11px !important;
+          }
+          .print-card .gap-4 {
+            gap: 8px !important;
+          }
+          .print-avoid-break {
+            break-inside: avoid !important;
+            page-break-inside: avoid !important;
+          }
+          .print-break-before {
+            break-before: page !important;
+            page-break-before: always !important;
+          }
+        }
+      `}</style>
 
       {/* Print Control Toolbar */}
       <div className="no-print print:hidden w-full max-w-[800px] bg-white border border-slate-200 rounded-xl p-4 mb-6 shadow-xs flex items-center justify-between">
@@ -122,9 +207,11 @@ function InterpolReportContent() {
       </div>
 
       {/* Main Report Container */}
-      <div className="print-border w-full max-w-[800px] bg-white border-[6px] border-double border-[#1e3a8a] print:border-0 p-8 sm:p-10 shadow-lg relative print:shadow-none print:my-0 print:mx-auto print:p-8">
+      <div className="print-card w-full max-w-[800px] bg-white border-[6px] border-double border-[#1e3a8a] p-8 sm:p-10 shadow-lg relative my-0 mx-auto print:shadow-none print:p-8 print:max-w-full print:w-full">
         
-        {/* Header */}
+        {/* Page Block */}
+        <div className="print-page-block">
+          {/* Header */}
         <div className="grid grid-cols-3 items-center gap-4 mb-8 border-b-2 border-slate-100 pb-6">
           <div className="flex justify-start">
             <div className="flex items-center gap-2">
@@ -337,7 +424,7 @@ function InterpolReportContent() {
         )}
 
         {/* Footer/Disclaimer */}
-        <div className="border-t border-slate-200 pt-6 mt-8 text-[9px] sm:text-[10px] text-slate-500 leading-relaxed print-avoid-break">
+        <div className="border-t border-slate-200 pt-6 mt-8 text-[9px] sm:text-[10px] text-slate-500 leading-relaxed print-avoid-break print:mt-auto">
           <p className="font-bold uppercase tracking-wider mb-1 text-slate-700">Disclaimer & Data Limitations</p>
           <p className="font-semibold">
             This verification check is a database-level query matching candidate details against publicly available notifications issued by the CBI and Interpol, as compiled on July 20, 2026. This search does not constitute an active physical or biometric verification. False positives may occur due to similar name phonetics or name sequences; client discretion is advised. Clean results indicate no matching notice records were found at the time of query.
@@ -348,6 +435,7 @@ function InterpolReportContent() {
           </div>
         </div>
 
+        </div>
       </div>
     </div>
   );

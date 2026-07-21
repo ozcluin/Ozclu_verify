@@ -36,8 +36,11 @@ import {
   Layers,
   ArrowUpDown,
   ArrowUp,
-  ArrowDown
+  ArrowDown,
+  Edit3,
+  FileEdit,
 } from "lucide-react";
+import CandidateFillModal from "src/app/components/CandidateFillModal";
 
 // ─── Helper: format elapsed/remaining seconds into "Xm Ys" ───
 function formatDuration(totalSeconds: number): string {
@@ -117,6 +120,25 @@ export default function OrderSummaryPage() {
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [modalClosing, setModalClosing] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const [activeFillModal, setActiveFillModal] = useState<{
+    isOpen: boolean;
+    id: string;
+    type: "employment" | "education";
+    name?: string;
+    initialData?: any;
+  } | null>(null);
+
+  const openCandidateFillModal = (v: Verification) => {
+    const data = v.type === "employment" ? v.employmentData : v.educationData;
+    setActiveFillModal({
+      isOpen: true,
+      id: v.id,
+      type: v.type as "employment" | "education",
+      name: v.name,
+      initialData: data,
+    });
+  };
 
   // Check if any court record searches are currently active
   const hasActiveSearches = verifications.some(
@@ -960,7 +982,7 @@ export default function OrderSummaryPage() {
                       <td className="py-3.5 px-2.5">
                         <span
                           className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold tracking-wide uppercase border ${
-                            ((v.type === "court_record" && (v.courtRecordStatus === "admin_review" || v.courtRecordStatus === "needs_admin_retry")) || ((v.type === "employment" || v.type === "education") && !v.sendToCustomer))
+                            ((v.type === "court_record" && (v.courtRecordStatus === "admin_review" || v.courtRecordStatus === "needs_admin_retry")) || !v.sendToCustomer)
                               ? "bg-amber-100/60 text-amber-700 border-amber-300/50"
                               : v.status === "Completed"
                               ? "bg-[#E6F8F3] text-[#00684A] border-[#A3EAD6]"
@@ -969,12 +991,12 @@ export default function OrderSummaryPage() {
                               : "bg-[#FFF4CC]/40 text-[#805b00] border-[#FFF4CC]"
                           }`}
                         >
-                          {((v.type === "court_record" && (v.courtRecordStatus === "admin_review" || v.courtRecordStatus === "needs_admin_retry")) || ((v.type === "employment" || v.type === "education") && !v.sendToCustomer)) ? "Under Review" : v.status}
+                          {((v.type === "court_record" && (v.courtRecordStatus === "admin_review" || v.courtRecordStatus === "needs_admin_retry")) || !v.sendToCustomer) ? "Under Review" : v.status}
                         </span>
                       </td>
                       <td className="py-3.5 px-2.5 text-right">
                         {v.type === "court_record" || v.type === "interpol" ? (
-                          v.status === "Completed" || v.courtRecordStatus === "completed" || v.status === "Needs Attention" ? (
+                          v.sendToCustomer || v.status === "Completed" || v.courtRecordStatus === "completed" || v.status === "Needs Attention" ? (
                             <button
                               onClick={() => window.open(v.type === "interpol" ? `/client/interpol-report?id=${v.id}` : `/client/court-record-report?id=${v.id}`, "_blank")}
                               className="font-bold text-[11px] px-3 py-1.5 rounded-lg bg-[#eaf0e4]/40 text-[#181d16] hover:bg-[#eaf0e4] transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs"
@@ -995,21 +1017,43 @@ export default function OrderSummaryPage() {
                           )
                         ) : ((v.type === "employment" || v.type === "education") && !v.sendToCustomer) ? (
                           (v.type === "employment" ? v.employmentDataSubmitted : v.educationDataSubmitted) ? (
-                            <button
-                              onClick={() => handleViewReport(v)}
-                              className="font-bold text-[11px] px-3 py-1.5 rounded-lg bg-[#FFF4CC]/60 text-[#805b00] hover:bg-[#FFF4CC]/80 transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs"
-                            >
-                              <span>Under Review</span>
-                              <Clock className="w-3.5 h-3.5 text-[#805b00]" />
-                            </button>
+                            <div className="flex items-center gap-1.5 justify-end">
+                              <button
+                                onClick={() => openCandidateFillModal(v)}
+                                className="font-bold text-[11px] px-2.5 py-1.5 rounded-lg bg-[#f0f5ea] text-[#181d16] hover:bg-[#eaf0e4] transition-all cursor-pointer inline-flex items-center gap-1 shadow-2xs"
+                                title="View or Edit Submitted Candidate Details"
+                              >
+                                <Edit3 className="w-3.5 h-3.5 text-[#00450e]" />
+                                <span>Edit Details</span>
+                              </button>
+                              <button
+                                onClick={() => handleViewReport(v)}
+                                className="font-bold text-[11px] px-2.5 py-1.5 rounded-lg bg-[#FFF4CC]/60 text-[#805b00] hover:bg-[#FFF4CC]/80 transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs"
+                              >
+                                <span>Under Review</span>
+                                <Clock className="w-3.5 h-3.5 text-[#805b00]" />
+                              </button>
+                            </div>
                           ) : (
-                            <button
-                              onClick={() => handleViewReport(v)}
-                              className="font-bold text-[11px] px-3 py-1.5 rounded-lg bg-[#f0f5ea]/65 text-[#181d16] hover:bg-[#f0f5ea] transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs"
-                            >
-                              <span>Credentials</span>
-                              <Key className="w-3.5 h-3.5 text-[#181d16]" />
-                            </button>
+                            <div className="flex items-center gap-1.5 justify-end">
+                              <button
+                                onClick={() => openCandidateFillModal(v)}
+                                className="font-bold text-[11px] px-3 py-1.5 rounded-lg bg-[#00450e] text-white hover:bg-[#00330a] transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-xs"
+                              >
+                                <FileEdit className="w-3.5 h-3.5" />
+                                <span>Fill Candidate Details</span>
+                              </button>
+                              {!v.skipCandidateLogin && (
+                                <button
+                                  onClick={() => handleViewReport(v)}
+                                  className="font-bold text-[11px] px-2.5 py-1.5 rounded-lg bg-[#f0f5ea]/65 text-[#181d16] hover:bg-[#f0f5ea] transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs"
+                                  title="View Candidate Login Credentials"
+                                >
+                                  <span>Credentials</span>
+                                  <Key className="w-3.5 h-3.5 text-[#181d16]" />
+                                </button>
+                              )}
+                            </div>
                           )
                         ) : v.status === "Completed" ? (
                           <button
@@ -1370,6 +1414,33 @@ export default function OrderSummaryPage() {
                               <span>The candidate can log in directly using this link without setting a password.</span>
                             </div>
                           </div>
+                        </div>
+                      )}
+
+                      {(displayVerification.type === "employment" || displayVerification.type === "education") && (
+                        <div className="p-4 bg-[#f0f5ea]/40 border border-[#eaf0e4] rounded-2xl flex items-center justify-between gap-3 text-left">
+                          <div className="flex flex-col">
+                            <span className="font-bold text-xs text-[#181d16]">
+                              {displayVerification.type === "employment" ? "Candidate Employment Details" : "Candidate Education Details"}
+                            </span>
+                            <span className="text-[11px] text-[#475569] font-medium mt-0.5">
+                              {(displayVerification.type === "employment" ? displayVerification.employmentDataSubmitted : displayVerification.educationDataSubmitted)
+                                ? "Verification details have been submitted."
+                                : "Candidate verification details not yet submitted."}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const v = displayVerification;
+                              setSelectedVerification(null);
+                              openCandidateFillModal(v);
+                            }}
+                            className="px-4 py-2 bg-[#00450e] text-white font-bold text-xs rounded-xl hover:bg-[#00330a] transition-all flex items-center gap-1.5 cursor-pointer shrink-0 shadow-2xs"
+                          >
+                            <FileEdit className="w-3.5 h-3.5" />
+                            <span>{(displayVerification.type === "employment" ? displayVerification.employmentDataSubmitted : displayVerification.educationDataSubmitted) ? "Edit Details" : "Fill Details Now"}</span>
+                          </button>
                         </div>
                       )}
 
@@ -2058,6 +2129,19 @@ export default function OrderSummaryPage() {
             )}
           </div>
         </div>
+      )}
+      {activeFillModal && (
+        <CandidateFillModal
+          isOpen={activeFillModal.isOpen}
+          onClose={() => setActiveFillModal(null)}
+          verificationId={activeFillModal.id}
+          verificationType={activeFillModal.type}
+          candidateName={activeFillModal.name}
+          initialData={activeFillModal.initialData}
+          onSuccess={() => {
+            refreshData();
+          }}
+        />
       )}
     </>
   );

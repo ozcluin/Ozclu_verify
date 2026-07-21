@@ -116,10 +116,95 @@ function EmploymentReportContent() {
   const attempts = verification.employmentAttempts || [];
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900 print:bg-white print:p-0 p-4 sm:p-6 md:p-8 flex flex-col items-center print:block">
-      {/* Repeating Fixed Border on Every Printed Page */}
-      <div className="hidden print:block fixed inset-0 border-[6px] border-double border-[#00450e] pointer-events-none z-50" />
-      
+    <div className="min-h-screen bg-slate-100 text-slate-900 print:bg-white print:p-0 p-4 sm:p-6 md:p-8 flex flex-col items-center justify-start font-sans">
+      <style>{`
+        @media print {
+          @page {
+            size: A4 portrait;
+            margin: 10mm;
+          }
+          html, body {
+            background: white !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          .no-print {
+            display: none !important;
+          }
+          .print-card {
+            border: none !important;
+            margin: 0 auto !important;
+            padding: 0 !important;
+            box-shadow: none !important;
+            max-width: 100% !important;
+            width: 100% !important;
+          }
+          .print-page-block {
+            border: 5px double #00450e !important;
+            padding: 22px 26px !important;
+            margin-bottom: 0 !important;
+            box-sizing: border-box !important;
+            break-inside: avoid !important;
+            page-break-inside: avoid !important;
+            background: white !important;
+            min-height: 265mm !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: space-between !important;
+          }
+          .print-card h1 {
+            font-size: 16px !important;
+            margin-bottom: 5px !important;
+          }
+          .print-card h2 {
+            font-size: 17px !important;
+          }
+          .print-card h3 {
+            font-size: 11px !important;
+          }
+          .print-card .grid {
+            gap: 10px !important;
+          }
+          .print-card p, .print-card div, .print-card span {
+            line-height: 1.45 !important;
+          }
+          .print-card .mb-8 {
+            margin-bottom: 18px !important;
+          }
+          .print-card .mb-6 {
+            margin-bottom: 12px !important;
+          }
+          .print-card .p-8, .print-card .p-6, .print-card .p-5 {
+            padding: 12px !important;
+          }
+          .print-card .pb-6 {
+            padding-bottom: 10px !important;
+          }
+          .print-card .pt-6 {
+            padding-top: 10px !important;
+          }
+          .print-card .mt-8 {
+            margin-top: 16px !important;
+          }
+          .print-card .gap-6 {
+            gap: 11px !important;
+          }
+          .print-card .gap-4 {
+            gap: 8px !important;
+          }
+          .print-avoid-break {
+            break-inside: avoid !important;
+            page-break-inside: avoid !important;
+          }
+          .print-break-before {
+            break-before: page !important;
+            page-break-before: always !important;
+          }
+        }
+      `}</style>
+
       {/* Print Control Toolbar */}
       <div className="no-print print:hidden w-full max-w-[800px] bg-white border border-slate-200 rounded-xl p-4 mb-6 shadow-sm flex items-center justify-between">
         <div className="flex flex-col">
@@ -152,9 +237,11 @@ function EmploymentReportContent() {
       </div>
 
       {/* Main Report Container */}
-      <div className="print-border w-full max-w-[800px] bg-white border-[6px] border-double border-[#00450e] print:border-0 p-8 sm:p-10 shadow-lg relative print:shadow-none print:my-0 print:mx-auto print:p-8">
+      <div className="print-card w-full max-w-[800px] bg-white border-[6px] border-double border-[#00450e] p-8 sm:p-10 shadow-lg relative my-0 mx-auto print:shadow-none print:p-8 print:max-w-full print:w-full">
         
-        {/* Top Header */}
+        {/* Page 1 Block */}
+        <div className="print-page-block">
+          {/* Top Header */}
         <div className="grid grid-cols-3 items-center gap-4 mb-8">
           <div className="flex justify-start">
             <div className="flex items-center gap-2">
@@ -305,7 +392,7 @@ function EmploymentReportContent() {
         </div>
 
         {/* Verification Status & History Timeline */}
-        <div className="mb-8 print-break-before">
+        <div className="mb-8">
           <h3 className="text-xs uppercase font-extrabold tracking-wider text-[#00450e] border-b border-slate-200 pb-1 mb-3">Employment Verification Summary</h3>
           
           <div className="space-y-4">
@@ -406,13 +493,14 @@ function EmploymentReportContent() {
             <span className="text-[9px] text-slate-400 font-mono">Generated: {generatedAtDate}</span>
           </div>
         </div>
+        </div>
 
         {/* Appendix: Verification Evidence */}
         {(() => {
           const attemptsWithScreenshots = attempts.filter((att: any) => att.screenshot);
           if (attemptsWithScreenshots.length === 0) return null;
           return (
-            <div className="mt-8 border-t border-slate-200 pt-6 print-break-before">
+            <div className="print-page-block print-break-before mt-6 print:mt-0 border-t border-slate-200 pt-6">
               <h3 className="text-xs uppercase font-extrabold tracking-wider text-[#00450e] mb-4">Appendix: Verification Evidence</h3>
               <div className="space-y-6">
                 {attemptsWithScreenshots.map((att: any, idx: number) => (

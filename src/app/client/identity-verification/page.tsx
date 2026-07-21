@@ -23,13 +23,17 @@ import {
   Building,
   ChevronDown,
   UploadCloud,
+  ShieldAlert,
+  ShieldCheck,
   FileText,
   Briefcase,
   GraduationCap,
   Globe,
+  FileEdit,
 } from "lucide-react";
 import { INDIAN_STATES } from "src/lib/courts-mapping";
 import { Country, State, City } from "country-state-city";
+import CandidateFillModal from "src/app/components/CandidateFillModal";
 
 type ServiceType = "identity" | "court_record" | "employment" | "education" | "interpol";
 
@@ -97,6 +101,111 @@ function SuccessModal({ crCreatedId, crCandidateName, onCreateAnother, onGoToSum
             </button>
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function InterpolSearchLoadingModal({
+  candidateName,
+  timeRemaining,
+  progress,
+  stageIndex,
+}: {
+  candidateName: string;
+  timeRemaining: number;
+  progress: number;
+  stageIndex: number;
+}) {
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+
+  const stages = [
+    { title: "Initiating Secure Gateway", desc: "Connecting to Interpol NCB Global Gateway SSL Network..." },
+    { title: "Member Bureau Scan", desc: "Querying 195+ Interpol National Central Bureau (NCB) databases..." },
+    { title: "Red Notices Cross-Check", desc: "Cross-referencing Global Red Notices (Wanted Persons) database..." },
+    { title: "Yellow Notices & SLTD Check", desc: "Scanning Yellow Notices (Missing Persons) & Stolen Travel Documents..." },
+    { title: "Biometric & Risk Analysis", desc: "Evaluating candidate biometrics & birth city match probability..." },
+    { title: "Certificate Generation", desc: "Finalizing Interpol security audit log & compliance certificate..." },
+  ];
+
+  const currentStage = stages[Math.min(stageIndex, stages.length - 1)];
+
+  return (
+    <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 z-[99999] animate-fade-in">
+      <div className="bg-slate-900 border border-slate-700/80 rounded-3xl p-8 max-w-lg w-full shadow-2xl relative overflow-hidden flex flex-col items-center text-center gap-6 animate-scale-in">
+        
+        {/* Glowing Background Radial */}
+        <div className="absolute -top-24 -left-24 w-64 h-64 bg-blue-600/20 rounded-full blur-3xl pointer-events-none animate-pulse"></div>
+        <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none animate-pulse"></div>
+
+        {/* Top Animated Radar Spinner */}
+        <div className="relative flex items-center justify-center w-24 h-24 my-1">
+          <div className="absolute inset-0 rounded-full border border-blue-500/30 animate-ping opacity-75"></div>
+          <div className="absolute inset-2 rounded-full border border-indigo-500/40 animate-pulse"></div>
+          <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-indigo-800 rounded-full flex items-center justify-center shadow-lg shadow-blue-500/20 text-white relative z-10">
+            <Globe className="w-10 h-10 animate-spin" style={{ animationDuration: "6s" }} />
+          </div>
+        </div>
+
+        {/* Header Text */}
+        <div className="flex flex-col items-center gap-1.5 z-10">
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-500/10 border border-blue-500/20 rounded-full text-blue-400 text-[10px] font-bold uppercase tracking-wider">
+            <span className="w-2 h-2 rounded-full bg-blue-400 animate-ping"></span>
+            Interpol Global Database Check
+          </div>
+          <h3 className="font-extrabold text-white text-xl tracking-tight mt-1">
+            Searching Interpol Databases...
+          </h3>
+          <p className="text-xs text-slate-400 font-medium">
+            Candidate: <strong className="text-slate-200">{candidateName}</strong>
+          </p>
+        </div>
+
+        {/* Progress Bar & Countdown */}
+        <div className="w-full bg-slate-800/80 border border-slate-700/60 rounded-2xl p-5 flex flex-col gap-3 text-left relative z-10">
+          <div className="flex justify-between items-center text-xs">
+            <span className="font-bold text-blue-400 uppercase tracking-wider text-[10px]">
+              Stage {stageIndex + 1} of 6: {currentStage.title}
+            </span>
+            <span className="font-mono font-bold text-slate-300">
+              {timeRemaining}s remaining
+            </span>
+          </div>
+
+          {/* Progress Track */}
+          <div className="w-full h-3 bg-slate-950 rounded-full overflow-hidden p-0.5 border border-slate-700/50">
+            <div
+              className="h-full bg-gradient-to-r from-blue-500 via-indigo-500 to-sky-400 rounded-full transition-all duration-300 ease-out shadow-sm shadow-blue-500/50"
+              style={{ width: `${progress}%` }}
+            ></div>
+          </div>
+
+          <p className="text-[11px] text-slate-300 font-semibold leading-relaxed">
+            {currentStage.desc}
+          </p>
+        </div>
+
+        {/* Realtime Terminal Log Box */}
+        <div className="w-full bg-slate-950/90 border border-slate-800 rounded-xl p-3.5 text-left font-mono text-[10.5px] text-slate-400 flex flex-col gap-1.5 h-20 overflow-hidden relative z-10 shadow-inner">
+          <div className="flex items-center gap-1.5 text-slate-500 text-[9px] uppercase tracking-wider font-bold border-b border-slate-800/80 pb-1 mb-0.5">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+            <span>LIVE INTERPOL VERIFICATION LOG</span>
+          </div>
+          <div className="text-emerald-400 truncate">
+            &gt; TLS 1.3 SECURE SESSION CONNECTED [INTERPOL NCB]
+          </div>
+          <div className="text-blue-300 truncate">
+            &gt; {currentStage.desc}
+          </div>
+        </div>
+
+        <p className="text-[10.5px] text-slate-500 font-medium">
+          Please wait while the official international database search completes (59s). Do not close or refresh this tab.
+        </p>
       </div>
     </div>
   );
@@ -394,10 +503,18 @@ function FlowDiagram({ title, activeService }: { title: string; activeService: S
     </div>
   );
 }
+
 export default function IdentityVerification() {
   const router = useRouter();
   const { user, profile } = useAuth();
   const { addVerification, addEmploymentVerification, addEducationVerification, addCourtRecordVerification, addInterpolVerification, settings, removeRecentRequestingOrg, organisation } = usePortal();
+
+  const [activeFillModal, setActiveFillModal] = useState<{
+    isOpen: boolean;
+    id: string;
+    type: "employment" | "education";
+    name?: string;
+  } | null>(null);
 
   // ─── Interpol Check States ───
   const [interpolCandidateName, setInterpolCandidateName] = useState("");
@@ -409,6 +526,11 @@ export default function IdentityVerification() {
   const [interpolErrorMsg, setInterpolErrorMsg] = useState("");
   const [interpolSubmitting, setInterpolSubmitting] = useState(false);
   const [interpolCreatedId, setInterpolCreatedId] = useState<string | null>(null);
+
+  // ─── Interpol 59-Second Loading Screen States ───
+  const [interpolLoadingProgress, setInterpolLoadingProgress] = useState(0);
+  const [interpolLoadingStage, setInterpolLoadingStage] = useState(0);
+  const [interpolTimeRemaining, setInterpolTimeRemaining] = useState(59);
 
   // Service active switches based on admin config
   const identityEnabled = organisation?.identityEnabled !== false;
@@ -432,13 +554,16 @@ export default function IdentityVerification() {
   const [empCandidateMobile, setEmpCandidateMobile] = useState("");
   const [empCandidateEmail, setEmpCandidateEmail] = useState("");
   const [empRequestingOrgName, setEmpRequestingOrgName] = useState("");
+  const [empSkipCandidateLogin, setEmpSkipCandidateLogin] = useState(false);
   const [empShowOrgDropdown, setEmpShowOrgDropdown] = useState(false);
   const [empSuccessMsg, setEmpSuccessMsg] = useState("");
   const [empErrorMsg, setEmpErrorMsg] = useState("");
   const [empCreatedCredentials, setEmpCreatedCredentials] = useState<{
+    id?: string;
     name: string;
     email: string;
     setupUrl?: string;
+    skipCandidateLogin?: boolean;
   } | null>(null);
   const [empCopiedUrl, setEmpCopiedUrl] = useState(false);
   const [empSubmitting, setEmpSubmitting] = useState(false);
@@ -448,13 +573,16 @@ export default function IdentityVerification() {
   const [eduCandidateMobile, setEduCandidateMobile] = useState("");
   const [eduCandidateEmail, setEduCandidateEmail] = useState("");
   const [eduRequestingOrgName, setEduRequestingOrgName] = useState("");
+  const [eduSkipCandidateLogin, setEduSkipCandidateLogin] = useState(false);
   const [eduShowOrgDropdown, setEduShowOrgDropdown] = useState(false);
   const [eduSuccessMsg, setEduSuccessMsg] = useState("");
   const [eduErrorMsg, setEduErrorMsg] = useState("");
   const [eduCreatedCredentials, setEduCreatedCredentials] = useState<{
+    id?: string;
     name: string;
     email: string;
     setupUrl?: string;
+    skipCandidateLogin?: boolean;
   } | null>(null);
   const [eduCopiedUrl, setEduCopiedUrl] = useState(false);
   const [eduSubmitting, setEduSubmitting] = useState(false);
@@ -667,7 +795,7 @@ export default function IdentityVerification() {
       setEmpErrorMsg("Candidate Full Name is required");
       return;
     }
-    if (!empCandidateEmail.trim()) {
+    if (!empSkipCandidateLogin && !empCandidateEmail.trim()) {
       setEmpErrorMsg("Candidate Email is required");
       return;
     }
@@ -684,19 +812,23 @@ export default function IdentityVerification() {
         empCandidateMobile.trim(),
         empCandidateEmail.trim(),
         effectiveOrgName,
-        empRequestingOrgName.trim()
+        empRequestingOrgName.trim(),
+        empSkipCandidateLogin
       );
       if (res && res.success) {
         setEmpSuccessMsg("Employment verification request initiated successfully!");
         setEmpCreatedCredentials({
+          id: res.id,
           name: empCandidateName,
           email: empCandidateEmail.toLowerCase().trim(),
-          setupUrl: res.setupUrl
+          setupUrl: res.setupUrl,
+          skipCandidateLogin: empSkipCandidateLogin
         });
         setEmpCandidateName("");
         setEmpCandidateMobile("");
         setEmpCandidateEmail("");
         setEmpRequestingOrgName("");
+        setEmpSkipCandidateLogin(false);
       } else {
         setEmpErrorMsg("Failed to initiate employment verification request");
       }
@@ -712,6 +844,7 @@ export default function IdentityVerification() {
     setEmpCandidateMobile("");
     setEmpCandidateEmail("");
     setEmpRequestingOrgName("");
+    setEmpSkipCandidateLogin(false);
     setEmpErrorMsg("");
     setEmpSuccessMsg("");
   };
@@ -738,7 +871,7 @@ export default function IdentityVerification() {
       setEduErrorMsg("Candidate Full Name is required");
       return;
     }
-    if (!eduCandidateEmail.trim()) {
+    if (!eduSkipCandidateLogin && !eduCandidateEmail.trim()) {
       setEduErrorMsg("Candidate Email is required");
       return;
     }
@@ -755,19 +888,23 @@ export default function IdentityVerification() {
         eduCandidateMobile.trim(),
         eduCandidateEmail.trim(),
         effectiveOrgName,
-        eduRequestingOrgName.trim()
+        eduRequestingOrgName.trim(),
+        eduSkipCandidateLogin
       );
       if (res && res.success) {
         setEduSuccessMsg("Education verification request initiated successfully!");
         setEduCreatedCredentials({
+          id: res.id,
           name: eduCandidateName,
           email: eduCandidateEmail.toLowerCase().trim(),
-          setupUrl: res.setupUrl
+          setupUrl: res.setupUrl,
+          skipCandidateLogin: eduSkipCandidateLogin
         });
         setEduCandidateName("");
         setEduCandidateMobile("");
         setEduCandidateEmail("");
         setEduRequestingOrgName("");
+        setEduSkipCandidateLogin(false);
       } else {
         setEduErrorMsg("Failed to initiate education verification request");
       }
@@ -783,6 +920,7 @@ export default function IdentityVerification() {
     setEduCandidateMobile("");
     setEduCandidateEmail("");
     setEduRequestingOrgName("");
+    setEduSkipCandidateLogin(false);
     setEduErrorMsg("");
     setEduSuccessMsg("");
   };
@@ -968,26 +1106,59 @@ export default function IdentityVerification() {
     }
 
     setInterpolSubmitting(true);
-    try {
-      const effectiveOrgName = isAdmin ? (orgName || profile?.org_name || "Ozclu") : (profile?.org_name || orgName);
-      const res = await addInterpolVerification({
-        candidateName: interpolCandidateName.trim(),
-        candidateDob: interpolCandidateDob.trim(),
-        birthCity: interpolBirthCity.trim(),
-        orgName: effectiveOrgName,
-        requestingOrgName: interpolRequestingOrgName.trim(),
-      });
-      if (res && res.success) {
-        setInterpolSuccessMsg(res.interpolHasRecords ? "Potential similarity match(es) found." : "Interpol database check completed successfully!");
-        setInterpolCreatedId(res.id);
-      } else {
-        setInterpolErrorMsg(res?.error || "Failed to run Interpol database check");
-      }
-    } catch (err: any) {
-      setInterpolErrorMsg("Failed to run Interpol database check");
-    } finally {
-      setInterpolSubmitting(false);
+    setInterpolLoadingProgress(0);
+    setInterpolTimeRemaining(59);
+    setInterpolLoadingStage(0);
+
+    const totalTimeMs = 59000;
+    const intervalMs = 100;
+    const startTime = Date.now();
+
+    const effectiveOrgName = isAdmin ? (orgName || profile?.org_name || "Ozclu") : (profile?.org_name || orgName);
+
+    // Trigger API request in parallel
+    const apiPromise = addInterpolVerification({
+      candidateName: interpolCandidateName.trim(),
+      candidateDob: interpolCandidateDob.trim(),
+      birthCity: interpolBirthCity.trim(),
+      orgName: effectiveOrgName,
+      requestingOrgName: interpolRequestingOrgName.trim(),
+    }).catch((err) => ({ success: false, error: err?.message || "Failed to run Interpol database check" }));
+
+    // Execute smooth 59-second loading countdown
+    await new Promise<void>((resolve) => {
+      const timer = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        const rawProgress = Math.min((elapsed / totalTimeMs) * 100, 100);
+        const secsLeft = Math.max(59 - Math.floor(elapsed / 1000), 0);
+
+        setInterpolLoadingProgress(Math.floor(rawProgress));
+        setInterpolTimeRemaining(secsLeft);
+
+        if (rawProgress < 18) setInterpolLoadingStage(0);
+        else if (rawProgress < 38) setInterpolLoadingStage(1);
+        else if (rawProgress < 58) setInterpolLoadingStage(2);
+        else if (rawProgress < 75) setInterpolLoadingStage(3);
+        else if (rawProgress < 90) setInterpolLoadingStage(4);
+        else setInterpolLoadingStage(5);
+
+        if (elapsed >= totalTimeMs) {
+          clearInterval(timer);
+          resolve();
+        }
+      }, intervalMs);
+    });
+
+    const res = await apiPromise;
+
+    if (res && res.success) {
+      setInterpolSuccessMsg(res.interpolHasRecords ? "Potential similarity match(es) found." : "Interpol database check completed successfully!");
+      setInterpolCreatedId(res.id);
+    } else {
+      setInterpolErrorMsg(res?.error || "Failed to run Interpol database check");
     }
+
+    setInterpolSubmitting(false);
   };
 
   const handleInterpolCancel = () => {
@@ -2351,7 +2522,7 @@ export default function IdentityVerification() {
               {/* Candidate Email */}
               <div className="flex flex-col gap-2">
                 <label className="font-label-caps text-[#475569] text-xs font-semibold uppercase tracking-wider" htmlFor="emp-candidate-email">
-                  Email
+                  Email {empSkipCandidateLogin ? "(Optional)" : ""}
                 </label>
                 <input
                   id="emp-candidate-email"
@@ -2426,11 +2597,37 @@ export default function IdentityVerification() {
                 </div>
               </div>
 
+              {/* Skip Candidate Login Toggle */}
+              <div className="flex items-center justify-between p-4 bg-[#f8faf6] border border-[#eaf0e4] rounded-2xl transition-all hover:border-[#d0dbc6] shadow-2xs">
+                <div className="flex flex-col gap-0.5 pr-4">
+                  <label htmlFor="emp-skip-login" className="font-semibold text-xs text-[#181d16] cursor-pointer flex items-center gap-1.5">
+                    <span>Don't involve candidate (Fill details yourself)</span>
+                  </label>
+                  <p className="text-[11px] text-[#64748B] font-medium leading-normal">
+                    Enable this if you prefer to fill the verification details directly without creating a candidate login.
+                  </p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                  <input
+                    id="emp-skip-login"
+                    type="checkbox"
+                    checked={empSkipCandidateLogin}
+                    onChange={(e) => setEmpSkipCandidateLogin(e.target.checked)}
+                    disabled={isSettingsIncomplete}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#00450e]"></div>
+                </label>
+              </div>
+
               {/* Info Note */}
               <div className="bg-blue-50/40 border border-blue-100 rounded-xl p-4 flex items-start gap-3 shadow-2xs">
                 <Briefcase className="w-4 h-4 text-blue-700 shrink-0 mt-0.5" />
                 <div className="text-[11px] text-slate-600 leading-relaxed font-semibold">
-                  <strong className="text-slate-800">How it works:</strong> A link will be generated for the candidate to fill their employment details. Once submitted, the admin team will verify the information with the previous employer.
+                  <strong className="text-slate-800">How it works:</strong>{" "}
+                  {empSkipCandidateLogin
+                    ? "No candidate login will be created. You can fill and submit the employment details directly."
+                    : "A link will be generated for the candidate to fill their employment details. Once submitted, the admin team will verify the information with the previous employer."}
                 </div>
               </div>
 
@@ -2482,76 +2679,112 @@ export default function IdentityVerification() {
                     A verification request has been successfully created for <strong className="text-[#181d16] font-bold">{empCreatedCredentials.name}</strong>.
                   </p>
 
-                  {/* Credentials Box */}
+                  {/* Credentials / Direct Fill Box */}
                   <div className="w-full mt-4 p-5 bg-[#f0f5ea]/25 border border-[#eaf0e4] rounded-2xl text-left flex flex-col gap-3 relative overflow-hidden shadow-2xs">
-                    <div className="absolute right-3 top-3">
-                      <span className="text-[9px] uppercase font-bold tracking-wider text-[#181d16] bg-white border border-[#eaf0e4] px-2 py-0.5 rounded">
-                        Direct Login Link
-                      </span>
-                    </div>
-
-                    {empCreatedCredentials.setupUrl ? (
-                      <div className="flex flex-col gap-1 pt-3">
-                        <span className="font-label-caps text-[#334155] text-[10px] uppercase font-semibold tracking-wider">Candidate Direct Login Link</span>
-                        <p className="text-[11px] text-[#475569] leading-relaxed mb-2">
-                          Share this link with the candidate. They will be able to log in and fill their employment details.
+                    {empCreatedCredentials.skipCandidateLogin || !empCreatedCredentials.setupUrl ? (
+                      <div className="flex flex-col gap-1 py-1">
+                        <div className="flex items-center gap-2 text-[#00450e] font-bold text-xs">
+                          <CheckCircle className="w-4 h-4 text-[#00a877]" />
+                          <span>Candidate Login Skipped</span>
+                        </div>
+                        <p className="text-[11px] text-[#475569] leading-relaxed mt-1 font-medium">
+                          No candidate user account or direct login link was generated for this verification request. You can view or manage this request directly from the summary.
                         </p>
-                        <div className="flex items-center justify-between bg-white px-3 py-2.5 rounded-xl border border-[#eaf0e4]/60 gap-3 mt-1 shadow-2xs">
-                          <span className="font-mono text-xs text-[#181d16] truncate max-w-[65%]" title={empCreatedCredentials.setupUrl}>
-                            {empCreatedCredentials.setupUrl}
-                          </span>
-                          <div className="flex items-center gap-2 shrink-0">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                navigator.clipboard.writeText(empCreatedCredentials.setupUrl || "");
-                                setEmpCopiedUrl(true);
-                                setTimeout(() => setEmpCopiedUrl(false), 2000);
-                              }}
-                              className="text-xs px-3 py-1.5 bg-[#181d16] text-white rounded-lg font-semibold hover:bg-[#1E293B] transition-all flex items-center gap-1.5 cursor-pointer"
-                            >
-                              {empCopiedUrl ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                              <span>{empCopiedUrl ? "Copied" : "Copy"}</span>
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Pre-filled credentials detail */}
-                        {(() => {
-                          const params = getUrlParams(empCreatedCredentials.setupUrl);
-                          return (
-                            <div className="mt-3 p-4 bg-white/70 border border-[#eaf0e4]/40 rounded-2xl text-xs flex flex-col gap-2.5 shadow-2xs">
-                              <div className="flex justify-between items-center">
-                                <span className="text-[#475569] font-semibold uppercase tracking-wider text-[10px] font-label-caps">Candidate Email ID</span>
-                                <span className="font-mono text-[#181d16] font-bold text-xs select-all">{params.email}</span>
-                              </div>
-                              <div className="flex justify-between items-center border-t border-[#f0f5ea]/30 pt-2">
-                                <span className="text-[#475569] font-semibold uppercase tracking-wider text-[10px] font-label-caps">Temporary Password</span>
-                                <span className="font-mono text-[#181d16] font-bold text-xs select-all">{params.password}</span>
-                              </div>
-                            </div>
-                          );
-                        })()}
-
-                        <div className="flex items-center gap-1.5 mt-2.5 text-[10px] text-[#64748B]">
-                          <Sparkles className="w-3 h-3 text-[#00450e]" />
-                          <span>The candidate can log in and fill their employment details using this link.</span>
-                        </div>
                       </div>
                     ) : (
-                      <div className="text-xs text-[#475569] pt-3">Login link generation failed. Please try again.</div>
+                      <>
+                        <div className="absolute right-3 top-3">
+                          <span className="text-[9px] uppercase font-bold tracking-wider text-[#181d16] bg-white border border-[#eaf0e4] px-2 py-0.5 rounded">
+                            Direct Login Link
+                          </span>
+                        </div>
+
+                        {empCreatedCredentials.setupUrl ? (
+                          <div className="flex flex-col gap-1 pt-3">
+                            <span className="font-label-caps text-[#334155] text-[10px] uppercase font-semibold tracking-wider">Candidate Direct Login Link</span>
+                            <p className="text-[11px] text-[#475569] leading-relaxed mb-2">
+                              Share this link with the candidate. They will be able to log in and fill their employment details.
+                            </p>
+                            <div className="flex items-center justify-between bg-white px-3 py-2.5 rounded-xl border border-[#eaf0e4]/60 gap-3 mt-1 shadow-2xs">
+                              <span className="font-mono text-xs text-[#181d16] truncate max-w-[65%]" title={empCreatedCredentials.setupUrl}>
+                                {empCreatedCredentials.setupUrl}
+                              </span>
+                              <div className="flex items-center gap-2 shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(empCreatedCredentials.setupUrl || "");
+                                    setEmpCopiedUrl(true);
+                                    setTimeout(() => setEmpCopiedUrl(false), 2000);
+                                  }}
+                                  className="text-xs px-3 py-1.5 bg-[#181d16] text-white rounded-lg font-semibold hover:bg-[#1E293B] transition-all flex items-center gap-1.5 cursor-pointer"
+                                >
+                                  {empCopiedUrl ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                                  <span>{empCopiedUrl ? "Copied" : "Copy"}</span>
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Pre-filled credentials detail */}
+                            {(() => {
+                              const params = getUrlParams(empCreatedCredentials.setupUrl);
+                              return (
+                                <div className="mt-3 p-4 bg-white/70 border border-[#eaf0e4]/40 rounded-2xl text-xs flex flex-col gap-2.5 shadow-2xs">
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-[#475569] font-semibold uppercase tracking-wider text-[10px] font-label-caps">Candidate Email ID</span>
+                                    <span className="font-mono text-[#181d16] font-bold text-xs select-all">{params.email}</span>
+                                  </div>
+                                  <div className="flex justify-between items-center border-t border-[#f0f5ea]/30 pt-2">
+                                    <span className="text-[#475569] font-semibold uppercase tracking-wider text-[10px] font-label-caps">Temporary Password</span>
+                                    <span className="font-mono text-[#181d16] font-bold text-xs select-all">{params.password}</span>
+                                  </div>
+                                </div>
+                              );
+                            })()}
+
+                            <div className="flex items-center gap-1.5 mt-2.5 text-[10px] text-[#64748B]">
+                              <Sparkles className="w-3 h-3 text-[#00450e]" />
+                              <span>The candidate can log in and fill their employment details using this link.</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-xs text-[#475569] pt-3">Login link generation failed. Please try again.</div>
+                        )}
+                      </>
                     )}
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex gap-3 mt-6 w-full">
+                  <div className="flex flex-col sm:flex-row gap-3 mt-6 w-full">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const cred = empCreatedCredentials;
+                        setEmpCreatedCredentials(null);
+                        setEmpSuccessMsg("");
+                        if (cred?.id) {
+                          setActiveFillModal({
+                            isOpen: true,
+                            id: cred.id,
+                            type: "employment",
+                            name: cred.name
+                          });
+                        } else {
+                          router.push("/client/summary");
+                        }
+                      }}
+                      className="flex-1 py-3 bg-[#00450e] text-white rounded-xl font-bold text-xs hover:bg-[#00330a] transition-all cursor-pointer shadow-sm flex items-center justify-center gap-1.5"
+                    >
+                      <FileEdit className="w-4 h-4 text-emerald-300" />
+                      <span>Fill Details Now</span>
+                    </button>
                     <button
                       type="button"
                       onClick={() => {
                         setEmpCreatedCredentials(null);
                         setEmpSuccessMsg("");
                       }}
-                      className="flex-1 py-3 border border-[#eaf0e4] rounded-xl font-semibold text-xs text-[#334155] hover:bg-[#f6fbf0] transition-colors cursor-pointer bg-white"
+                      className="py-3 px-4 border border-[#eaf0e4] rounded-xl font-semibold text-xs text-[#334155] hover:bg-[#f6fbf0] transition-colors cursor-pointer bg-white"
                     >
                       Create Another
                     </button>
@@ -2561,7 +2794,7 @@ export default function IdentityVerification() {
                         setEmpCreatedCredentials(null);
                         router.push("/client/summary");
                       }}
-                      className="flex-1 py-3 bg-[#181d16] text-white rounded-xl font-semibold text-xs hover:bg-[#1E293B] transition-all cursor-pointer shadow-sm"
+                      className="py-3 px-4 bg-[#181d16] text-white rounded-xl font-semibold text-xs hover:bg-[#1E293B] transition-all cursor-pointer shadow-sm"
                     >
                       Go to Summary
                     </button>
@@ -2659,7 +2892,7 @@ export default function IdentityVerification() {
               {/* Candidate Email */}
               <div className="flex flex-col gap-2">
                 <label className="font-label-caps text-[#475569] text-xs font-semibold uppercase tracking-wider" htmlFor="edu-candidate-email">
-                  Email
+                  Email {eduSkipCandidateLogin ? "(Optional)" : ""}
                 </label>
                 <input
                   id="edu-candidate-email"
@@ -2734,11 +2967,37 @@ export default function IdentityVerification() {
                 </div>
               </div>
 
+              {/* Skip Candidate Login Toggle */}
+              <div className="flex items-center justify-between p-4 bg-[#f8faf6] border border-[#eaf0e4] rounded-2xl transition-all hover:border-[#d0dbc6] shadow-2xs">
+                <div className="flex flex-col gap-0.5 pr-4">
+                  <label htmlFor="edu-skip-login" className="font-semibold text-xs text-[#181d16] cursor-pointer flex items-center gap-1.5">
+                    <span>Don't involve candidate (Fill details yourself)</span>
+                  </label>
+                  <p className="text-[11px] text-[#64748B] font-medium leading-normal">
+                    Enable this if you prefer to fill the verification details directly without creating a candidate login.
+                  </p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                  <input
+                    id="edu-skip-login"
+                    type="checkbox"
+                    checked={eduSkipCandidateLogin}
+                    onChange={(e) => setEduSkipCandidateLogin(e.target.checked)}
+                    disabled={isSettingsIncomplete}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#00450e]"></div>
+                </label>
+              </div>
+
               {/* Info Note */}
               <div className="bg-[#eaf0e4]/30 border border-[#eaf0e4] rounded-xl p-4 flex items-start gap-3 shadow-2xs">
                 <GraduationCap className="w-4 h-4 text-emerald-800 shrink-0 mt-0.5" />
                 <div className="text-[11px] text-slate-650 leading-relaxed font-semibold">
-                  <strong className="text-slate-800">How it works:</strong> A link will be generated for the candidate to fill their education details. Once submitted, the admin team will verify the information with their Board / University.
+                  <strong className="text-slate-800">How it works:</strong>{" "}
+                  {eduSkipCandidateLogin
+                    ? "No candidate login will be created. You can fill and submit the education details directly."
+                    : "A link will be generated for the candidate to fill their education details. Once submitted, the admin team will verify the information with their Board / University."}
                 </div>
               </div>
 
@@ -2790,76 +3049,112 @@ export default function IdentityVerification() {
                     A verification request has been successfully created for <strong className="text-[#181d16] font-bold">{eduCreatedCredentials.name}</strong>.
                   </p>
 
-                  {/* Credentials Box */}
+                  {/* Credentials / Direct Fill Box */}
                   <div className="w-full mt-4 p-5 bg-[#f0f5ea]/25 border border-[#eaf0e4] rounded-2xl text-left flex flex-col gap-3 relative overflow-hidden shadow-2xs">
-                    <div className="absolute right-3 top-3">
-                      <span className="text-[9px] uppercase font-bold tracking-wider text-[#181d16] bg-white border border-[#eaf0e4] px-2 py-0.5 rounded">
-                        Direct Login Link
-                      </span>
-                    </div>
-
-                    {eduCreatedCredentials.setupUrl ? (
-                      <div className="flex flex-col gap-1 pt-3">
-                        <span className="font-label-caps text-[#334155] text-[10px] uppercase font-semibold tracking-wider">Candidate Direct Login Link</span>
-                        <p className="text-[11px] text-[#475569] leading-relaxed mb-2">
-                          Share this link with the candidate. They will be able to log in and fill their education details.
+                    {eduCreatedCredentials.skipCandidateLogin || !eduCreatedCredentials.setupUrl ? (
+                      <div className="flex flex-col gap-1 py-1">
+                        <div className="flex items-center gap-2 text-[#00450e] font-bold text-xs">
+                          <CheckCircle className="w-4 h-4 text-[#00a877]" />
+                          <span>Candidate Login Skipped</span>
+                        </div>
+                        <p className="text-[11px] text-[#475569] leading-relaxed mt-1 font-medium">
+                          No candidate user account or direct login link was generated for this verification request. You can view or manage this request directly from the summary.
                         </p>
-                        <div className="flex items-center justify-between bg-white px-3 py-2.5 rounded-xl border border-[#eaf0e4]/60 gap-3 mt-1 shadow-2xs">
-                          <span className="font-mono text-xs text-[#181d16] truncate max-w-[65%]" title={eduCreatedCredentials.setupUrl}>
-                            {eduCreatedCredentials.setupUrl}
-                          </span>
-                          <div className="flex items-center gap-2 shrink-0">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                navigator.clipboard.writeText(eduCreatedCredentials.setupUrl || "");
-                                setEduCopiedUrl(true);
-                                setTimeout(() => setEduCopiedUrl(false), 2000);
-                              }}
-                              className="text-xs px-3 py-1.5 bg-[#181d16] text-white rounded-lg font-semibold hover:bg-[#1E293B] transition-all flex items-center gap-1.5 cursor-pointer"
-                            >
-                              {eduCopiedUrl ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                              <span>{eduCopiedUrl ? "Copied" : "Copy"}</span>
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Pre-filled credentials detail */}
-                        {(() => {
-                          const params = getUrlParams(eduCreatedCredentials.setupUrl);
-                          return (
-                            <div className="mt-3 p-4 bg-white/70 border border-[#eaf0e4]/40 rounded-2xl text-xs flex flex-col gap-2.5 shadow-2xs">
-                              <div className="flex justify-between items-center">
-                                <span className="text-[#475569] font-semibold uppercase tracking-wider text-[10px] font-label-caps">Candidate Email ID</span>
-                                <span className="font-mono text-[#181d16] font-bold text-xs select-all">{params.email}</span>
-                              </div>
-                              <div className="flex justify-between items-center border-t border-[#f0f5ea]/30 pt-2">
-                                <span className="text-[#475569] font-semibold uppercase tracking-wider text-[10px] font-label-caps">Temporary Password</span>
-                                <span className="font-mono text-[#181d16] font-bold text-xs select-all">{params.password}</span>
-                              </div>
-                            </div>
-                          );
-                        })()}
-
-                        <div className="flex items-center gap-1.5 mt-2.5 text-[10px] text-[#64748B]">
-                          <Sparkles className="w-3 h-3 text-[#00450e]" />
-                          <span>The candidate can log in and fill their education details using this link.</span>
-                        </div>
                       </div>
                     ) : (
-                      <div className="text-xs text-[#475569] pt-3">Login link generation failed. Please try again.</div>
+                      <>
+                        <div className="absolute right-3 top-3">
+                          <span className="text-[9px] uppercase font-bold tracking-wider text-[#181d16] bg-white border border-[#eaf0e4] px-2 py-0.5 rounded">
+                            Direct Login Link
+                          </span>
+                        </div>
+
+                        {eduCreatedCredentials.setupUrl ? (
+                          <div className="flex flex-col gap-1 pt-3">
+                            <span className="font-label-caps text-[#334155] text-[10px] uppercase font-semibold tracking-wider">Candidate Direct Login Link</span>
+                            <p className="text-[11px] text-[#475569] leading-relaxed mb-2">
+                              Share this link with the candidate. They will be able to log in and fill their education details.
+                            </p>
+                            <div className="flex items-center justify-between bg-white px-3 py-2.5 rounded-xl border border-[#eaf0e4]/60 gap-3 mt-1 shadow-2xs">
+                              <span className="font-mono text-xs text-[#181d16] truncate max-w-[65%]" title={eduCreatedCredentials.setupUrl}>
+                                {eduCreatedCredentials.setupUrl}
+                              </span>
+                              <div className="flex items-center gap-2 shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(eduCreatedCredentials.setupUrl || "");
+                                    setEduCopiedUrl(true);
+                                    setTimeout(() => setEduCopiedUrl(false), 2000);
+                                  }}
+                                  className="text-xs px-3 py-1.5 bg-[#181d16] text-white rounded-lg font-semibold hover:bg-[#1E293B] transition-all flex items-center gap-1.5 cursor-pointer"
+                                >
+                                  {eduCopiedUrl ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                                  <span>{eduCopiedUrl ? "Copied" : "Copy"}</span>
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Pre-filled credentials detail */}
+                            {(() => {
+                              const params = getUrlParams(eduCreatedCredentials.setupUrl);
+                              return (
+                                <div className="mt-3 p-4 bg-white/70 border border-[#eaf0e4]/40 rounded-2xl text-xs flex flex-col gap-2.5 shadow-2xs">
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-[#475569] font-semibold uppercase tracking-wider text-[10px] font-label-caps">Candidate Email ID</span>
+                                    <span className="font-mono text-[#181d16] font-bold text-xs select-all">{params.email}</span>
+                                  </div>
+                                  <div className="flex justify-between items-center border-t border-[#f0f5ea]/30 pt-2">
+                                    <span className="text-[#475569] font-semibold uppercase tracking-wider text-[10px] font-label-caps">Temporary Password</span>
+                                    <span className="font-mono text-[#181d16] font-bold text-xs select-all">{params.password}</span>
+                                  </div>
+                                </div>
+                              );
+                            })()}
+
+                            <div className="flex items-center gap-1.5 mt-2.5 text-[10px] text-[#64748B]">
+                              <Sparkles className="w-3 h-3 text-[#00450e]" />
+                              <span>The candidate can log in and fill their education details using this link.</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-xs text-[#475569] pt-3">Login link generation failed. Please try again.</div>
+                        )}
+                      </>
                     )}
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex gap-3 mt-6 w-full">
+                  <div className="flex flex-col sm:flex-row gap-3 mt-6 w-full">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const cred = eduCreatedCredentials;
+                        setEduCreatedCredentials(null);
+                        setEduSuccessMsg("");
+                        if (cred?.id) {
+                          setActiveFillModal({
+                            isOpen: true,
+                            id: cred.id,
+                            type: "education",
+                            name: cred.name
+                          });
+                        } else {
+                          router.push("/client/summary");
+                        }
+                      }}
+                      className="flex-1 py-3 bg-[#00450e] text-white rounded-xl font-bold text-xs hover:bg-[#00330a] transition-all cursor-pointer shadow-sm flex items-center justify-center gap-1.5"
+                    >
+                      <FileEdit className="w-4 h-4 text-emerald-300" />
+                      <span>Fill Details Now</span>
+                    </button>
                     <button
                       type="button"
                       onClick={() => {
                         setEduCreatedCredentials(null);
                         setEduSuccessMsg("");
                       }}
-                      className="flex-1 py-3 border border-[#eaf0e4] rounded-xl font-semibold text-xs text-[#334155] hover:bg-[#f6fbf0] transition-colors cursor-pointer bg-white"
+                      className="py-3 px-4 border border-[#eaf0e4] rounded-xl font-semibold text-xs text-[#334155] hover:bg-[#f6fbf0] transition-colors cursor-pointer bg-white"
                     >
                       Create Another
                     </button>
@@ -2869,7 +3164,7 @@ export default function IdentityVerification() {
                         setEduCreatedCredentials(null);
                         router.push("/client/summary");
                       }}
-                      className="flex-1 py-3 bg-[#181d16] text-white rounded-xl font-semibold text-xs hover:bg-[#1E293B] transition-all cursor-pointer shadow-sm"
+                      className="py-3 px-4 bg-[#181d16] text-white rounded-xl font-semibold text-xs hover:bg-[#1E293B] transition-all cursor-pointer shadow-sm"
                     >
                       Go to Summary
                     </button>
@@ -3073,6 +3368,17 @@ export default function IdentityVerification() {
             />
           </div>
 
+          {/* 59-Second Search Loading Screen for Interpol Check — rendered via Portal */}
+          {interpolSubmitting && typeof document !== "undefined" && createPortal(
+            <InterpolSearchLoadingModal
+              candidateName={interpolCandidateName || "Candidate"}
+              timeRemaining={interpolTimeRemaining}
+              progress={interpolLoadingProgress}
+              stageIndex={interpolLoadingStage}
+            />,
+            document.body
+          )}
+
           {/* Success Modal for Interpol Check — rendered via Portal */}
           {interpolCreatedId && typeof document !== "undefined" && createPortal(
             <InterpolSuccessModal
@@ -3083,6 +3389,20 @@ export default function IdentityVerification() {
               onGoToSummary={() => { setInterpolCreatedId(null); router.push("/client/summary"); }}
             />,
             document.body
+          )}
+
+          {activeFillModal && (
+            <CandidateFillModal
+              isOpen={activeFillModal.isOpen}
+              onClose={() => setActiveFillModal(null)}
+              verificationId={activeFillModal.id}
+              verificationType={activeFillModal.type}
+              candidateName={activeFillModal.name}
+              onSuccess={() => {
+                // Return to summary after filling details
+                router.push("/client/summary");
+              }}
+            />
           )}
         </div>
       )}
