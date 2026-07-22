@@ -18,7 +18,8 @@ import {
   Sparkles,
   Users,
   History,
-  FileText
+  FileText,
+  FileCheck
 } from "lucide-react";
 import OzcluLogo from "../components/OzcluLogo";
 
@@ -151,7 +152,15 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   const displayName = profile?.full_name || user?.email || "User";
   const displayOrg = profile?.org_name || settings.companyName || "Company";
 
-  if (pathname.includes("/client/report") || pathname.includes("/client/billable-summary") || pathname.includes("/client/court-record-report") || pathname.includes("/client/employment-report") || pathname.includes("/client/education-report")) {
+  if (
+    pathname.includes("/client/report") ||
+    pathname.includes("/client/passport-report") ||
+    pathname.includes("/client/interpol-report") ||
+    pathname.includes("/client/billable-summary") ||
+    pathname.includes("/client/court-record-report") ||
+    pathname.includes("/client/employment-report") ||
+    pathname.includes("/client/education-report")
+  ) {
     return <>{children}</>;
   }
 

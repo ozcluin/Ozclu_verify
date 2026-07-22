@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { usePortal } from "src/context/PortalContext";
 import { useAuth } from "src/context/AuthContext";
 import {
@@ -30,12 +30,15 @@ import {
   GraduationCap,
   Globe,
   FileEdit,
+  FileCheck,
+  Loader2,
+  Search,
 } from "lucide-react";
 import { INDIAN_STATES } from "src/lib/courts-mapping";
 import { Country, State, City } from "country-state-city";
 import CandidateFillModal from "src/app/components/CandidateFillModal";
 
-type ServiceType = "identity" | "court_record" | "employment" | "education" | "interpol";
+type ServiceType = "identity" | "court_record" | "employment" | "education" | "interpol" | "passport";
 
 /** Portaled success modal — always renders at document.body so fixed positioning is correct */
 function SuccessModal({ crCreatedId, crCandidateName, onCreateAnother, onGoToSummary }: {
@@ -290,6 +293,74 @@ function InterpolSuccessModal({ interpolCreatedId, candidateName, hasRecords, on
   );
 }
 
+function PassportSuccessModal({ passportCreatedId, candidateName, statusMessage, onCreateAnother, onGoToSummary }: {
+  passportCreatedId: string;
+  candidateName: string;
+  statusMessage?: string;
+  onCreateAnother: () => void;
+  onGoToSummary: () => void;
+}) {
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+
+  return (
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-[99999] animate-fade-in">
+      <div className="bg-white border border-slate-200 rounded-3xl p-8 max-w-md w-full shadow-2xl relative flex flex-col items-center gap-6 animate-scale-in">
+        <div className="relative w-20 h-20 flex items-center justify-center rounded-full border-2 bg-emerald-50 border-emerald-200 text-emerald-600">
+          <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.952 11.952 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+        </div>
+
+        <div className="flex flex-col gap-2 text-center">
+          <h2 className="text-xl font-extrabold text-slate-800">
+            Passport Verification Completed
+          </h2>
+          <p className="text-xs font-semibold text-slate-500 leading-relaxed max-w-xs">
+            Official Passport Seva status retrieved for <strong className="text-slate-800">{candidateName}</strong>.
+          </p>
+          <div className="mt-2 py-2.5 px-4 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 leading-snug">
+            {statusMessage || "Status Retrieved & Saved to Database"}
+          </div>
+          <p className="text-[11px] font-mono text-slate-400 mt-1">
+            Verification ID: {passportCreatedId}
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-2.5 w-full">
+          <button
+            onClick={() => {
+              window.open(`/client/passport-report?id=${passportCreatedId}`, "_blank");
+            }}
+            className="w-full py-3 bg-[#181d16] hover:bg-[#1E293B] text-white font-bold rounded-xl transition-all cursor-pointer text-xs shadow-xs inline-flex items-center justify-center gap-1.5"
+          >
+            <span>View Verification Report</span>
+            <ExternalLink className="w-4 h-4" />
+          </button>
+          
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={onCreateAnother}
+              className="py-3 border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-xl transition-all cursor-pointer text-xs bg-white"
+            >
+              Check Another
+            </button>
+            <button
+              onClick={onGoToSummary}
+              className="py-3 border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-xl transition-all cursor-pointer text-xs bg-white"
+            >
+              Order Summary
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function FlowIllustration({ activeService }: { activeService: ServiceType }) {
   let primaryColor = "#4f46e5";
   let secondaryColor = "#10b981";
@@ -327,10 +398,16 @@ function FlowIllustration({ activeService }: { activeService: ServiceType }) {
     dbLabel = "Red & Yellow DB";
     clientLabel = "Initiate Search";
     candidateLabel = "Notice Match Check";
+  } else if (activeService === "passport") {
+    primaryColor = "#dc2626";
+    secondaryColor = "#ef4444";
+    dbLabel = "Passport Registry";
+    clientLabel = "Initiate Lookup";
+    candidateLabel = "File Number & DOB";
   }
 
   return (
-    <div className="w-full flex justify-center py-6 bg-slate-50 border border-slate-100 rounded-3xl mb-1 relative overflow-hidden group">
+    <div className="w-full flex justify-center py-6 sm:py-8 bg-slate-50 border border-slate-100 rounded-3xl mb-1 relative overflow-hidden group items-center">
       <div className="absolute top-0 right-0 w-32 h-32 bg-slate-200/15 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-32 h-32 bg-slate-200/15 rounded-full blur-2xl pointer-events-none" />
 
@@ -341,8 +418,8 @@ function FlowIllustration({ activeService }: { activeService: ServiceType }) {
           }
         }
         .flow-line {
-          stroke-dasharray: 6, 4;
-          animation: flowDash 1.5s linear infinite;
+          stroke-dasharray: 6 4;
+          animation: flowDash 0.9s linear infinite;
         }
         @keyframes rotateOrbit {
           from { transform: rotate(0deg); }
@@ -375,11 +452,11 @@ function FlowIllustration({ activeService }: { activeService: ServiceType }) {
 
       <svg 
         width="100%" 
-        height="230" 
+        height="240" 
         viewBox="0 0 400 260" 
         fill="none" 
         xmlns="http://www.w3.org/2000/svg"
-        className="max-w-[350px] select-none"
+        className="max-w-[380px] select-none"
         style={{ '--glow-color': primaryColor } as any}
       >
         <defs>
@@ -482,9 +559,10 @@ function FlowDiagram({ title, activeService }: { title: string; activeService: S
   else if (activeService === "employment") colorTheme = "linear-gradient(to right, #2563eb, #3b82f6)";
   else if (activeService === "education") colorTheme = "linear-gradient(to right, #7c3aed, #8b5cf6)";
   else if (activeService === "interpol") colorTheme = "linear-gradient(to right, #1d4ed8, #4f46e5)";
+  else if (activeService === "passport") colorTheme = "linear-gradient(to right, #4338ca, #6366f1)";
 
   return (
-    <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-lg relative overflow-hidden transition-all duration-300 hover:shadow-xl w-full">
+    <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-md w-full">
       <div className="absolute top-0 left-0 right-0 h-1.5" style={{ background: colorTheme }}></div>
       <div className="flex flex-col gap-4 mt-1">
         <div>
@@ -507,7 +585,7 @@ function FlowDiagram({ title, activeService }: { title: string; activeService: S
 export default function IdentityVerification() {
   const router = useRouter();
   const { user, profile } = useAuth();
-  const { addVerification, addEmploymentVerification, addEducationVerification, addCourtRecordVerification, addInterpolVerification, settings, removeRecentRequestingOrg, organisation } = usePortal();
+  const { addVerification, addEmploymentVerification, addEducationVerification, addCourtRecordVerification, addInterpolVerification, addPassportVerification, settings, removeRecentRequestingOrg, organisation } = usePortal();
 
   const [activeFillModal, setActiveFillModal] = useState<{
     isOpen: boolean;
@@ -538,8 +616,27 @@ export default function IdentityVerification() {
   const employmentEnabled = true; // always enabled for now
   const educationEnabled = true; // always enabled for now
 
+  // ─── Passport Check States ───
+  const [passportFileNumber, setPassportFileNumber] = useState("");
+  const [passportDob, setPassportDob] = useState("");
+  const [passportRequestingOrgName, setPassportRequestingOrgName] = useState("");
+  const [passportShowOrgDropdown, setPassportShowOrgDropdown] = useState(false);
+  const [passportSubmitting, setPassportSubmitting] = useState(false);
+  const [passportCreatedId, setPassportCreatedId] = useState<string | null>(null);
+  const [passportCreatedData, setPassportCreatedData] = useState<any>(null);
+  const [passportErrorMsg, setPassportErrorMsg] = useState<string | null>(null);
+  const [passportSuccessMsg, setPassportSuccessMsg] = useState("");
+
   // Service selector state
   const [activeService, setActiveService] = useState<ServiceType>("identity");
+  const searchParams = useSearchParams();
+
+  React.useEffect(() => {
+    const serviceParam = searchParams.get("service");
+    if (serviceParam === "passport") {
+      setActiveService("passport");
+    }
+  }, [searchParams]);
 
   React.useEffect(() => {
     if (!identityEnabled && activeService === "identity" && courtRecordEnabled) {
@@ -568,6 +665,42 @@ export default function IdentityVerification() {
   const [empCopiedUrl, setEmpCopiedUrl] = useState(false);
   const [empSubmitting, setEmpSubmitting] = useState(false);
 
+  const SUPPORTED_COUNTRIES = [
+    { code: "India", label: "India", flag: "🇮🇳", defaultRate: 5 },
+    { code: "Singapore", label: "Singapore", flag: "🇸🇬", defaultRate: 15 },
+    { code: "Malaysia", label: "Malaysia", flag: "🇲🇾", defaultRate: 12 },
+    { code: "Philippines", label: "Philippines", flag: "🇵🇭", defaultRate: 10 },
+    { code: "UAE", label: "UAE", flag: "🇦🇪", defaultRate: 20 }
+  ];
+
+  const [empCountry, setEmpCountry] = useState("India");
+  const [eduCountry, setEduCountry] = useState("India");
+
+  const getEmpCountryRate = (countryCode: string) => {
+    return (organisation as any)?.employmentRates?.[countryCode] ?? (SUPPORTED_COUNTRIES.find(c => c.code === countryCode)?.defaultRate || 5);
+  };
+  const getEduCountryRate = (countryCode: string) => {
+    return (organisation as any)?.educationRates?.[countryCode] ?? (SUPPORTED_COUNTRIES.find(c => c.code === countryCode)?.defaultRate || 5);
+  };
+
+  // Dynamic multi-employment items
+  const [empItems, setEmpItems] = useState<Array<{ id: string; companyName: string; position: string; joiningYear: string; leavingYear: string; employeeCode: string }>>([
+    { id: "emp-1", companyName: "", position: "", joiningYear: "", leavingYear: "", employeeCode: "" }
+  ]);
+
+  const addEmpItem = () => {
+    setEmpItems(prev => [...prev, { id: `emp-${Date.now()}`, companyName: "", position: "", joiningYear: "", leavingYear: "", employeeCode: "" }]);
+  };
+
+  const removeEmpItem = (id: string) => {
+    if (empItems.length <= 1) return;
+    setEmpItems(prev => prev.filter(item => item.id !== id));
+  };
+
+  const updateEmpItem = (id: string, field: string, value: string) => {
+    setEmpItems(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
+  };
+
   // ─── Education Check States ───
   const [eduCandidateName, setEduCandidateName] = useState("");
   const [eduCandidateMobile, setEduCandidateMobile] = useState("");
@@ -587,6 +720,24 @@ export default function IdentityVerification() {
   const [eduCopiedUrl, setEduCopiedUrl] = useState(false);
   const [eduSubmitting, setEduSubmitting] = useState(false);
 
+  // Dynamic multi-education items
+  const [eduItems, setEduItems] = useState<Array<{ id: string; boardUniversity: string; courseName: string; passingYear: string; rollNumber: string }>>([
+    { id: "edu-1", boardUniversity: "", courseName: "", passingYear: "", rollNumber: "" }
+  ]);
+
+  const addEduItem = () => {
+    setEduItems(prev => [...prev, { id: `edu-${Date.now()}`, boardUniversity: "", courseName: "", passingYear: "", rollNumber: "" }]);
+  };
+
+  const removeEduItem = (id: string) => {
+    if (eduItems.length <= 1) return;
+    setEduItems(prev => prev.filter(item => item.id !== id));
+  };
+
+  const updateEduItem = (id: string, field: string, value: string) => {
+    setEduItems(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
+  };
+
   const recentOrgs = settings?.recentRequestingOrgs || [];
 
   const empFilteredOrgs = recentOrgs.filter(org =>
@@ -599,6 +750,10 @@ export default function IdentityVerification() {
 
   const interpolFilteredOrgs = recentOrgs.filter(org =>
     org.toLowerCase().includes(interpolRequestingOrgName.toLowerCase())
+  );
+
+  const passportFilteredOrgs = recentOrgs.filter(org =>
+    org.toLowerCase().includes(passportRequestingOrgName.toLowerCase())
   );
 
   // ─── Identity Check States (existing) ───
@@ -813,7 +968,9 @@ export default function IdentityVerification() {
         empCandidateEmail.trim(),
         effectiveOrgName,
         empRequestingOrgName.trim(),
-        empSkipCandidateLogin
+        empSkipCandidateLogin,
+        empItems.map(i => ({ companyName: i.companyName.trim(), position: i.position.trim(), joiningYear: i.joiningYear.trim(), leavingYear: i.leavingYear.trim(), employeeCode: i.employeeCode.trim() })),
+        empCountry
       );
       if (res && res.success) {
         setEmpSuccessMsg("Employment verification request initiated successfully!");
@@ -829,6 +986,7 @@ export default function IdentityVerification() {
         setEmpCandidateEmail("");
         setEmpRequestingOrgName("");
         setEmpSkipCandidateLogin(false);
+        setEmpItems([{ id: "emp-1", companyName: "", position: "", joiningYear: "", leavingYear: "", employeeCode: "" }]);
       } else {
         setEmpErrorMsg("Failed to initiate employment verification request");
       }
@@ -845,6 +1003,7 @@ export default function IdentityVerification() {
     setEmpCandidateEmail("");
     setEmpRequestingOrgName("");
     setEmpSkipCandidateLogin(false);
+    setEmpItems([{ id: "emp-1", companyName: "", position: "", joiningYear: "", leavingYear: "", employeeCode: "" }]);
     setEmpErrorMsg("");
     setEmpSuccessMsg("");
   };
@@ -889,7 +1048,9 @@ export default function IdentityVerification() {
         eduCandidateEmail.trim(),
         effectiveOrgName,
         eduRequestingOrgName.trim(),
-        eduSkipCandidateLogin
+        eduSkipCandidateLogin,
+        eduItems.map(i => ({ boardUniversity: i.boardUniversity.trim(), courseName: i.courseName.trim(), passingYear: i.passingYear.trim(), rollNumber: i.rollNumber.trim() })),
+        eduCountry
       );
       if (res && res.success) {
         setEduSuccessMsg("Education verification request initiated successfully!");
@@ -905,6 +1066,7 @@ export default function IdentityVerification() {
         setEduCandidateEmail("");
         setEduRequestingOrgName("");
         setEduSkipCandidateLogin(false);
+        setEduItems([{ id: "edu-1", boardUniversity: "", courseName: "", passingYear: "", rollNumber: "" }]);
       } else {
         setEduErrorMsg("Failed to initiate education verification request");
       }
@@ -921,6 +1083,7 @@ export default function IdentityVerification() {
     setEduCandidateEmail("");
     setEduRequestingOrgName("");
     setEduSkipCandidateLogin(false);
+    setEduItems([{ id: "edu-1", boardUniversity: "", courseName: "", passingYear: "", rollNumber: "" }]);
     setEduErrorMsg("");
     setEduSuccessMsg("");
   };
@@ -1171,6 +1334,68 @@ export default function IdentityVerification() {
     setInterpolCreatedId(null);
   };
 
+  // ─── Passport Check Handlers ───
+  const handlePassportSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPassportErrorMsg(null);
+    setPassportSuccessMsg("");
+
+    const isSettingsIncomplete = !settings ||
+      !settings.contactFirstName?.trim() ||
+      !settings.contactLastName?.trim() ||
+      !settings.address?.trim() ||
+      !settings.city?.trim() ||
+      !settings.postalCode?.trim();
+
+    if (isSettingsIncomplete) {
+      setPassportErrorMsg("Please complete your profile settings before creating requests.");
+      return;
+    }
+
+    if (!passportFileNumber.trim() || !passportDob) {
+      setPassportErrorMsg("Please enter both Passport File Number and Date of Birth.");
+      return;
+    }
+
+    if (!passportRequestingOrgName.trim()) {
+      setPassportErrorMsg("Requesting ORG Name is required.");
+      return;
+    }
+
+    setPassportSubmitting(true);
+    try {
+      const effectiveOrgName = isAdmin ? (orgName || profile?.org_name || "Ozclu") : (profile?.org_name || orgName);
+      const res = await addPassportVerification({
+        fileNumber: passportFileNumber.trim(),
+        dateOfBirth: passportDob,
+        orgName: effectiveOrgName,
+        requestingOrgName: passportRequestingOrgName.trim(),
+      });
+
+      if (res && res.success) {
+        setPassportCreatedId(res.id);
+        setPassportCreatedData(res.passportData);
+        setPassportSuccessMsg("Passport verification completed successfully!");
+      } else {
+        setPassportErrorMsg(res?.error || "Failed to query Passport Seva portal.");
+      }
+    } catch (err: any) {
+      setPassportErrorMsg(err.message || "An error occurred while tracking passport status.");
+    } finally {
+      setPassportSubmitting(false);
+    }
+  };
+
+  const handlePassportCancel = () => {
+    setPassportFileNumber("");
+    setPassportDob("");
+    setPassportRequestingOrgName("");
+    setPassportErrorMsg(null);
+    setPassportSuccessMsg("");
+    setPassportCreatedId(null);
+    setPassportCreatedData(null);
+  };
+
   const isSettingsIncomplete = !settings ||
     !settings.contactFirstName?.trim() ||
     !settings.contactLastName?.trim() ||
@@ -1190,7 +1415,7 @@ export default function IdentityVerification() {
       </div>
 
       {/* Service Selector Tabs */}
-      <div className="flex gap-3 max-w-2xl">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 w-full">
         {identityEnabled && (
           <button
             type="button"
@@ -1319,6 +1544,30 @@ export default function IdentityVerification() {
           </div>
         </button>
 
+        <button
+          type="button"
+          onClick={() => setActiveService("passport")}
+          className={`flex-1 flex items-center gap-3 p-4 rounded-2xl border-2 transition-all duration-300 cursor-pointer group ${
+            activeService === "passport"
+              ? "border-[#181d16] bg-white shadow-md"
+              : "border-[#eaf0e4] bg-[#f6fbf0]/50 hover:border-[#d0dbc6] hover:bg-white/80"
+          }`}
+        >
+          <div className={`p-2.5 rounded-xl transition-all ${
+            activeService === "passport"
+              ? "bg-[#181d16] text-white"
+              : "bg-[#f0f5ea]/60 text-[#00450e] group-hover:bg-[#e0e8d8]"
+          }`}>
+            <FileCheck className="w-5 h-5" />
+          </div>
+          <div className="text-left">
+            <div className={`font-semibold text-sm ${activeService === "passport" ? "text-[#181d16]" : "text-[#475569]"}`}>
+              Passport Check
+            </div>
+            <div className="text-[11px] text-[#64748B] mt-0.5">Passport Seva status</div>
+          </div>
+        </button>
+
         {!identityEnabled && !courtRecordEnabled && !employmentEnabled && !educationEnabled && activeService !== "interpol" && (
           <div className="flex-1 bg-rose-50 border border-rose-100 rounded-2xl p-4 text-center">
             <p className="text-xs font-bold text-rose-800">All verification services are currently deactivated by the administrator.</p>
@@ -1350,7 +1599,7 @@ export default function IdentityVerification() {
       {/* ═══════════════════════════════════════════════════ */}
       {activeService === "identity" && identityEnabled && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start max-w-6xl w-full">
-          <div className="lg:col-span-7 flex flex-col gap-6 w-full">
+          <div className="lg:col-span-6 flex flex-col gap-6 w-full">
             {/* Form Alerts */}
             {successMsg && !createdCredentials && (
               <div className="bg-[#E6F8F3] text-[#00684A] border border-[#A3EAD6] rounded-xl p-4 font-body-sm flex items-center gap-3 max-w-2xl animate-fade-in shadow-2xs">
@@ -1609,7 +1858,7 @@ export default function IdentityVerification() {
           )}
           </div>
           
-          <div className="lg:col-span-5 w-full">
+          <div className="lg:col-span-6 w-full lg:sticky lg:top-24">
             <FlowDiagram 
               title="Identity Check Data Flow" 
               activeService="identity" 
@@ -1623,7 +1872,7 @@ export default function IdentityVerification() {
       {/* ═══════════════════════════════════════════════════ */}
       {activeService === "court_record" && courtRecordEnabled && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start max-w-6xl w-full">
-          <div className="lg:col-span-7 flex flex-col gap-6 w-full">
+          <div className="lg:col-span-6 flex flex-col gap-6 w-full">
             {/* Form Alerts */}
             {crSuccessMsg && !crCreatedId && (
               <div className="bg-[#E6F8F3] text-[#00684A] border border-[#A3EAD6] rounded-xl p-4 font-body-sm flex items-center gap-3 max-w-2xl animate-fade-in shadow-2xs">
@@ -2424,7 +2673,7 @@ export default function IdentityVerification() {
 
           </div>
           
-          <div className="lg:col-span-5 w-full">
+          <div className="lg:col-span-6 w-full lg:sticky lg:top-24">
             <FlowDiagram 
               title="Court Record Search Data Flow" 
               activeService="court_record" 
@@ -2448,7 +2697,7 @@ export default function IdentityVerification() {
       {/* ═══════════════════════════════════════════════════ */}
       {activeService === "employment" && employmentEnabled && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start max-w-6xl w-full">
-          <div className="lg:col-span-7 flex flex-col gap-6 w-full">
+          <div className="lg:col-span-6 flex flex-col gap-6 w-full">
             {/* Form Alerts */}
             {empSuccessMsg && !empCreatedCredentials && (
               <div className="bg-[#E6F8F3] text-[#00684A] border border-[#A3EAD6] rounded-xl p-4 font-body-sm flex items-center gap-3 max-w-2xl animate-fade-in shadow-2xs">
@@ -2595,6 +2844,121 @@ export default function IdentityVerification() {
                     </div>
                   )}
                 </div>
+              </div>
+
+              {/* Dynamic Employment Items */}
+              <div className="flex flex-col gap-4 border-t border-[#eaf0e4] pt-5">
+                {/* Target Country Selector */}
+                <div className="flex flex-col gap-2">
+                  <label className="font-label-caps text-[#475569] text-xs font-semibold uppercase tracking-wider">
+                    Verification Country Rate
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                    {SUPPORTED_COUNTRIES.map((c) => {
+                      const isSelected = empCountry === c.code;
+                      const rate = getEmpCountryRate(c.code);
+                      return (
+                        <button
+                          key={c.code}
+                          type="button"
+                          onClick={() => setEmpCountry(c.code)}
+                          className={`p-2.5 rounded-xl border text-xs font-bold transition-all flex flex-col items-center justify-center gap-1 cursor-pointer ${
+                            isSelected
+                              ? "border-[#00450e] bg-[#f0f5ea] text-[#00450e] shadow-2xs ring-2 ring-[#00450e]/20"
+                              : "border-[#eaf0e4] bg-white text-slate-700 hover:border-[#d0dbc6]"
+                          }`}
+                        >
+                          <span className="text-base">{c.flag}</span>
+                          <span>{c.label}</span>
+                          <span className="text-[10px] text-slate-500 font-semibold">${rate.toFixed(2)}/check</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-semibold text-xs text-[#181d16] uppercase tracking-wider font-label-caps">
+                      Employment History Checks (${getEmpCountryRate(empCountry).toFixed(2)} / Check - {empCountry})
+                    </h4>
+                    <p className="text-[11px] text-[#64748B]">Add company records to be verified in {empCountry}.</p>
+                  </div>
+                  <span className="text-xs font-bold text-[#00450e] bg-[#eaf0e4]/60 px-3 py-1 rounded-full border border-[#d0dbc6]">
+                    Total: ${(empItems.length * getEmpCountryRate(empCountry)).toFixed(2)} ({empItems.length} {empItems.length === 1 ? 'Check' : 'Checks'})
+                  </span>
+                </div>
+
+                {empItems.map((item, idx) => (
+                  <div key={item.id} className="p-4 bg-[#f8faf6] border border-[#eaf0e4] rounded-2xl flex flex-col gap-3 relative transition-all hover:border-[#d0dbc6]">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-[#181d16] flex items-center gap-1.5">
+                        <Briefcase className="w-3.5 h-3.5 text-[#00450e]" />
+                        <span>Employer #{idx + 1}</span>
+                      </span>
+                      {empItems.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeEmpItem(item.id)}
+                          className="p-1 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                          title="Remove employment check"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <input
+                        type="text"
+                        value={item.companyName}
+                        onChange={(e) => updateEmpItem(item.id, "companyName", e.target.value)}
+                        placeholder="Employer / Company Name"
+                        className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] bg-white font-semibold"
+                      />
+                      <input
+                        type="text"
+                        value={item.position}
+                        onChange={(e) => updateEmpItem(item.id, "position", e.target.value)}
+                        placeholder="Designation / Job Title"
+                        className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] bg-white font-semibold"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <input
+                        type="text"
+                        value={item.joiningYear}
+                        onChange={(e) => updateEmpItem(item.id, "joiningYear", e.target.value)}
+                        placeholder="Joining Year / From"
+                        className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] bg-white font-semibold"
+                      />
+                      <input
+                        type="text"
+                        value={item.leavingYear}
+                        onChange={(e) => updateEmpItem(item.id, "leavingYear", e.target.value)}
+                        placeholder="Leaving Year / To"
+                        className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] bg-white font-semibold"
+                      />
+                      <input
+                        type="text"
+                        value={item.employeeCode}
+                        onChange={(e) => updateEmpItem(item.id, "employeeCode", e.target.value)}
+                        placeholder="Employee Code (Optional)"
+                        className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] bg-white font-semibold"
+                      />
+                    </div>
+                  </div>
+                ))}
+
+                <button
+                  type="button"
+                  onClick={addEmpItem}
+                  className="w-full py-2.5 border-2 border-dashed border-[#d0dbc6] rounded-xl text-xs font-bold text-[#00450e] hover:bg-[#f0f5ea]/50 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Add Another Employment Check (+$5.00)</span>
+                </button>
               </div>
 
               {/* Skip Candidate Login Toggle */}
@@ -2805,7 +3169,7 @@ export default function IdentityVerification() {
           )}
           </div>
           
-          <div className="lg:col-span-5 w-full">
+          <div className="lg:col-span-6 w-full lg:sticky lg:top-24">
             <FlowDiagram 
               title="Employment Verification Flow" 
               activeService="employment" 
@@ -2819,7 +3183,7 @@ export default function IdentityVerification() {
       {/* ═══════════════════════════════════════════════════ */}
       {activeService === "education" && educationEnabled && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start max-w-6xl w-full">
-          <div className="lg:col-span-7 flex flex-col gap-6 w-full">
+          <div className="lg:col-span-6 flex flex-col gap-6 w-full">
             {/* Form Alerts */}
             {eduSuccessMsg && !eduCreatedCredentials && (
               <div className="bg-[#E6F8F3] text-[#00684A] border border-[#A3EAD6] rounded-xl p-4 font-body-sm flex items-center gap-3 max-w-2xl animate-fade-in shadow-2xs">
@@ -2965,6 +3329,114 @@ export default function IdentityVerification() {
                     </div>
                   )}
                 </div>
+              </div>
+
+              {/* Dynamic Education Items */}
+              <div className="flex flex-col gap-4 border-t border-[#eaf0e4] pt-5">
+                {/* Target Country Selector */}
+                <div className="flex flex-col gap-2">
+                  <label className="font-label-caps text-[#475569] text-xs font-semibold uppercase tracking-wider">
+                    Verification Country Rate
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                    {SUPPORTED_COUNTRIES.map((c) => {
+                      const isSelected = eduCountry === c.code;
+                      const rate = getEduCountryRate(c.code);
+                      return (
+                        <button
+                          key={c.code}
+                          type="button"
+                          onClick={() => setEduCountry(c.code)}
+                          className={`p-2.5 rounded-xl border text-xs font-bold transition-all flex flex-col items-center justify-center gap-1 cursor-pointer ${
+                            isSelected
+                              ? "border-purple-600 bg-purple-50 text-purple-900 shadow-2xs ring-2 ring-purple-500/20"
+                              : "border-[#eaf0e4] bg-white text-slate-700 hover:border-[#d0dbc6]"
+                          }`}
+                        >
+                          <span className="text-base">{c.flag}</span>
+                          <span>{c.label}</span>
+                          <span className="text-[10px] text-slate-500 font-semibold">${rate.toFixed(2)}/check</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-semibold text-xs text-[#181d16] uppercase tracking-wider font-label-caps">
+                      Education Credential Checks (${getEduCountryRate(eduCountry).toFixed(2)} / Check - {eduCountry})
+                    </h4>
+                    <p className="text-[11px] text-[#64748B]">Add degree/board records to be verified in {eduCountry}.</p>
+                  </div>
+                  <span className="text-xs font-bold text-purple-700 bg-purple-50 px-3 py-1 rounded-full border border-purple-200">
+                    Total: ${(eduItems.length * getEduCountryRate(eduCountry)).toFixed(2)} ({eduItems.length} {eduItems.length === 1 ? 'Check' : 'Checks'})
+                  </span>
+                </div>
+
+                {eduItems.map((item, idx) => (
+                  <div key={item.id} className="p-4 bg-[#f8faf6] border border-[#eaf0e4] rounded-2xl flex flex-col gap-3 relative transition-all hover:border-[#d0dbc6]">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-[#181d16] flex items-center gap-1.5">
+                        <GraduationCap className="w-3.5 h-3.5 text-purple-700" />
+                        <span>Credential #{idx + 1}</span>
+                      </span>
+                      {eduItems.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeEduItem(item.id)}
+                          className="p-1 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                          title="Remove education check"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <input
+                        type="text"
+                        value={item.boardUniversity}
+                        onChange={(e) => updateEduItem(item.id, "boardUniversity", e.target.value)}
+                        placeholder="Board / University / School Name"
+                        className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] bg-white font-semibold"
+                      />
+                      <input
+                        type="text"
+                        value={item.courseName}
+                        onChange={(e) => updateEduItem(item.id, "courseName", e.target.value)}
+                        placeholder="Degree / Course Name (e.g. B.Sc, MBA)"
+                        className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] bg-white font-semibold"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <input
+                        type="text"
+                        value={item.passingYear}
+                        onChange={(e) => updateEduItem(item.id, "passingYear", e.target.value)}
+                        placeholder="Passing Year (e.g. 2022)"
+                        className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] bg-white font-semibold"
+                      />
+                      <input
+                        type="text"
+                        value={item.rollNumber}
+                        onChange={(e) => updateEduItem(item.id, "rollNumber", e.target.value)}
+                        placeholder="Roll / Registration No (Optional)"
+                        className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] bg-white font-semibold"
+                      />
+                    </div>
+                  </div>
+                ))}
+
+                <button
+                  type="button"
+                  onClick={addEduItem}
+                  className="w-full py-2.5 border-2 border-dashed border-purple-200 rounded-xl text-xs font-bold text-purple-700 hover:bg-purple-50/50 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Add Another Education Check (+$5.00)</span>
+                </button>
               </div>
 
               {/* Skip Candidate Login Toggle */}
@@ -3175,7 +3647,7 @@ export default function IdentityVerification() {
           )}
           </div>
           
-          <div className="lg:col-span-5 w-full">
+          <div className="lg:col-span-6 w-full lg:sticky lg:top-24">
             <FlowDiagram 
               title="Education Verification Flow" 
               activeService="education" 
@@ -3189,7 +3661,7 @@ export default function IdentityVerification() {
       {/* ═══════════════════════════════════════════════════ */}
       {activeService === "interpol" && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start max-w-6xl w-full">
-          <div className="lg:col-span-7 flex flex-col gap-6 w-full">
+          <div className="lg:col-span-6 flex flex-col gap-6 w-full">
             {/* Form Alerts */}
             {interpolSuccessMsg && !interpolCreatedId && (
               <div className="bg-[#E6F8F3] text-[#00684A] border border-[#A3EAD6] rounded-xl p-4 font-body-sm flex items-center gap-3 max-w-2xl animate-fade-in shadow-2xs">
@@ -3361,7 +3833,7 @@ export default function IdentityVerification() {
 
           </div>
           
-          <div className="lg:col-span-5 w-full">
+          <div className="lg:col-span-6 w-full lg:sticky lg:top-24">
             <FlowDiagram 
               title="Interpol Database Check Flow" 
               activeService="interpol" 
@@ -3403,6 +3875,178 @@ export default function IdentityVerification() {
                 router.push("/client/summary");
               }}
             />
+          )}
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════════ */}
+      {/* PASSPORT CHECK FORM */}
+      {/* ═══════════════════════════════════════════════════ */}
+      {activeService === "passport" && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start max-w-6xl w-full">
+          <div className="lg:col-span-6 flex flex-col gap-6 w-full">
+            {passportErrorMsg && (
+              <div className="bg-red-50 text-red-800 border border-red-200 rounded-xl p-4 font-body-sm flex items-center gap-3 max-w-2xl animate-fade-in shadow-2xs">
+                <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
+                <span className="font-semibold">{passportErrorMsg}</span>
+              </div>
+            )}
+
+            {/* Form Card */}
+            <div className="bg-white border border-[#eaf0e4] rounded-3xl p-8 shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1 w-full">
+              <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-red-500 via-rose-600 to-red-800"></div>
+
+              <form onSubmit={handlePassportSubmit} className="flex flex-col gap-6 mt-2 relative z-10">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="p-2 bg-red-50 rounded-xl border border-red-100">
+                    <FileCheck className="w-5 h-5 text-red-700" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-[#181d16] text-lg">Passport Verification Check</h3>
+                    <p className="text-xs text-slate-500">Official Passport Registry lookup & DB audit</p>
+                  </div>
+                </div>
+
+                {/* Passport File Number Field */}
+                <div className="flex flex-col gap-2">
+                  <label className="font-label-caps text-[#475569] text-xs font-semibold uppercase tracking-wider" htmlFor="passport-file-no">
+                    Passport File Number
+                  </label>
+                  <div className="relative">
+                    <FileText className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
+                    <input
+                      id="passport-file-no"
+                      type="text"
+                      value={passportFileNumber}
+                      onChange={(e) => setPassportFileNumber(e.target.value.toUpperCase())}
+                      autoComplete="off"
+                      className="w-full border border-[#eaf0e4] rounded-xl pl-10 pr-3.5 py-3.5 font-mono text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] focus:border-[#181d16] transition-all bg-[#f6fbf0]/50 placeholder-slate-400 font-bold uppercase"
+                      placeholder="e.g. PA1065476374625"
+                      required
+                    />
+                  </div>
+                  <p className="text-[11px] text-slate-500">
+                    Enter 15-character alphanumeric File Number provided in acknowledgment slip.
+                  </p>
+                </div>
+
+                {/* Date of Birth Field */}
+                <div className="flex flex-col gap-2">
+                  <label className="font-label-caps text-[#475569] text-xs font-semibold uppercase tracking-wider" htmlFor="passport-dob">
+                    Date of Birth
+                  </label>
+                  <div className="relative">
+                    <Calendar className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
+                    <input
+                      id="passport-dob"
+                      type="date"
+                      value={passportDob}
+                      onChange={(e) => setPassportDob(e.target.value)}
+                      className="w-full border border-[#eaf0e4] rounded-xl pl-10 pr-3.5 py-3.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] focus:border-[#181d16] transition-all bg-[#f6fbf0]/50 placeholder-slate-400 font-semibold"
+                      required
+                    />
+                  </div>
+                  <p className="text-[11px] text-slate-500">
+                    Format sent to API: <span className="font-mono font-bold text-indigo-700">DD/MM/YYYY</span>
+                  </p>
+                </div>
+
+                {/* Requesting Organisation Field */}
+                <div className="flex flex-col gap-2 relative">
+                  <label className="font-label-caps text-[#475569] text-xs font-semibold uppercase tracking-wider" htmlFor="passport-req-org">
+                    Requesting ORG Name
+                  </label>
+                  <div className="relative">
+                    <Building className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
+                    <input
+                      id="passport-req-org"
+                      type="text"
+                      value={passportRequestingOrgName}
+                      onChange={(e) => {
+                        setPassportRequestingOrgName(e.target.value);
+                        setPassportShowOrgDropdown(true);
+                      }}
+                      onFocus={() => setPassportShowOrgDropdown(true)}
+                      autoComplete="off"
+                      className="w-full border border-[#eaf0e4] rounded-xl pl-10 pr-3.5 py-3.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] focus:border-[#181d16] transition-all bg-[#f6fbf0]/50 placeholder-slate-400 font-semibold"
+                      placeholder="Enter requesting organization name"
+                      required
+                    />
+                  </div>
+                  {passportShowOrgDropdown && passportFilteredOrgs.length > 0 && (
+                    <div className="absolute top-[calc(100%+4px)] left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-lg z-50 max-h-40 overflow-y-auto">
+                      {passportFilteredOrgs.map((org, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => {
+                            setPassportRequestingOrgName(org);
+                            setPassportShowOrgDropdown(false);
+                          }}
+                          className="w-full px-4 py-2.5 text-left text-xs font-semibold text-slate-700 hover:bg-[#f6fbf0] transition-colors flex items-center justify-between group"
+                        >
+                          <span>{org}</span>
+                          <Trash2
+                            className="w-3.5 h-3.5 text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              await removeRecentRequestingOrg(org);
+                            }}
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Form Action Buttons */}
+                <div className="flex items-center gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={handlePassportCancel}
+                    disabled={passportSubmitting}
+                    className="py-3.5 px-5 border border-[#eaf0e4] hover:bg-slate-50 text-slate-700 font-semibold rounded-xl transition-all cursor-pointer text-xs bg-white"
+                  >
+                    Clear
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={passportSubmitting}
+                    className="flex-1 bg-[#181d16] hover:bg-[#1E293B] text-white font-bold py-3.5 px-6 rounded-xl shadow-sm transition-all cursor-pointer flex items-center justify-center gap-2 text-xs disabled:opacity-60"
+                  >
+                    {passportSubmitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Executing Verification...
+                      </>
+                    ) : (
+                      <>
+                        <Search className="w-4 h-4" />
+                        Run Passport Verification
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          {/* Right Column: Workflow Diagram */}
+          <div className="lg:col-span-6 w-full lg:sticky lg:top-24">
+            <FlowDiagram title="Passport Verification Workflow" activeService="passport" />
+          </div>
+
+          {/* Success Modal for Passport Check — rendered via Portal */}
+          {passportCreatedId && typeof document !== "undefined" && createPortal(
+            <PassportSuccessModal
+              passportCreatedId={passportCreatedId}
+              candidateName={passportCreatedData?.givenName && passportCreatedData?.givenName !== "—" ? `${passportCreatedData.givenName} ${passportCreatedData.surname || ""}` : passportFileNumber}
+              statusMessage={passportCreatedData?.statusMessage}
+              onCreateAnother={() => { setPassportCreatedId(null); setPassportCreatedData(null); setPassportSuccessMsg(""); }}
+              onGoToSummary={() => { setPassportCreatedId(null); router.push("/client/summary"); }}
+            />,
+            document.body
           )}
         </div>
       )}

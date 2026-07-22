@@ -519,7 +519,8 @@ export async function POST(req: NextRequest) {
         break;
       }
       case "addEmploymentVerification": {
-        const { name, mobile, email, orgName, requestingOrgName: empReqOrgName, skipCandidateLogin } = payload;
+        const { name, mobile, email, orgName, requestingOrgName: empReqOrgName, skipCandidateLogin, employments, country } = payload;
+        const selectedCountry = country || "India";
 
         if (!name?.trim()) {
           return NextResponse.json({ error: "Candidate name is required" }, { status: 400 });
@@ -528,8 +529,18 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ error: "Candidate email is required" }, { status: 400 });
         }
 
+        const validEmployments = Array.isArray(employments) ? employments.filter(e => e?.companyName?.trim()) : [];
+        const itemCount = validEmployments.length > 0 ? validEmployments.length : 1;
+
         const isAdminSession = sessionOrgName?.toLowerCase() === "ozclu" || sessionOrgName?.toLowerCase() === "admin";
         const safeOrgName = isAdminSession ? (orgName || sessionOrgName) : (sessionOrgName || orgName);
+
+        const defaultCountryRates: Record<string, number> = { Singapore: 15, Malaysia: 12, Philippines: 10, UAE: 20, India: 5 };
+        const orgDoc = await db.collection("organisations").findOne({
+          name: { $regex: new RegExp("^" + (safeOrgName || "").replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + "$", "i") }
+        });
+        const perCheckRate = orgDoc?.employmentRates?.[selectedCountry] ?? (defaultCountryRates[selectedCountry] || 5);
+        const serviceCharge = itemCount * perCheckRate;
 
         const cleanOrg = (safeOrgName || "XXX").replace(/[^a-zA-Z]/g, "").slice(0, 3).padEnd(3, "X").toUpperCase();
         const nowTime = new Date();
@@ -587,7 +598,7 @@ export async function POST(req: NextRequest) {
           date: new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata", hour12: true }).replace(/\u202f/g, " ").toLowerCase(),
           verifier: "Client Init",
           status: "Processing",
-          notes: skipCandidateLogin ? "Employment verification created directly by client (candidate login skipped)." : "Employment verification request created by client."
+          notes: skipCandidateLogin ? `Employment verification created directly by client (${itemCount} check(s), candidate login skipped).` : `Employment verification request created by client (${itemCount} check(s)).`
         };
 
         await db.collection("verifications").insertOne({
@@ -599,12 +610,15 @@ export async function POST(req: NextRequest) {
           date: dateFormatted,
           status: "Processing",
           verifier: null,
-          notes: skipCandidateLogin ? "Direct client submission (candidate login skipped)." : "Awaiting candidate employment data submission.",
+          notes: skipCandidateLogin ? `Direct client submission (${itemCount} check(s)).` : "Awaiting candidate employment data submission.",
           type: "employment",
           candidateMobile: mobile || "",
           onboardingStatus: "active",
           tempPassword,
           skipCandidateLogin: !!skipCandidateLogin,
+          employments: validEmployments,
+          itemCount,
+          serviceCharge,
           attempts: [initialAttempt],
           setupUrl,
           createdAt: new Date().toISOString()
@@ -634,7 +648,8 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: true, id: finalId, setupUrl, skipCandidateLogin: !!skipCandidateLogin });
       }
       case "addEducationVerification": {
-        const { name, mobile, email, orgName, requestingOrgName: eduReqOrgName, skipCandidateLogin } = payload;
+        const { name, mobile, email, orgName, requestingOrgName: eduReqOrgName, skipCandidateLogin, educationList, country } = payload;
+        const selectedCountry = country || "India";
 
         if (!name?.trim()) {
           return NextResponse.json({ error: "Candidate name is required" }, { status: 400 });
@@ -643,8 +658,18 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ error: "Candidate email is required" }, { status: 400 });
         }
 
+        const validEducation = Array.isArray(educationList) ? educationList.filter(e => e?.boardUniversity?.trim()) : [];
+        const itemCount = validEducation.length > 0 ? validEducation.length : 1;
+
         const isAdminSession = sessionOrgName?.toLowerCase() === "ozclu" || sessionOrgName?.toLowerCase() === "admin";
         const safeOrgName = isAdminSession ? (orgName || sessionOrgName) : (sessionOrgName || orgName);
+
+        const defaultCountryRates: Record<string, number> = { Singapore: 15, Malaysia: 12, Philippines: 10, UAE: 20, India: 5 };
+        const orgDoc = await db.collection("organisations").findOne({
+          name: { $regex: new RegExp("^" + (safeOrgName || "").replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + "$", "i") }
+        });
+        const perCheckRate = orgDoc?.educationRates?.[selectedCountry] ?? (defaultCountryRates[selectedCountry] || 5);
+        const serviceCharge = itemCount * perCheckRate;
 
         const cleanOrg = (safeOrgName || "XXX").replace(/[^a-zA-Z]/g, "").slice(0, 3).padEnd(3, "X").toUpperCase();
         const nowTime = new Date();
@@ -702,7 +727,7 @@ export async function POST(req: NextRequest) {
           date: new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata", hour12: true }).replace(/\u202f/g, " ").toLowerCase(),
           verifier: "Client Init",
           status: "Processing",
-          notes: skipCandidateLogin ? "Education verification created directly by client (candidate login skipped)." : "Education verification request created by client."
+          notes: skipCandidateLogin ? `Education verification created directly by client (${itemCount} check(s), candidate login skipped).` : `Education verification request created by client (${itemCount} check(s)).`
         };
 
         await db.collection("verifications").insertOne({
@@ -714,12 +739,15 @@ export async function POST(req: NextRequest) {
           date: dateFormatted,
           status: "Processing",
           verifier: null,
-          notes: skipCandidateLogin ? "Direct client submission (candidate login skipped)." : "Awaiting candidate education data submission.",
+          notes: skipCandidateLogin ? `Direct client submission (${itemCount} check(s)).` : "Awaiting candidate education data submission.",
           type: "education",
           candidateMobile: mobile || "",
           onboardingStatus: "active",
           tempPassword,
           skipCandidateLogin: !!skipCandidateLogin,
+          educationList: validEducation,
+          itemCount,
+          serviceCharge,
           attempts: [initialAttempt],
           setupUrl,
           createdAt: new Date().toISOString()
@@ -782,6 +810,8 @@ export async function POST(req: NextRequest) {
                 reasonForLeaving: employmentData.reasonForLeaving || "",
                 remarks: employmentData.remarks || "",
               },
+              ...(Array.isArray(employmentData.pastOrganisations) ? { pastOrganisations: employmentData.pastOrganisations } : {}),
+              ...(Array.isArray(employmentData.employments) ? { employments: employmentData.employments } : {}),
               employmentDataSubmitted: true,
               employmentDataSubmittedAt: new Date().toISOString(),
               updatedAt: new Date()
@@ -1066,6 +1096,150 @@ export async function POST(req: NextRequest) {
         });
 
         return NextResponse.json({ success: true, id: finalId });
+      }
+      case "addPassportVerification": {
+        const { fileNumber, dateOfBirth, orgName, requestingOrgName: reqOrgName } = payload;
+
+        if (!fileNumber?.trim() || !dateOfBirth?.trim()) {
+          return NextResponse.json({ error: "File number and date of birth are required" }, { status: 400 });
+        }
+
+        const isAdminSession = sessionOrgName?.toLowerCase() === "ozclu" || sessionOrgName?.toLowerCase() === "admin";
+        const safeOrgName = isAdminSession ? (orgName || sessionOrgName) : (sessionOrgName || orgName);
+
+        const cleanOrg = (safeOrgName || "XXX").replace(/[^a-zA-Z]/g, "").slice(0, 3).padEnd(3, "X").toUpperCase();
+        const nowTime = new Date();
+        const dd = String(nowTime.getDate()).padStart(2, "0");
+        const mm = String(nowTime.getMonth() + 1).padStart(2, "0");
+        const yy = String(nowTime.getFullYear()).slice(-2);
+        const dateStr = `${dd}${mm}${yy}`;
+        const prefix = `PAS${dateStr}-`;
+
+        const count = await db.collection("verifications").countDocuments({
+          id: { $regex: `^${prefix}` }
+        });
+        const finalId = `${prefix}${String(count + 1).padStart(4, "0")}`;
+
+        let formattedDob = dateOfBirth.trim();
+        if (formattedDob.includes('-')) {
+          const parts = formattedDob.split('-');
+          if (parts.length === 3) {
+            if (parts[0].length === 4) {
+              formattedDob = `${parts[2]}/${parts[1]}/${parts[0]}`;
+            } else {
+              formattedDob = `${parts[0]}/${parts[1]}/${parts[2]}`;
+            }
+          }
+        }
+
+        const headers = {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json, text/plain, */*',
+          'Accept-Language': 'en-US,en;q=0.9',
+          'Origin': 'https://www.passportindia.gov.in',
+          'Referer': 'https://www.passportindia.gov.in/',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+        };
+
+        const apiUrl = 'https://api1.passportindia.gov.in/v1/online/trackStatusForFileNo';
+        const apiPayload = {
+          requestResponseMap: {
+            fileNo: fileNumber.trim().toUpperCase(),
+            applDob: formattedDob,
+            optStatus: 'Application_Status'
+          }
+        };
+
+        let passportResult: any = null;
+        let apiError: string | null = null;
+
+        try {
+          const apiRes = await fetch(apiUrl, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(apiPayload)
+          });
+
+          if (!apiRes.ok) {
+            const errText = await apiRes.text();
+            apiError = `Passport India portal returned status ${apiRes.status}.`;
+          } else {
+            const data = await apiRes.json();
+            if (data.strReturnString === 'error' || (data.fieldErrors && Object.keys(data.fieldErrors).length > 0)) {
+              const fieldMsg = data.fieldErrors ? Object.values(data.fieldErrors).flat().join(', ') : '';
+              apiError = fieldMsg || 'Invalid File Number or Date of Birth.';
+            } else {
+              passportResult = data;
+            }
+          }
+        } catch (err: any) {
+          apiError = err?.message || 'Failed to connect to Passport India server.';
+        }
+
+        if (apiError || !passportResult) {
+          return NextResponse.json({ error: apiError || 'Passport verification query failed' }, { status: 400 });
+        }
+
+        const map = passportResult.requestResponseMap || {};
+        const appStatusObj = Array.isArray(map.applicationStatus) && map.applicationStatus.length > 0
+          ? map.applicationStatus[0]
+          : {};
+
+        const passportData = {
+          fileNumber: appStatusObj.FILE_NO || map.fileNo || fileNumber.trim().toUpperCase(),
+          dateOfBirth: appStatusObj.DATE_OF_BIRTH || map.applDob || formattedDob,
+          givenName: appStatusObj.APPL_GIVEN_NAME || '—',
+          surname: appStatusObj.APPL_SURNAME || '—',
+          typeOfApplication: appStatusObj.PARAM_VALUE || 'Normal',
+          applicationReceivedDate: appStatusObj.APP_SUB_DATE || '—',
+          statusMessage: map.statusMessage || appStatusObj.STATUS_MESSAGE || 'Status Retrieved Successfully',
+          rawResponse: passportResult
+        };
+
+        const candidateDisplayName = passportData.givenName && passportData.givenName !== '—'
+          ? `${passportData.givenName} ${passportData.surname !== '—' ? passportData.surname : ''}`.trim()
+          : passportData.fileNumber;
+
+        const dateFormatted = new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
+
+        await db.collection("verifications").insertOne({
+          id: finalId,
+          name: candidateDisplayName,
+          email: "",
+          orgName: safeOrgName,
+          requestingOrgName: reqOrgName || safeOrgName,
+          date: dateFormatted,
+          status: "Completed",
+          verifier: "System",
+          notes: `Passport status tracked successfully: ${passportData.statusMessage}`,
+          type: "passport",
+          passportData,
+          price: 15,
+          createdAt: new Date().toISOString()
+        });
+
+        if (reqOrgName && reqOrgName.trim()) {
+          await db.collection("settings").updateOne(
+            { companyName: safeOrgName },
+            { $addToSet: { recentRequestingOrgs: reqOrgName.trim() } },
+            { upsert: true }
+          );
+        }
+
+        await logAuditEvent(db, {
+          actorUserId: user.id,
+          actorEmail: user.email,
+          actorRole: user.role,
+          portal: "client",
+          action: "passport_verification_created",
+          targetType: "verification",
+          targetId: finalId,
+          ip,
+          userAgent,
+          outcome: "success"
+        });
+
+        return NextResponse.json({ success: true, id: finalId, passportData });
       }
       default:
 

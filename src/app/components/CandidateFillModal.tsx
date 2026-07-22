@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, Briefcase, GraduationCap, Send, CheckCircle, AlertCircle, Building2, MapPin, Calendar, UserCheck, Award } from "lucide-react";
+import { X, Briefcase, GraduationCap, Send, CheckCircle, AlertCircle, Building2, Award } from "lucide-react";
 import { usePortal } from "src/context/PortalContext";
 import { INDIAN_STATES } from "src/lib/courts-mapping";
-import { Country, State, City } from "country-state-city";
+
 
 interface CandidateFillModalProps {
   isOpen: boolean;
@@ -31,8 +31,9 @@ export default function CandidateFillModal({
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
 
-  // Employment Form State
-  const [empForm, setEmpForm] = useState({
+  // Employment Form Multi-Organisation State
+  const createEmptyEmployment = (idSuffix: number) => ({
+    id: `emp-${Date.now()}-${idSuffix}`,
     country: "India",
     state: "",
     city: "",
@@ -58,6 +59,20 @@ export default function CandidateFillModal({
     remarks: "",
   });
 
+  const [employments, setEmployments] = useState([createEmptyEmployment(1)]);
+
+  const addEmploymentItem = () => {
+    setEmployments((prev) => [...prev, createEmptyEmployment(prev.length + 1)]);
+  };
+
+  const removeEmploymentItem = (id: string) => {
+    setEmployments((prev) => (prev.length > 1 ? prev.filter((item) => item.id !== id) : prev));
+  };
+
+  const updateEmploymentItem = (id: string, field: string, val: string) => {
+    setEmployments((prev) => prev.map((item) => (item.id === id ? { ...item, [field]: val } : item)));
+  };
+
   // Education Form State
   const [eduForm, setEduForm] = useState({
     degreeType: "",
@@ -69,55 +84,23 @@ export default function CandidateFillModal({
     certificateFile: "",
   });
 
-  // Location helpers
-  const [statesList, setStatesList] = useState<Array<{ name: string; code: string }>>([]);
-  const [citiesList, setCitiesList] = useState<Array<{ name: string; value: string }>>([]);
-
   useEffect(() => {
     if (initialData) {
       if (verificationType === "employment") {
-        setEmpForm((prev) => ({ ...prev, ...initialData }));
+        if (Array.isArray(initialData.employments) && initialData.employments.length > 0) {
+          setEmployments(initialData.employments);
+        } else if (Array.isArray(initialData.pastOrganisations) && initialData.pastOrganisations.length > 0) {
+          setEmployments(initialData.pastOrganisations);
+        } else if (initialData.companyName) {
+          setEmployments([{ ...createEmptyEmployment(1), ...initialData }]);
+        }
       } else if (verificationType === "education") {
         setEduForm((prev) => ({ ...prev, ...initialData }));
       }
     }
   }, [initialData, verificationType]);
 
-  useEffect(() => {
-    if (empForm.country === "India") {
-      setStatesList([]);
-    } else {
-      const allCountries = Country.getAllCountries();
-      const matched = allCountries.find(c => c.name.toLowerCase() === empForm.country.toLowerCase());
-      if (matched) {
-        const countryStates = State.getStatesOfCountry(matched.isoCode);
-        setStatesList(countryStates.map(s => ({ name: s.name, code: s.isoCode })).sort((a, b) => a.name.localeCompare(b.name)));
-      } else {
-        setStatesList([]);
-      }
-    }
-  }, [empForm.country]);
-
-  useEffect(() => {
-    if (empForm.country !== "India" && empForm.state && statesList.length > 0) {
-      const matchedState = statesList.find(s => s.name.toLowerCase() === empForm.state.toLowerCase());
-      const matchedCountry = Country.getAllCountries().find(c => c.name.toLowerCase() === empForm.country.toLowerCase());
-      if (matchedState && matchedCountry) {
-        const stateCities = City.getCitiesOfState(matchedCountry.isoCode, matchedState.code);
-        setCitiesList(stateCities.map(c => ({ name: c.name, value: c.name })).sort((a, b) => a.name.localeCompare(b.name)));
-      } else {
-        setCitiesList([]);
-      }
-    } else {
-      setCitiesList([]);
-    }
-  }, [empForm.state, empForm.country, statesList]);
-
   if (!isOpen) return null;
-
-  const updateEmp = (field: string, val: string) => {
-    setEmpForm((prev) => ({ ...prev, [field]: val }));
-  };
 
   const updateEdu = (field: string, val: string) => {
     setEduForm((prev) => ({ ...prev, [field]: val }));
@@ -129,13 +112,16 @@ export default function CandidateFillModal({
     setSuccessMsg("");
 
     if (verificationType === "employment") {
-      if (!empForm.companyName.trim()) {
-        setErrorMsg("Company Name is required");
-        return;
-      }
-      if (!empForm.employmentPeriodFrom) {
-        setErrorMsg("Employment Period From date is required");
-        return;
+      for (let i = 0; i < employments.length; i++) {
+        const emp = employments[i];
+        if (!emp.companyName.trim()) {
+          setErrorMsg(`Organisation / Company Name is required for Organisation #${i + 1}`);
+          return;
+        }
+        if (!emp.employmentPeriodFrom) {
+          setErrorMsg(`Employment Period From date is required for Organisation #${i + 1}`);
+          return;
+        }
       }
     } else if (verificationType === "education") {
       if (!eduForm.degreeType) {
@@ -168,7 +154,13 @@ export default function CandidateFillModal({
     try {
       let res;
       if (verificationType === "employment") {
-        res = await submitEmploymentData(verificationId, empForm);
+        const primaryEmp = employments[0] || {};
+        const payloadData = {
+          ...primaryEmp,
+          employments,
+          pastOrganisations: employments,
+        };
+        res = await submitEmploymentData(verificationId, payloadData);
       } else {
         res = await submitEducationData(verificationId, eduForm);
       }
@@ -238,296 +230,253 @@ export default function CandidateFillModal({
 
           {verificationType === "employment" ? (
             /* ═══════════════════════════════════════════════════ */
-            /* EMPLOYMENT DETAILS FORM                             */
+            /* EMPLOYMENT DETAILS FORM (MULTIPLE ORGANISATIONS)   */
             /* ═══════════════════════════════════════════════════ */
             <div className="flex flex-col gap-6">
-              {/* Company Location */}
-              <div className="bg-[#f6fbf0]/60 border border-[#eaf0e4] rounded-2xl p-5 flex flex-col gap-4">
-                <div className="flex items-center gap-2 border-b border-[#eaf0e4] pb-2">
-                  <MapPin className="w-4 h-4 text-[#00450e]" />
-                  <span className="font-bold text-xs uppercase text-[#181d16] tracking-wider">Company Location</span>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">Country</label>
-                    <select
-                      value={empForm.country}
-                      onChange={(e) => {
-                        updateEmp("country", e.target.value);
-                        updateEmp("state", "");
-                        updateEmp("city", "");
-                      }}
-                      className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none focus:border-[#181d16]"
-                    >
-                      <option value="India">India</option>
-                      {[...Country.getAllCountries()]
-                        .filter((c) => c.name !== "India")
-                        .sort((a, b) => a.name.localeCompare(b.name))
-                        .map((c) => (
-                          <option key={c.isoCode} value={c.name}>
-                            {c.name}
-                          </option>
-                        ))}
-                    </select>
-                  </div>
+              {employments.map((emp, idx) => (
+                <div key={emp.id} className="bg-[#f6fbf0]/60 border border-[#eaf0e4] rounded-2xl p-5 flex flex-col gap-5 relative transition-all hover:border-[#d0dbc6]">
+                  {/* Employer Header */}
+                  <div className="flex items-center justify-between border-b border-[#eaf0e4] pb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-lg bg-[#00450e] text-white flex items-center justify-center font-bold text-xs">
+                        {idx + 1}
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-xs uppercase text-[#181d16] tracking-wider">
+                          {idx === 0 ? "Current / Most Recent Organisation *" : `Past Organisation #${idx + 1}`}
+                        </h4>
+                        <p className="text-[11px] text-[#64748B]">Provide employer details, position, and period.</p>
+                      </div>
+                    </div>
 
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">State</label>
-                    {empForm.country === "India" ? (
-                      <select
-                        value={empForm.state}
-                        onChange={(e) => updateEmp("state", e.target.value)}
-                        className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none focus:border-[#181d16]"
+                    {employments.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeEmploymentItem(emp.id)}
+                        className="px-2.5 py-1 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 font-bold text-[11px] transition-colors cursor-pointer flex items-center gap-1"
+                        title="Remove this organisation entry"
                       >
-                        <option value="">Select State</option>
-                        {[...INDIAN_STATES].sort((a, b) => a.name.localeCompare(b.name)).map((s) => (
-                          <option key={s.code} value={s.name}>{s.name}</option>
-                        ))}
-                      </select>
-                    ) : (
-                      <input
-                        type="text"
-                        value={empForm.state}
-                        onChange={(e) => updateEmp("state", e.target.value)}
-                        placeholder="State name"
-                        className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none focus:border-[#181d16]"
-                      />
+                        <X className="w-3.5 h-3.5" />
+                        <span>Remove</span>
+                      </button>
                     )}
                   </div>
 
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">City / District</label>
-                    <input
-                      type="text"
-                      value={empForm.city}
-                      onChange={(e) => updateEmp("city", e.target.value)}
-                      placeholder="City name"
-                      className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none focus:border-[#181d16]"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Company Details */}
-              <div className="bg-[#f6fbf0]/60 border border-[#eaf0e4] rounded-2xl p-5 flex flex-col gap-4">
-                <div className="flex items-center gap-2 border-b border-[#eaf0e4] pb-2">
-                  <Building2 className="w-4 h-4 text-[#00450e]" />
-                  <span className="font-bold text-xs uppercase text-[#181d16] tracking-wider">Company Details</span>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">Company Name *</label>
-                    <input
-                      type="text"
-                      value={empForm.companyName}
-                      onChange={(e) => updateEmp("companyName", e.target.value)}
-                      placeholder="Company name"
-                      className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none focus:border-[#181d16]"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">Department</label>
-                    <input
-                      type="text"
-                      value={empForm.department}
-                      onChange={(e) => updateEmp("department", e.target.value)}
-                      placeholder="Department"
-                      className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none focus:border-[#181d16]"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1.5 md:col-span-2">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">Address Line 1</label>
-                    <input
-                      type="text"
-                      value={empForm.addressLine1}
-                      onChange={(e) => updateEmp("addressLine1", e.target.value)}
-                      placeholder="Street address line 1"
-                      className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none focus:border-[#181d16]"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">Company Telephone</label>
-                    <div className="flex gap-2">
-                      <select
-                        value={empForm.companyTelephoneCode}
-                        onChange={(e) => updateEmp("companyTelephoneCode", e.target.value)}
-                        className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white w-20 focus:outline-none"
-                      >
-                        <option value="+91">+91</option>
-                        <option value="+1">+1</option>
-                        <option value="+44">+44</option>
-                      </select>
+                  {/* Primary Company Info (Name & Title FIRST) */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-1.5 md:col-span-2">
+                      <label className="text-[10px] font-bold text-[#00450e] uppercase tracking-wider">Organisation / Company Name *</label>
                       <input
-                        type="tel"
-                        value={empForm.companyTelephone}
-                        onChange={(e) => updateEmp("companyTelephone", e.target.value)}
-                        placeholder="Phone number"
-                        className="flex-1 border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none focus:border-[#181d16]"
+                        type="text"
+                        value={emp.companyName}
+                        onChange={(e) => updateEmploymentItem(emp.id, "companyName", e.target.value)}
+                        placeholder="e.g. Infosys, TCS, Google India..."
+                        className="border border-[#eaf0e4] rounded-xl p-3 text-xs font-bold text-[#181d16] bg-white focus:outline-none focus:ring-2 focus:ring-[#00450e]/20"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase">Position / Job Title</label>
+                      <input
+                        type="text"
+                        value={emp.position}
+                        onChange={(e) => updateEmploymentItem(emp.id, "position", e.target.value)}
+                        placeholder="e.g. Senior Software Engineer"
+                        className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none focus:border-[#181d16]"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase">Department</label>
+                      <input
+                        type="text"
+                        value={emp.department}
+                        onChange={(e) => updateEmploymentItem(emp.id, "department", e.target.value)}
+                        placeholder="e.g. Engineering / Operations"
+                        className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none focus:border-[#181d16]"
                       />
                     </div>
                   </div>
 
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">Position / Title</label>
-                    <input
-                      type="text"
-                      value={empForm.position}
-                      onChange={(e) => updateEmp("position", e.target.value)}
-                      placeholder="Job title / position"
-                      className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none focus:border-[#181d16]"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Employment Period */}
-              <div className="bg-[#f6fbf0]/60 border border-[#eaf0e4] rounded-2xl p-5 flex flex-col gap-4">
-                <div className="flex items-center gap-2 border-b border-[#eaf0e4] pb-2">
-                  <Calendar className="w-4 h-4 text-[#00450e]" />
-                  <span className="font-bold text-xs uppercase text-[#181d16] tracking-wider">Employment Period &amp; Identifiers</span>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">From Date *</label>
-                    <input
-                      type="date"
-                      value={empForm.employmentPeriodFrom}
-                      onChange={(e) => updateEmp("employmentPeriodFrom", e.target.value)}
-                      className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none focus:border-[#181d16]"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">To Date (Leave blank if Present)</label>
-                    <input
-                      type="date"
-                      value={empForm.employmentPeriodTo}
-                      onChange={(e) => updateEmp("employmentPeriodTo", e.target.value)}
-                      className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none focus:border-[#181d16]"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">Employee Code</label>
-                    <input
-                      type="text"
-                      value={empForm.employeeCode}
-                      onChange={(e) => updateEmp("employeeCode", e.target.value.toUpperCase())}
-                      placeholder="EMP ID / Code"
-                      className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white uppercase focus:outline-none focus:border-[#181d16]"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Reporting Manager */}
-              <div className="bg-[#f6fbf0]/60 border border-[#eaf0e4] rounded-2xl p-5 flex flex-col gap-4">
-                <div className="flex items-center gap-2 border-b border-[#eaf0e4] pb-2">
-                  <UserCheck className="w-4 h-4 text-[#00450e]" />
-                  <span className="font-bold text-xs uppercase text-[#181d16] tracking-wider">Reporting Manager &amp; Compensation</span>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">Reporting Manager Name</label>
-                    <input
-                      type="text"
-                      value={empForm.reportingManagerName}
-                      onChange={(e) => updateEmp("reportingManagerName", e.target.value)}
-                      placeholder="Manager full name"
-                      className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none focus:border-[#181d16]"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">Manager Email</label>
-                    <input
-                      type="email"
-                      value={empForm.reportingManagerEmail}
-                      onChange={(e) => updateEmp("reportingManagerEmail", e.target.value)}
-                      placeholder="manager@company.com"
-                      className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none focus:border-[#181d16]"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">Manager Contact No</label>
-                    <div className="flex gap-2">
+                  {/* Company Location & Contact */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t border-[#eaf0e4]/80">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase">Country</label>
                       <select
-                        value={empForm.reportingManagerContactCode}
-                        onChange={(e) => updateEmp("reportingManagerContactCode", e.target.value)}
-                        className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white w-20 focus:outline-none"
+                        value={emp.country}
+                        onChange={(e) => {
+                          updateEmploymentItem(emp.id, "country", e.target.value);
+                          updateEmploymentItem(emp.id, "state", "");
+                          updateEmploymentItem(emp.id, "city", "");
+                        }}
+                        className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none"
                       >
-                        <option value="+91">+91</option>
-                        <option value="+1">+1</option>
-                        <option value="+44">+44</option>
+                        <option value="India">India</option>
+                        <option value="Singapore">Singapore</option>
+                        <option value="Malaysia">Malaysia</option>
+                        <option value="Philippines">Philippines</option>
+                        <option value="UAE">UAE</option>
                       </select>
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase">State / Province</label>
+                      {emp.country === "India" ? (
+                        <select
+                          value={emp.state}
+                          onChange={(e) => updateEmploymentItem(emp.id, "state", e.target.value)}
+                          className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none"
+                        >
+                          <option value="">Select State</option>
+                          {[...INDIAN_STATES].sort((a, b) => a.name.localeCompare(b.name)).map((s) => (
+                            <option key={s.code} value={s.name}>{s.name}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input
+                          type="text"
+                          value={emp.state}
+                          onChange={(e) => updateEmploymentItem(emp.id, "state", e.target.value)}
+                          placeholder="State name"
+                          className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none"
+                        />
+                      )}
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase">City</label>
                       <input
-                        type="tel"
-                        value={empForm.reportingManagerContact}
-                        onChange={(e) => updateEmp("reportingManagerContact", e.target.value)}
-                        placeholder="Mobile number"
-                        className="flex-1 border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none focus:border-[#181d16]"
+                        type="text"
+                        value={emp.city}
+                        onChange={(e) => updateEmploymentItem(emp.id, "city", e.target.value)}
+                        placeholder="City name"
+                        className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none"
                       />
                     </div>
                   </div>
 
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">Annual CTC</label>
-                    <input
-                      type="text"
-                      value={empForm.annualCTC}
-                      onChange={(e) => updateEmp("annualCTC", e.target.value)}
-                      placeholder="e.g. ₹12,00,000"
-                      className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none focus:border-[#181d16]"
-                    />
+                  {/* Employment Period & Identifiers */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t border-[#eaf0e4]/80">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase">From Date *</label>
+                      <input
+                        type="date"
+                        value={emp.employmentPeriodFrom}
+                        onChange={(e) => updateEmploymentItem(emp.id, "employmentPeriodFrom", e.target.value)}
+                        className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase">To Date (Leave blank if Present)</label>
+                      <input
+                        type="date"
+                        value={emp.employmentPeriodTo}
+                        onChange={(e) => updateEmploymentItem(emp.id, "employmentPeriodTo", e.target.value)}
+                        className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase">Employee Code / ID</label>
+                      <input
+                        type="text"
+                        value={emp.employeeCode}
+                        onChange={(e) => updateEmploymentItem(emp.id, "employeeCode", e.target.value.toUpperCase())}
+                        placeholder="EMP ID / Code"
+                        className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white uppercase focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Reporting Manager & Compensation */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t border-[#eaf0e4]/80">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase">Reporting Manager Name</label>
+                      <input
+                        type="text"
+                        value={emp.reportingManagerName}
+                        onChange={(e) => updateEmploymentItem(emp.id, "reportingManagerName", e.target.value)}
+                        placeholder="Manager full name"
+                        className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase">Manager Email</label>
+                      <input
+                        type="email"
+                        value={emp.reportingManagerEmail}
+                        onChange={(e) => updateEmploymentItem(emp.id, "reportingManagerEmail", e.target.value)}
+                        placeholder="manager@company.com"
+                        className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase">Annual CTC</label>
+                      <input
+                        type="text"
+                        value={emp.annualCTC}
+                        onChange={(e) => updateEmploymentItem(emp.id, "annualCTC", e.target.value)}
+                        placeholder="e.g. ₹12,00,000"
+                        className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Type, Agency & Remarks */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-[#eaf0e4]/80">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase">Employment Type</label>
+                      <select
+                        value={emp.employmentType}
+                        onChange={(e) => updateEmploymentItem(emp.id, "employmentType", e.target.value)}
+                        className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none"
+                      >
+                        <option value="">Select Type</option>
+                        <option value="Full-time Permanent">Full-time Permanent</option>
+                        <option value="Part-time">Part-time</option>
+                        <option value="Contractual / Staffing Agency">Contractual / Staffing Agency</option>
+                        <option value="Internship / Trainee">Internship / Trainee</option>
+                        <option value="Consultant">Consultant</option>
+                      </select>
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase">Staffing Agency Name (If Contractual)</label>
+                      <input
+                        type="text"
+                        value={emp.agencyDetails}
+                        onChange={(e) => updateEmploymentItem(emp.id, "agencyDetails", e.target.value)}
+                        placeholder="Staffing agency name"
+                        className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1.5 md:col-span-2">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase">Reason for Leaving &amp; Remarks</label>
+                      <textarea
+                        value={emp.reasonForLeaving}
+                        onChange={(e) => updateEmploymentItem(emp.id, "reasonForLeaving", e.target.value)}
+                        rows={2}
+                        placeholder="Reason for leaving or additional remarks"
+                        className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none resize-none"
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
+              ))}
 
-              {/* Employment Type & Extras */}
-              <div className="bg-[#f6fbf0]/60 border border-[#eaf0e4] rounded-2xl p-5 flex flex-col gap-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">Employment Type</label>
-                    <select
-                      value={empForm.employmentType}
-                      onChange={(e) => updateEmp("employmentType", e.target.value)}
-                      className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none"
-                    >
-                      <option value="">Select Type</option>
-                      <option value="Permanent">Permanent</option>
-                      <option value="Temporary">Temporary</option>
-                      <option value="Contractual">Contractual</option>
-                      <option value="Internship">Internship</option>
-                    </select>
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">Agency Details (If contractual)</label>
-                    <input
-                      type="text"
-                      value={empForm.agencyDetails}
-                      onChange={(e) => updateEmp("agencyDetails", e.target.value)}
-                      placeholder="Staffing agency name"
-                      className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none focus:border-[#181d16]"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1.5 md:col-span-2">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">Reason for Leaving &amp; Remarks</label>
-                    <textarea
-                      value={empForm.reasonForLeaving}
-                      onChange={(e) => updateEmp("reasonForLeaving", e.target.value)}
-                      rows={2}
-                      placeholder="Reason for leaving or additional remarks"
-                      className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none focus:border-[#181d16] resize-none"
-                    />
-                  </div>
-                </div>
-              </div>
+              {/* Add Another Organisation Button */}
+              <button
+                type="button"
+                onClick={addEmploymentItem}
+                className="w-full py-3 border-2 border-dashed border-[#00450e]/30 hover:border-[#00450e] rounded-2xl text-xs font-bold text-[#00450e] bg-[#f6fbf0]/40 hover:bg-[#f6fbf0] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+              >
+                <Building2 className="w-4 h-4 text-[#00450e]" />
+                <span>+ Add Another Organisation / Past Employment Record</span>
+              </button>
             </div>
           ) : (
             /* ═══════════════════════════════════════════════════ */

@@ -35,8 +35,12 @@ export interface Verification {
   setupUrl?: string;
   skipCandidateLogin?: boolean;
   createdAt?: string;
+  itemCount?: number;
+  serviceCharge?: number;
+  employments?: Array<{ companyName: string; position: string; joiningYear?: string; leavingYear?: string; employeeCode?: string }>;
+  educationList?: Array<{ boardUniversity: string; courseName: string; passingYear?: string; rollNumber?: string }>;
   // Court Record Verification fields
-  type?: "identity" | "court_record" | "employment" | "education" | "interpol";
+  type?: "identity" | "court_record" | "employment" | "education" | "interpol" | "passport";
   candidateDob?: string;
   birthCity?: string;
   interpolHasRecords?: boolean;
@@ -243,8 +247,18 @@ export interface Organisation {
   maxVerifiers?: number;
   identityEnabled?: boolean;
   courtRecordEnabled?: boolean;
+  employmentEnabled?: boolean;
+  educationEnabled?: boolean;
+  interpolEnabled?: boolean;
+  passportEnabled?: boolean;
+  identityRate?: number;
   courtRecordRate?: number;
+  employmentRate?: number;
   educationRate?: number;
+  interpolRate?: number;
+  passportRate?: number;
+  employmentRates?: Record<string, number>;
+  educationRates?: Record<string, number>;
 }
 
 interface PortalContextType {
@@ -261,9 +275,15 @@ interface PortalContextType {
     orgName: string;
     requestingOrgName: string;
   }) => Promise<any>;
+  addPassportVerification: (params: {
+    fileNumber: string;
+    dateOfBirth: string;
+    orgName: string;
+    requestingOrgName: string;
+  }) => Promise<any>;
   addVerification: (name: string, email: string, orgName: string, requestingOrgName?: string) => Promise<any>;
-  addEmploymentVerification: (name: string, mobile: string, email: string, orgName: string, requestingOrgName?: string, skipCandidateLogin?: boolean) => Promise<any>;
-  addEducationVerification: (name: string, mobile: string, email: string, orgName: string, requestingOrgName?: string, skipCandidateLogin?: boolean) => Promise<any>;
+  addEmploymentVerification: (name: string, mobile: string, email: string, orgName: string, requestingOrgName?: string, skipCandidateLogin?: boolean, employments?: Array<{ companyName: string; position: string; joiningYear?: string; leavingYear?: string; employeeCode?: string }>, country?: string) => Promise<any>;
+  addEducationVerification: (name: string, mobile: string, email: string, orgName: string, requestingOrgName?: string, skipCandidateLogin?: boolean, educationList?: Array<{ boardUniversity: string; courseName: string; passingYear?: string; rollNumber?: string }>, country?: string) => Promise<any>;
   submitEmploymentData: (verificationId: string, employmentData: any) => Promise<any>;
   submitEducationData: (verificationId: string, educationData: any) => Promise<any>;
   addCourtRecordVerification: (params: {
@@ -758,14 +778,61 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return null;
   };
 
-  const addEmploymentVerification = async (name: string, mobile: string, email: string, orgName: string, requestingOrgName?: string, skipCandidateLogin?: boolean) => {
+  const addPassportVerification = async (params: {
+    fileNumber: string;
+    dateOfBirth: string;
+    orgName: string;
+    requestingOrgName: string;
+  }) => {
+    try {
+      const res = await fetch("/api/portal-data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "addPassportVerification",
+          payload: params,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        fetchAllData();
+        return data;
+      } else {
+        const errData = await res.json();
+        return { success: false, error: errData.error || "Passport verification failed" };
+      }
+    } catch (err: any) {
+      console.error("Failed creating passport verification:", err);
+      return { success: false, error: err?.message || "Failed to connect to server" };
+    }
+  };
+
+  const addEmploymentVerification = async (
+    name: string,
+    mobile: string,
+    email: string,
+    orgName: string,
+    requestingOrgName?: string,
+    skipCandidateLogin?: boolean,
+    employments?: Array<{ companyName: string; position: string; joiningYear?: string; leavingYear?: string; employeeCode?: string }>,
+    country?: string
+  ) => {
     try {
       const res = await fetch("/api/portal-data", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "addEmploymentVerification",
-          payload: { name, mobile, email, orgName, requestingOrgName: requestingOrgName || orgName, skipCandidateLogin: !!skipCandidateLogin },
+          payload: {
+            name,
+            mobile,
+            email,
+            orgName,
+            requestingOrgName: requestingOrgName || orgName,
+            skipCandidateLogin: !!skipCandidateLogin,
+            employments: employments || [],
+            country: country || "India"
+          },
         }),
       });
       if (res.ok) {
@@ -780,14 +847,32 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return null;
   };
 
-  const addEducationVerification = async (name: string, mobile: string, email: string, orgName: string, requestingOrgName?: string, skipCandidateLogin?: boolean) => {
+  const addEducationVerification = async (
+    name: string,
+    mobile: string,
+    email: string,
+    orgName: string,
+    requestingOrgName?: string,
+    skipCandidateLogin?: boolean,
+    educationList?: Array<{ boardUniversity: string; courseName: string; passingYear?: string; rollNumber?: string }>,
+    country?: string
+  ) => {
     try {
       const res = await fetch("/api/portal-data", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "addEducationVerification",
-          payload: { name, mobile, email, orgName, requestingOrgName: requestingOrgName || orgName, skipCandidateLogin: !!skipCandidateLogin },
+          payload: {
+            name,
+            mobile,
+            email,
+            orgName,
+            requestingOrgName: requestingOrgName || orgName,
+            skipCandidateLogin: !!skipCandidateLogin,
+            educationList: educationList || [],
+            country: country || "India"
+          },
         }),
       });
       if (res.ok) {
@@ -856,6 +941,7 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         organisation,
         ozcluSettings,
         addInterpolVerification,
+        addPassportVerification,
         addVerification,
         addEmploymentVerification,
         addEducationVerification,

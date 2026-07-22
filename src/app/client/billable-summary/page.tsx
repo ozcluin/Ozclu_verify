@@ -255,11 +255,23 @@ function BillableSummaryContent() {
                     }
                   } catch {}
 
-                  const verType = v.type || "identity";
-                  const serviceName = verType === "court_record" ? "Court Record Check" : "Identity Verification";
-                  const rate = verType === "court_record"
+                  const verType = (v.type as string) || "identity";
+                  const serviceName = verType === "court_record"
+                    ? "Court Record Check"
+                    : verType === "interpol"
+                    ? "Interpol Check"
+                    : verType === "passport"
+                    ? "Passport Check"
+                    : verType === "employment"
+                    ? "Employment Check"
+                    : verType === "education"
+                    ? "Education Check"
+                    : "Identity Verification";
+                  const rate = (v as any).price || (verType === "court_record"
                     ? (organisation?.courtRecordRate !== undefined ? organisation.courtRecordRate : perVerificationRate)
-                    : perVerificationRate;
+                    : verType === "passport"
+                    ? 15
+                    : perVerificationRate);
 
                   return (
                     <tr key={v.id || idx} className="hover:bg-slate-50/50">

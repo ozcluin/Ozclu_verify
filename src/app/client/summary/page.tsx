@@ -946,6 +946,8 @@ export default function OrderSummaryPage() {
                             ? "bg-amber-50 text-amber-700 border-amber-200"
                             : v.type === "interpol"
                             ? "bg-blue-50/70 text-blue-800 border-blue-200"
+                            : (v.type as string) === "passport"
+                            ? "bg-[#EBF5FF] text-[#1E40AF] border-[#BFDBFE]"
                             : v.type === "employment"
                             ? "bg-blue-50 text-blue-700 border-blue-200"
                             : v.type === "education"
@@ -956,6 +958,8 @@ export default function OrderSummaryPage() {
                             ? "Court Record" 
                             : v.type === "interpol"
                             ? "Interpol Check"
+                            : (v.type as string) === "passport"
+                            ? "Passport Check"
                             : v.type === "employment" 
                             ? "Employment Check" 
                             : v.type === "education" 
@@ -974,6 +978,8 @@ export default function OrderSummaryPage() {
                                   : "Search in progress..."))
                               : v.type === "interpol"
                               ? `DOB: ${v.candidateDob || "Not Given"}${v.birthCity ? ` | City: ${v.birthCity}` : ""}`
+                              : (v.type as string) === "passport"
+                              ? `File No: ${(v as any).passportData?.fileNumber || "—"}${(v as any).passportData?.dateOfBirth ? ` | DOB: ${(v as any).passportData.dateOfBirth}` : ""}`
                               : v.email}
                           </span>
                         </div>
@@ -982,7 +988,7 @@ export default function OrderSummaryPage() {
                       <td className="py-3.5 px-2.5">
                         <span
                           className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold tracking-wide uppercase border ${
-                            ((v.type === "court_record" && (v.courtRecordStatus === "admin_review" || v.courtRecordStatus === "needs_admin_retry")) || !v.sendToCustomer)
+                            ((v.type === "court_record" && (v.courtRecordStatus === "admin_review" || v.courtRecordStatus === "needs_admin_retry")) || (!v.sendToCustomer && (v.type as string) !== "passport" && v.type !== "interpol" && v.type !== "court_record"))
                               ? "bg-amber-100/60 text-amber-700 border-amber-300/50"
                               : v.status === "Completed"
                               ? "bg-[#E6F8F3] text-[#00684A] border-[#A3EAD6]"
@@ -991,14 +997,21 @@ export default function OrderSummaryPage() {
                               : "bg-[#FFF4CC]/40 text-[#805b00] border-[#FFF4CC]"
                           }`}
                         >
-                          {((v.type === "court_record" && (v.courtRecordStatus === "admin_review" || v.courtRecordStatus === "needs_admin_retry")) || !v.sendToCustomer) ? "Under Review" : v.status}
+                          {((v.type === "court_record" && (v.courtRecordStatus === "admin_review" || v.courtRecordStatus === "needs_admin_retry")) || (!v.sendToCustomer && (v.type as string) !== "passport" && v.type !== "interpol" && v.type !== "court_record")) ? "Under Review" : v.status}
                         </span>
                       </td>
                       <td className="py-3.5 px-2.5 text-right">
-                        {v.type === "court_record" || v.type === "interpol" ? (
+                        {(v.type as string) === "court_record" || (v.type as string) === "interpol" || (v.type as string) === "passport" ? (
                           v.sendToCustomer || v.status === "Completed" || v.courtRecordStatus === "completed" || v.status === "Needs Attention" ? (
                             <button
-                              onClick={() => window.open(v.type === "interpol" ? `/client/interpol-report?id=${v.id}` : `/client/court-record-report?id=${v.id}`, "_blank")}
+                              onClick={() => window.open(
+                                (v.type as string) === "interpol"
+                                  ? `/client/interpol-report?id=${v.id}`
+                                  : (v.type as string) === "passport"
+                                  ? `/client/passport-report?id=${v.id}`
+                                  : `/client/court-record-report?id=${v.id}`,
+                                "_blank"
+                              )}
                               className="font-bold text-[11px] px-3 py-1.5 rounded-lg bg-[#eaf0e4]/40 text-[#181d16] hover:bg-[#eaf0e4] transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs"
                             >
                               <span>View Report</span>
@@ -1500,16 +1513,18 @@ export default function OrderSummaryPage() {
                   >
                     Close
                   </button>
-                  {((displayVerification.status === "Completed" || displayVerification.status === "Verified" || displayVerification.status === "Needs Attention" || displayVerification.status === "Discrepancy") && (displayVerification.type === "court_record" || displayVerification.type === "interpol" || displayVerification.sendToCustomer)) && (
+                  {((displayVerification.status === "Completed" || displayVerification.status === "Verified" || displayVerification.status === "Needs Attention" || displayVerification.status === "Discrepancy") && ((displayVerification.type as string) === "court_record" || (displayVerification.type as string) === "interpol" || (displayVerification.type as string) === "passport" || displayVerification.sendToCustomer)) && (
                     <button
                       onClick={() => {
-                        const reportPath = displayVerification.type === "court_record"
+                        const reportPath = (displayVerification.type as string) === "court_record"
                           ? `/client/court-record-report?id=${displayVerification.id}`
-                          : displayVerification.type === "interpol"
+                          : (displayVerification.type as string) === "interpol"
                           ? `/client/interpol-report?id=${displayVerification.id}`
-                          : displayVerification.type === "employment"
+                          : (displayVerification.type as string) === "passport"
+                          ? `/client/passport-report?id=${displayVerification.id}`
+                          : (displayVerification.type as string) === "employment"
                           ? `/client/employment-report?id=${displayVerification.id}`
-                          : displayVerification.type === "education"
+                          : (displayVerification.type as string) === "education"
                           ? `/client/education-report?id=${displayVerification.id}`
                           : `/client/report?id=${displayVerification.id}`;
                         window.open(reportPath, "_blank");
