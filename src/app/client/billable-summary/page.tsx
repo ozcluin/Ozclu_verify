@@ -52,12 +52,22 @@ function BillableSummaryContent() {
     }
   });
 
-  const perVerificationRate = organisation?.monthlyRate || 100.00; // Default to 100 as in the image
+  const perVerificationRate = organisation?.monthlyRate || 100.00;
   const subTotal = filteredVerifications.reduce((sum, v) => {
-    const verType = v.type || "identity";
+    const verType = (v.type as string) || "identity";
     const rate = verType === "court_record"
       ? (organisation?.courtRecordRate !== undefined ? organisation.courtRecordRate : perVerificationRate)
-      : perVerificationRate;
+      : verType === "passport"
+      ? (organisation?.passportRate !== undefined ? organisation.passportRate : 8)
+      : verType === "digital_address"
+      ? (organisation?.digitalAddressRate !== undefined ? organisation.digitalAddressRate : 5)
+      : verType === "interpol"
+      ? (organisation?.interpolRate !== undefined ? organisation.interpolRate : 10)
+      : verType === "employment"
+      ? (organisation?.employmentRate !== undefined ? organisation.employmentRate : 5)
+      : verType === "education"
+      ? (organisation?.educationRate !== undefined ? organisation.educationRate : 5)
+      : (organisation?.identityRate !== undefined ? organisation.identityRate : perVerificationRate);
     return sum + rate;
   }, 0);
 
@@ -262,6 +272,8 @@ function BillableSummaryContent() {
                     ? "Interpol Check"
                     : verType === "passport"
                     ? "Passport Check"
+                    : verType === "digital_address"
+                    ? "Digital Address Check"
                     : verType === "employment"
                     ? "Employment Check"
                     : verType === "education"
@@ -270,8 +282,16 @@ function BillableSummaryContent() {
                   const rate = (v as any).price || (verType === "court_record"
                     ? (organisation?.courtRecordRate !== undefined ? organisation.courtRecordRate : perVerificationRate)
                     : verType === "passport"
-                    ? 15
-                    : perVerificationRate);
+                    ? (organisation?.passportRate !== undefined ? organisation.passportRate : 8)
+                    : verType === "digital_address"
+                    ? (organisation?.digitalAddressRate !== undefined ? organisation.digitalAddressRate : 5)
+                    : verType === "interpol"
+                    ? (organisation?.interpolRate !== undefined ? organisation.interpolRate : 10)
+                    : verType === "employment"
+                    ? (organisation?.employmentRate !== undefined ? organisation.employmentRate : 5)
+                    : verType === "education"
+                    ? (organisation?.educationRate !== undefined ? organisation.educationRate : 5)
+                    : (organisation?.identityRate !== undefined ? organisation.identityRate : perVerificationRate));
 
                   return (
                     <tr key={v.id || idx} className="hover:bg-slate-50/50">

@@ -38,7 +38,7 @@ import { INDIAN_STATES } from "src/lib/courts-mapping";
 import { Country, State, City } from "country-state-city";
 import CandidateFillModal from "src/app/components/CandidateFillModal";
 
-type ServiceType = "identity" | "court_record" | "employment" | "education" | "interpol" | "passport";
+type ServiceType = "identity" | "court_record" | "employment" | "education" | "interpol" | "passport" | "digital_address";
 
 /** Portaled success modal — always renders at document.body so fixed positioning is correct */
 function SuccessModal({ crCreatedId, crCandidateName, onCreateAnother, onGoToSummary }: {
@@ -480,6 +480,12 @@ function FlowIllustration({ activeService }: { activeService: ServiceType }) {
     dbLabel = "Passport Registry";
     clientLabel = "Initiate Lookup";
     candidateLabel = "File Number & DOB";
+  } else if (activeService === "digital_address") {
+    primaryColor = "#0891b2";
+    secondaryColor = "#06b6d4";
+    dbLabel = "Geo-Tagged DB";
+    clientLabel = "Initiate Request";
+    candidateLabel = "Photo & Location";
   }
 
   return (
@@ -636,6 +642,7 @@ function FlowDiagram({ title, activeService }: { title: string; activeService: S
   else if (activeService === "education") colorTheme = "linear-gradient(to right, #7c3aed, #8b5cf6)";
   else if (activeService === "interpol") colorTheme = "linear-gradient(to right, #1d4ed8, #4f46e5)";
   else if (activeService === "passport") colorTheme = "linear-gradient(to right, #4338ca, #6366f1)";
+  else if (activeService === "digital_address") colorTheme = "linear-gradient(to right, #0891b2, #06b6d4)";
 
   return (
     <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-md w-full">
@@ -661,7 +668,7 @@ function FlowDiagram({ title, activeService }: { title: string; activeService: S
 export default function IdentityVerification() {
   const router = useRouter();
   const { user, profile } = useAuth();
-  const { addVerification, addEmploymentVerification, addEducationVerification, addCourtRecordVerification, addInterpolVerification, addPassportVerification, settings, removeRecentRequestingOrg, organisation } = usePortal();
+  const { addVerification, addEmploymentVerification, addEducationVerification, addCourtRecordVerification, addInterpolVerification, addPassportVerification, addDigitalAddressVerification, settings, removeRecentRequestingOrg, organisation } = usePortal();
 
   const [activeFillModal, setActiveFillModal] = useState<{
     isOpen: boolean;
@@ -708,6 +715,22 @@ export default function IdentityVerification() {
   const [passportTimeRemaining, setPassportTimeRemaining] = useState(15);
   const [showPassportLoadingModal, setShowPassportLoadingModal] = useState(false);
 
+  // ─── Digital Address Verification States ───
+  const [davCandidateName, setDavCandidateName] = useState("");
+  const [davCandidateEmail, setDavCandidateEmail] = useState("");
+  const [davCandidateAddress, setDavCandidateAddress] = useState("");
+  const [davRequestingOrgName, setDavRequestingOrgName] = useState("");
+  const [davShowOrgDropdown, setDavShowOrgDropdown] = useState(false);
+  const [davSubmitting, setDavSubmitting] = useState(false);
+  const [davErrorMsg, setDavErrorMsg] = useState("");
+  const [davSuccessMsg, setDavSuccessMsg] = useState("");
+  const [davCreatedCredentials, setDavCreatedCredentials] = useState<{
+    id?: string;
+    name: string;
+    email: string;
+    setupUrl?: string;
+  } | null>(null);
+  const [davCopiedUrl, setDavCopiedUrl] = useState(false);
 
 
   // Service selector state
@@ -718,6 +741,8 @@ export default function IdentityVerification() {
     const serviceParam = searchParams.get("service");
     if (serviceParam === "passport") {
       setActiveService("passport");
+    } else if (serviceParam === "digital_address") {
+      setActiveService("digital_address");
     }
   }, [searchParams]);
 
@@ -837,6 +862,10 @@ export default function IdentityVerification() {
 
   const passportFilteredOrgs = recentOrgs.filter(org =>
     org.toLowerCase().includes(passportRequestingOrgName.toLowerCase())
+  );
+
+  const davFilteredOrgs = recentOrgs.filter(org =>
+    org.toLowerCase().includes(davRequestingOrgName.toLowerCase())
   );
 
   // ─── Identity Check States (existing) ───
@@ -1437,6 +1466,85 @@ export default function IdentityVerification() {
     setPassportCreatedData(null);
   };
 
+  // ─── Digital Address Verification Handlers ───
+  const handleDigitalAddressSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setDavErrorMsg("");
+    setDavSuccessMsg("");
+
+    const isSettingsInc = !settings ||
+      !settings.contactFirstName?.trim() ||
+      !settings.contactLastName?.trim() ||
+      !settings.address?.trim() ||
+      !settings.city?.trim() ||
+      !settings.postalCode?.trim();
+
+    if (isSettingsInc) {
+      setDavErrorMsg("Please complete your profile settings before creating requests.");
+      return;
+    }
+
+    if (!davCandidateName.trim()) {
+      setDavErrorMsg("Candidate Name is required");
+      return;
+    }
+    if (!davCandidateEmail.trim()) {
+      setDavErrorMsg("Candidate Email is required");
+      return;
+    }
+    if (!davCandidateAddress.trim()) {
+      setDavErrorMsg("Candidate Address is required");
+      return;
+    }
+    if (!davRequestingOrgName.trim()) {
+      setDavErrorMsg("Requesting ORG Name is required");
+      return;
+    }
+
+    setDavSubmitting(true);
+    try {
+      const effectiveOrgName = isAdmin ? (orgName || profile?.org_name || "Ozclu") : (profile?.org_name || orgName);
+      const res = await addDigitalAddressVerification({
+        candidateName: davCandidateName.trim(),
+        candidateEmail: davCandidateEmail.trim(),
+        candidateAddress: davCandidateAddress.trim(),
+        orgName: effectiveOrgName,
+        requestingOrgName: davRequestingOrgName.trim(),
+      });
+
+      if (res && res.success) {
+        setDavSuccessMsg("Digital address verification request created successfully!");
+        setDavCreatedCredentials({
+          id: res.id,
+          name: davCandidateName,
+          email: davCandidateEmail.toLowerCase().trim(),
+          setupUrl: res.setupUrl,
+        });
+        setDavCandidateName("");
+        setDavCandidateEmail("");
+        setDavCandidateAddress("");
+        setDavRequestingOrgName("");
+      } else {
+        setDavErrorMsg(res?.error || "Failed to create digital address verification request");
+      }
+    } catch (err: any) {
+      setDavErrorMsg(err?.message || "Failed to create digital address verification request");
+    } finally {
+      setDavSubmitting(false);
+    }
+  };
+
+  const handleDigitalAddressCancel = () => {
+    setDavCandidateName("");
+    setDavCandidateEmail("");
+    setDavCandidateAddress("");
+    setDavRequestingOrgName("");
+    setDavErrorMsg("");
+    setDavSuccessMsg("");
+    setDavCreatedCredentials(null);
+    setDavCopiedUrl(false);
+  };
+
   const isSettingsIncomplete = !settings ||
     !settings.contactFirstName?.trim() ||
     !settings.contactLastName?.trim() ||
@@ -1606,6 +1714,30 @@ export default function IdentityVerification() {
               Passport Check
             </div>
             <div className="text-[11px] text-[#64748B] mt-0.5">Passport Seva status</div>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveService("digital_address")}
+          className={`flex-1 flex items-center gap-3 p-4 rounded-2xl border-2 transition-all duration-300 cursor-pointer group ${
+            activeService === "digital_address"
+              ? "border-[#181d16] bg-white shadow-md"
+              : "border-[#eaf0e4] bg-[#f6fbf0]/50 hover:border-[#d0dbc6] hover:bg-white/80"
+          }`}
+        >
+          <div className={`p-2.5 rounded-xl transition-all ${
+            activeService === "digital_address"
+              ? "bg-[#181d16] text-white"
+              : "bg-[#f0f5ea]/60 text-[#00450e] group-hover:bg-[#e0e8d8]"
+          }`}>
+            <MapPin className="w-5 h-5" />
+          </div>
+          <div className="text-left">
+            <div className={`font-semibold text-sm ${activeService === "digital_address" ? "text-[#181d16]" : "text-[#475569]"}`}>
+              Digital Address
+            </div>
+            <div className="text-[11px] text-[#64748B] mt-0.5">Geo-tagged photo verify</div>
           </div>
         </button>
 
@@ -4074,6 +4206,276 @@ export default function IdentityVerification() {
             />,
             document.body
           )}
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════════ */}
+      {/* DIGITAL ADDRESS VERIFICATION FORM */}
+      {/* ═══════════════════════════════════════════════════ */}
+      {activeService === "digital_address" && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start max-w-6xl w-full">
+          <div className="lg:col-span-6 flex flex-col gap-6 w-full">
+            {/* Alerts */}
+            {davSuccessMsg && !davCreatedCredentials && (
+              <div className="bg-[#E6F8F3] text-[#00684A] border border-[#A3EAD6] rounded-xl p-4 font-body-sm flex items-center gap-3 max-w-2xl animate-fade-in shadow-2xs">
+                <CheckCircle className="w-5 h-5 text-[#00a877] shrink-0" />
+                <span className="font-semibold">{davSuccessMsg}</span>
+              </div>
+            )}
+
+            {davErrorMsg && (
+              <div className="bg-red-50 text-red-800 border border-red-200 rounded-xl p-4 font-body-sm flex items-center gap-3 max-w-2xl animate-fade-in shadow-2xs">
+                <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
+                <span className="font-semibold">{davErrorMsg}</span>
+              </div>
+            )}
+
+            {/* Success Card with URL */}
+            {davCreatedCredentials && (
+              <div className="bg-white border border-[#eaf0e4] rounded-3xl p-8 shadow-sm relative overflow-hidden animate-fade-in w-full">
+                <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-cyan-500 via-teal-500 to-emerald-500"></div>
+                <div className="flex flex-col gap-5 mt-2">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-[#E6F8F3] border border-[#A3EAD6] rounded-full flex items-center justify-center">
+                      <CheckCircle className="w-5 h-5 text-[#00a877]" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-[#181d16] text-sm">Verification Request Created!</h3>
+                      <p className="text-xs text-slate-500 mt-0.5">Verification ID: <span className="font-mono font-bold">{davCreatedCredentials.id}</span></p>
+                    </div>
+                  </div>
+
+                  <div className="bg-[#f6fbf0] border border-[#eaf0e4] rounded-2xl p-4 flex flex-col gap-3">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-slate-500 font-semibold">Candidate</span>
+                      <span className="text-[#181d16] font-bold">{davCreatedCredentials.name}</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-slate-500 font-semibold">Email</span>
+                      <span className="text-[#181d16] font-bold">{davCreatedCredentials.email}</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-slate-500 font-semibold">Status</span>
+                      <span className="text-amber-600 font-bold flex items-center gap-1">
+                        <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></div>
+                        Awaiting Candidate
+                      </span>
+                    </div>
+                  </div>
+
+                  {davCreatedCredentials.setupUrl && (
+                    <div className="flex flex-col gap-2">
+                      <label className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Candidate Verification URL</label>
+                      <div className="flex gap-2">
+                        <input
+                          readOnly
+                          value={davCreatedCredentials.setupUrl}
+                          className="flex-1 border border-slate-200 rounded-lg px-3 py-2.5 text-[11px] font-mono text-slate-600 bg-slate-50 truncate"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(davCreatedCredentials.setupUrl || "");
+                            setDavCopiedUrl(true);
+                            setTimeout(() => setDavCopiedUrl(false), 2000);
+                          }}
+                          className="px-3 py-2.5 bg-[#181d16] text-white rounded-lg text-[11px] font-bold hover:bg-[#1E293B] transition-all cursor-pointer flex items-center gap-1.5"
+                        >
+                          {davCopiedUrl ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                          {davCopiedUrl ? "Copied!" : "Copy"}
+                        </button>
+                      </div>
+                      <p className="text-[10px] text-slate-400 flex items-center gap-1">
+                        <Sparkles className="w-3 h-3" />
+                        Share this URL with the candidate. They will take geo-tagged photos for address verification.
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="flex gap-3 mt-2">
+                    <button
+                      type="button"
+                      onClick={() => { setDavCreatedCredentials(null); setDavSuccessMsg(""); }}
+                      className="flex-1 py-3 border border-[#eaf0e4] rounded-xl font-semibold text-xs text-slate-700 hover:bg-[#f6fbf0] transition-colors cursor-pointer bg-white"
+                    >
+                      Create Another
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setDavCreatedCredentials(null); router.push("/client/summary"); }}
+                      className="flex-1 py-3 bg-[#181d16] text-white rounded-xl font-semibold text-xs hover:bg-[#1E293B] transition-all cursor-pointer shadow-sm"
+                    >
+                      Go to Summary
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Form Card */}
+            {!davCreatedCredentials && (
+              <div className="bg-white border border-[#eaf0e4] rounded-3xl p-8 shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1 w-full">
+                <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-cyan-500 via-teal-500 to-emerald-500"></div>
+                <div className="absolute -right-12 -bottom-12 w-32 h-32 bg-cyan-50/35 rounded-full blur-2xl pointer-events-none"></div>
+                <div className="absolute -left-12 -top-12 w-32 h-32 bg-teal-50/20 rounded-full blur-2xl pointer-events-none"></div>
+
+                <form onSubmit={handleDigitalAddressSubmit} className="flex flex-col gap-6 mt-2 relative z-10">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="p-2 bg-cyan-50 rounded-xl border border-cyan-100">
+                      <MapPin className="w-5 h-5 text-cyan-700" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-[#181d16] text-lg">Digital Address Verification</h3>
+                      <p className="text-xs text-slate-500">Geo-tagged photo verification at candidate&apos;s residing address</p>
+                    </div>
+                  </div>
+
+                  {/* Candidate Name */}
+                  <div className="flex flex-col gap-2">
+                    <label className="font-label-caps text-[#475569] text-xs font-semibold uppercase tracking-wider" htmlFor="dav-candidate-name">
+                      Candidate Name
+                    </label>
+                    <div className="relative">
+                      <UserPlus className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
+                      <input
+                        id="dav-candidate-name"
+                        type="text"
+                        value={davCandidateName}
+                        onChange={(e) => setDavCandidateName(e.target.value)}
+                        autoComplete="off"
+                        className="w-full border border-[#eaf0e4] rounded-xl pl-10 pr-3.5 py-3.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] focus:border-[#181d16] transition-all bg-[#f6fbf0]/50 placeholder-slate-400 font-semibold"
+                        placeholder="Enter the candidate name"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {/* Candidate Email */}
+                  <div className="flex flex-col gap-2">
+                    <label className="font-label-caps text-[#475569] text-xs font-semibold uppercase tracking-wider" htmlFor="dav-candidate-email">
+                      Candidate Email ID
+                    </label>
+                    <div className="relative">
+                      <Send className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
+                      <input
+                        id="dav-candidate-email"
+                        type="email"
+                        value={davCandidateEmail}
+                        onChange={(e) => setDavCandidateEmail(e.target.value)}
+                        autoComplete="off"
+                        className="w-full border border-[#eaf0e4] rounded-xl pl-10 pr-3.5 py-3.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] focus:border-[#181d16] transition-all bg-[#f6fbf0]/50 placeholder-slate-400 font-semibold"
+                        placeholder="Enter the candidate email ID"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {/* Candidate Address */}
+                  <div className="flex flex-col gap-2">
+                    <label className="font-label-caps text-[#475569] text-xs font-semibold uppercase tracking-wider" htmlFor="dav-candidate-address">
+                      Address of Candidate
+                    </label>
+                    <div className="relative">
+                      <MapPin className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
+                      <textarea
+                        id="dav-candidate-address"
+                        value={davCandidateAddress}
+                        onChange={(e) => setDavCandidateAddress(e.target.value)}
+                        autoComplete="off"
+                        rows={3}
+                        className="w-full border border-[#eaf0e4] rounded-xl pl-10 pr-3.5 py-3.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] focus:border-[#181d16] transition-all bg-[#f6fbf0]/50 placeholder-slate-400 font-semibold resize-none"
+                        placeholder="Enter the full residential address of the candidate"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {/* Requesting Organisation */}
+                  <div className="flex flex-col gap-2 relative">
+                    <label className="font-label-caps text-[#475569] text-xs font-semibold uppercase tracking-wider" htmlFor="dav-req-org">
+                      Requesting ORG Name
+                    </label>
+                    <div className="relative">
+                      <Building className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
+                      <input
+                        id="dav-req-org"
+                        type="text"
+                        value={davRequestingOrgName}
+                        onChange={(e) => {
+                          setDavRequestingOrgName(e.target.value);
+                          setDavShowOrgDropdown(true);
+                        }}
+                        onFocus={() => setDavShowOrgDropdown(true)}
+                        autoComplete="off"
+                        className="w-full border border-[#eaf0e4] rounded-xl pl-10 pr-3.5 py-3.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] focus:border-[#181d16] transition-all bg-[#f6fbf0]/50 placeholder-slate-400 font-semibold"
+                        placeholder="e.g. Acme Corp"
+                        required
+                      />
+                    </div>
+                    {davShowOrgDropdown && davFilteredOrgs.length > 0 && (
+                      <div className="absolute top-[calc(100%+4px)] left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-lg z-50 max-h-40 overflow-y-auto">
+                        {davFilteredOrgs.map((org, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => {
+                              setDavRequestingOrgName(org);
+                              setDavShowOrgDropdown(false);
+                            }}
+                            className="w-full px-4 py-2.5 text-left text-xs font-semibold text-slate-700 hover:bg-[#f6fbf0] transition-colors flex items-center justify-between group"
+                          >
+                            <span>{org}</span>
+                            <Trash2
+                              className="w-3.5 h-3.5 text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                await removeRecentRequestingOrg(org);
+                              }}
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Form Action Buttons */}
+                  <div className="flex items-center gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={handleDigitalAddressCancel}
+                      disabled={davSubmitting}
+                      className="py-3.5 px-5 border border-[#eaf0e4] hover:bg-slate-50 text-slate-700 font-semibold rounded-xl transition-all cursor-pointer text-xs bg-white"
+                    >
+                      Cancel
+                    </button>
+
+                    <button
+                      type="submit"
+                      disabled={davSubmitting}
+                      className="flex-1 bg-[#181d16] hover:bg-[#1E293B] text-white font-bold py-3.5 px-6 rounded-xl shadow-sm transition-all cursor-pointer flex items-center justify-center gap-2 text-xs disabled:opacity-60"
+                    >
+                      {davSubmitting ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Creating Request...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="w-4 h-4" />
+                          Create Verification Request
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+          </div>
+
+          {/* Right Column: Workflow Diagram */}
+          <div className="lg:col-span-6 w-full lg:sticky lg:top-24">
+            <FlowDiagram title="Digital Address Verification Workflow" activeService="digital_address" />
+          </div>
         </div>
       )}
     </div>

@@ -42,7 +42,7 @@ export interface Verification {
   employments?: Array<{ companyName: string; position: string; joiningYear?: string; leavingYear?: string; employeeCode?: string }>;
   educationList?: Array<{ boardUniversity: string; courseName: string; passingYear?: string; rollNumber?: string }>;
   // Court Record Verification fields
-  type?: "identity" | "court_record" | "employment" | "education" | "interpol" | "passport";
+  type?: "identity" | "court_record" | "employment" | "education" | "interpol" | "passport" | "digital_address";
   candidateDob?: string;
   birthCity?: string;
   interpolHasRecords?: boolean;
@@ -167,6 +167,25 @@ export interface Verification {
     loggedBy?: string;
   }>;
   sendToCustomer?: boolean;
+  // Digital Address Verification fields
+  candidateAddress?: string;
+  digitalAddressData?: {
+    selfieImage?: string;
+    selfieGeoLat?: number;
+    selfieGeoLng?: number;
+    selfieGeoAccuracy?: number;
+    selfieTimestamp?: string;
+    houseImage?: string;
+    houseGeoLat?: number;
+    houseGeoLng?: number;
+    houseGeoAccuracy?: number;
+    houseTimestamp?: string;
+    consentGiven?: boolean;
+    consentTimestamp?: string;
+    deviceInfo?: string;
+  };
+  digitalAddressSubmitted?: boolean;
+  digitalAddressSubmittedAt?: string;
 }
 
 export interface InvoiceActivity {
@@ -260,6 +279,8 @@ export interface Organisation {
   educationRate?: number;
   interpolRate?: number;
   passportRate?: number;
+  digitalAddressEnabled?: boolean;
+  digitalAddressRate?: number;
   employmentRates?: Record<string, number>;
   educationRates?: Record<string, number>;
 }
@@ -281,6 +302,13 @@ interface PortalContextType {
   addPassportVerification: (params: {
     fileNumber: string;
     dateOfBirth: string;
+    orgName: string;
+    requestingOrgName: string;
+  }) => Promise<any>;
+  addDigitalAddressVerification: (params: {
+    candidateName: string;
+    candidateEmail: string;
+    candidateAddress: string;
     orgName: string;
     requestingOrgName: string;
   }) => Promise<any>;
@@ -934,6 +962,36 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return null;
   };
 
+  const addDigitalAddressVerification = async (params: {
+    candidateName: string;
+    candidateEmail: string;
+    candidateAddress: string;
+    orgName: string;
+    requestingOrgName: string;
+  }) => {
+    try {
+      const res = await fetch("/api/portal-data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "addDigitalAddressVerification",
+          payload: params,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        fetchAllData();
+        return data;
+      } else {
+        const errData = await res.json();
+        return { success: false, error: errData.error || "Digital address verification failed" };
+      }
+    } catch (err: any) {
+      console.error("Failed creating digital address verification:", err);
+      return { success: false, error: err?.message || "Failed to connect to server" };
+    }
+  };
+
   return (
     <PortalContext.Provider
       value={{
@@ -945,6 +1003,7 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         ozcluSettings,
         addInterpolVerification,
         addPassportVerification,
+        addDigitalAddressVerification,
         addVerification,
         addEmploymentVerification,
         addEducationVerification,

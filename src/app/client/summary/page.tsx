@@ -53,6 +53,25 @@ function formatDuration(totalSeconds: number): string {
 
 // ─── Search Progress Indicator Component ───
 function SearchProgressIndicator({ verification, now }: { verification: Verification; now: number }) {
+  const verType = (verification.type as string) || "identity";
+
+  if (verType === "digital_address") {
+    const isSubmitted = verification.digitalAddressSubmitted || verification.digitalAddressData?.selfieImage;
+    return (
+      <div className="flex flex-col items-end gap-1 min-w-[140px]">
+        <div className="flex items-center gap-1.5">
+          <div className="w-2 h-2 bg-[#0891b2] rounded-full animate-pulse shrink-0"></div>
+          <span className="text-[11px] text-[#0369A1] font-bold">
+            {isSubmitted ? "Verifying GPS & Photos..." : "Awaiting Candidate Capture"}
+          </span>
+        </div>
+        <span className="text-[9px] text-[#475569] font-medium text-right leading-tight">
+          {isSubmitted ? "Processing watermark..." : "Live camera link sent to candidate"}
+        </span>
+      </div>
+    );
+  }
+
   const MAX_SEARCH_DURATION_S = 180; // 3 minutes max
 
   // Calculate elapsed time
@@ -109,8 +128,10 @@ function SearchProgressIndicator({ verification, now }: { verification: Verifica
 }
 
 function QuickReportProgressIndicator({ verification, now }: { verification: Verification; now: number }) {
-  const isPassport = (verification.type as string) === "passport";
-  const MIN_HOLD_S = isPassport ? 5 : 10;
+  const verType = (verification.type as string) || "identity";
+  const isPassport = verType === "passport";
+  const isDigitalAddress = verType === "digital_address";
+  const MIN_HOLD_S = isPassport ? 5 : isDigitalAddress ? 4 : 10;
   const startedAt = verification.createdAt;
   let elapsedSeconds = 0;
   if (startedAt) {
@@ -118,10 +139,18 @@ function QuickReportProgressIndicator({ verification, now }: { verification: Ver
   }
   const remainingSeconds = Math.max(1, MIN_HOLD_S - elapsedSeconds);
 
-  let stepText = isPassport ? "Step 1/3: Connecting..." : "Step 1/3: Scanning NCB...";
+  let stepText = isPassport
+    ? "Step 1/3: Connecting..."
+    : isDigitalAddress
+    ? "Step 1/3: Validating GPS..."
+    : "Step 1/3: Scanning NCB...";
+
   if (isPassport) {
     if (remainingSeconds <= 3 && remainingSeconds >= 2) stepText = "Step 2/3: Auditing DB...";
     else if (remainingSeconds <= 1) stepText = "Step 3/3: Generating...";
+  } else if (isDigitalAddress) {
+    if (remainingSeconds <= 2 && remainingSeconds >= 2) stepText = "Step 2/3: Watermarking...";
+    else if (remainingSeconds <= 1) stepText = "Step 3/3: Finalizing Report...";
   } else {
     if (remainingSeconds <= 6 && remainingSeconds >= 3) stepText = "Step 2/3: Checking Notices...";
     else if (remainingSeconds <= 2) stepText = "Step 3/3: Generating...";
@@ -720,7 +749,7 @@ export default function OrderSummaryPage() {
                   className="font-bold text-xs text-[#181d16] bg-white hover:bg-[#f0f5ea]/35 px-4 py-2.5 rounded-xl transition-all border border-[#eaf0e4] flex items-center gap-2 cursor-pointer shadow-2xs"
                 >
                   <Layers className="w-4 h-4 text-[#00450e]" />
-                  <span>Type: {typeFilter === "all" ? "ALL" : typeFilter === "court_record" ? "COURT RECORD" : typeFilter === "interpol" ? "INTERPOL CHECK" : typeFilter === "employment" ? "EMPLOYMENT" : typeFilter === "education" ? "EDUCATION" : "IDENTITY"}</span>
+                  <span>Type: {typeFilter === "all" ? "ALL" : typeFilter === "court_record" ? "COURT RECORD" : typeFilter === "interpol" ? "INTERPOL CHECK" : typeFilter === "passport" ? "PASSPORT CHECK" : typeFilter === "digital_address" ? "DIGITAL ADDRESS" : typeFilter === "employment" ? "EMPLOYMENT" : typeFilter === "education" ? "EDUCATION" : "IDENTITY"}</span>
                 </button>
 
                 {typeDropdownOpen && (
@@ -728,9 +757,11 @@ export default function OrderSummaryPage() {
                     <div className="p-1 flex flex-col gap-1 font-body-sm">
                       {[
                         { key: "all", label: "ALL" },
+                        { key: "digital_address", label: "DIGITAL ADDRESS" },
                         { key: "identity", label: "IDENTITY" },
                         { key: "court_record", label: "COURT RECORD" },
                         { key: "interpol", label: "INTERPOL CHECK" },
+                        { key: "passport", label: "PASSPORT CHECK" },
                         { key: "employment", label: "EMPLOYMENT" },
                         { key: "education", label: "EDUCATION" }
                       ].map((item) => (
@@ -988,6 +1019,8 @@ export default function OrderSummaryPage() {
                             ? "bg-blue-50/70 text-blue-800 border-blue-200"
                             : (v.type as string) === "passport"
                             ? "bg-[#EBF5FF] text-[#1E40AF] border-[#BFDBFE]"
+                            : (v.type as string) === "digital_address"
+                            ? "bg-[#E0F2FE] text-[#0369A1] border-[#BAE6FD]"
                             : v.type === "employment"
                             ? "bg-blue-50 text-blue-700 border-blue-200"
                             : v.type === "education"
@@ -1000,6 +1033,8 @@ export default function OrderSummaryPage() {
                             ? "Interpol Check"
                             : (v.type as string) === "passport"
                             ? "Passport Check"
+                            : (v.type as string) === "digital_address"
+                            ? "Digital Address Check"
                             : v.type === "employment" 
                             ? "Employment Check" 
                             : v.type === "education" 
@@ -1020,6 +1055,8 @@ export default function OrderSummaryPage() {
                               ? `DOB: ${v.candidateDob || "Not Given"}${v.birthCity ? ` | City: ${v.birthCity}` : ""}`
                               : (v.type as string) === "passport"
                               ? `File No: ${(v as any).passportData?.fileNumber || "—"}${(v as any).passportData?.dateOfBirth ? ` | DOB: ${(v as any).passportData.dateOfBirth}` : ""}`
+                              : (v.type as string) === "digital_address"
+                              ? `${v.candidateAddress ? `${v.candidateAddress} | ` : ""}${v.email}`
                               : v.email}
                           </span>
                         </div>
@@ -1028,7 +1065,7 @@ export default function OrderSummaryPage() {
                       <td className="py-3.5 px-2.5">
                         <span
                           className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold tracking-wide uppercase border ${
-                            ((v.type === "court_record" && (v.courtRecordStatus === "admin_review" || v.courtRecordStatus === "needs_admin_retry")) || (!v.sendToCustomer && (v.type as string) !== "passport" && v.type !== "interpol" && v.type !== "court_record"))
+                            ((v.type === "court_record" && (v.courtRecordStatus === "admin_review" || v.courtRecordStatus === "needs_admin_retry")) || (!v.sendToCustomer && (v.type as string) !== "passport" && v.type !== "interpol" && v.type !== "court_record" && (v.type as string) !== "digital_address"))
                               ? "bg-amber-100/60 text-amber-700 border-amber-300/50"
                               : v.status === "Completed"
                               ? "bg-[#E6F8F3] text-[#00684A] border-[#A3EAD6]"
@@ -1037,11 +1074,11 @@ export default function OrderSummaryPage() {
                               : "bg-[#FFF4CC]/40 text-[#805b00] border-[#FFF4CC]"
                           }`}
                         >
-                          {((v.type === "court_record" && (v.courtRecordStatus === "admin_review" || v.courtRecordStatus === "needs_admin_retry")) || (!v.sendToCustomer && (v.type as string) !== "passport" && v.type !== "interpol" && v.type !== "court_record")) ? "Under Review" : v.status}
+                          {((v.type === "court_record" && (v.courtRecordStatus === "admin_review" || v.courtRecordStatus === "needs_admin_retry")) || (!v.sendToCustomer && (v.type as string) !== "passport" && v.type !== "interpol" && v.type !== "court_record" && (v.type as string) !== "digital_address")) ? "Under Review" : v.status}
                         </span>
                       </td>
                       <td className="py-3.5 px-2.5 text-right">
-                        {(v.type as string) === "court_record" || (v.type as string) === "interpol" || (v.type as string) === "passport" ? (
+                        {(v.type as string) === "court_record" || (v.type as string) === "interpol" || (v.type as string) === "passport" || (v.type as string) === "digital_address" ? (
                           (() => {
                             const isPassport = (v.type as string) === "passport";
                             const isQuickCheck = isPassport || (v.type as string) === "interpol";
@@ -1061,6 +1098,8 @@ export default function OrderSummaryPage() {
                                       ? `/client/interpol-report?id=${v.id}`
                                       : (v.type as string) === "passport"
                                       ? `/client/passport-report?id=${v.id}`
+                                      : (v.type as string) === "digital_address"
+                                      ? `/client/digital-address-report?id=${v.id}`
                                       : `/client/court-record-report?id=${v.id}`,
                                     "_blank"
                                   )}
@@ -1580,6 +1619,8 @@ export default function OrderSummaryPage() {
                           ? `/client/interpol-report?id=${displayVerification.id}`
                           : (displayVerification.type as string) === "passport"
                           ? `/client/passport-report?id=${displayVerification.id}`
+                          : (displayVerification.type as string) === "digital_address"
+                          ? `/client/digital-address-report?id=${displayVerification.id}`
                           : (displayVerification.type as string) === "employment"
                           ? `/client/employment-report?id=${displayVerification.id}`
                           : (displayVerification.type as string) === "education"

@@ -1298,6 +1298,115 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({ success: true, id: finalId, passportData });
       }
+      case "addDigitalAddressVerification": {
+        const { candidateName, candidateEmail, candidateAddress, orgName, requestingOrgName: reqOrgName } = payload;
+
+        if (!candidateName?.trim() || !candidateEmail?.trim() || !candidateAddress?.trim()) {
+          return NextResponse.json({ error: "Candidate name, email, and address are required" }, { status: 400 });
+        }
+
+        const isAdminSession = sessionOrgName?.toLowerCase() === "ozclu" || sessionOrgName?.toLowerCase() === "admin";
+        const safeOrgName = isAdminSession ? (orgName || sessionOrgName) : (sessionOrgName || orgName);
+
+        const cleanOrg = (safeOrgName || "XXX").replace(/[^a-zA-Z]/g, "").slice(0, 3).padEnd(3, "X").toUpperCase();
+        const nowTime = new Date();
+        const dd = String(nowTime.getDate()).padStart(2, "0");
+        const mm = String(nowTime.getMonth() + 1).padStart(2, "0");
+        const yy = String(nowTime.getFullYear()).slice(-2);
+        const dateStr = `${dd}${mm}${yy}`;
+        const prefix = `DAV${dateStr}-`;
+
+        const count = await db.collection("verifications").countDocuments({
+          id: { $regex: `^${prefix}` }
+        });
+        const finalId = `${prefix}${String(count + 1).padStart(4, "0")}`;
+
+        // Generate temporary password and create/update candidate user
+        const { randomBytes } = await import("crypto");
+        const bcrypt = await import("bcryptjs");
+
+        const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        let randStr = "";
+        const randomBytesArr = randomBytes(8);
+        for (let i = 0; i < 8; i++) {
+          randStr += charset.charAt(randomBytesArr[i] % charset.length);
+        }
+        const tempPassword = `Ozclu@${randStr}`;
+        const hashedTempPassword = bcrypt.hashSync(tempPassword, 10);
+
+        const emailLower = candidateEmail.toLowerCase().trim();
+        const existingUser = await db.collection("users").findOne({ email: emailLower });
+        if (!existingUser) {
+          await db.collection("users").insertOne({
+            email: emailLower,
+            password: hashedTempPassword,
+            fullName: candidateName.trim(),
+            role: "candidate",
+            orgName: safeOrgName,
+            createdAt: new Date()
+          });
+        } else {
+          await db.collection("users").updateOne(
+            { email: emailLower },
+            { $set: { password: hashedTempPassword, role: "candidate", fullName: candidateName.trim() } }
+          );
+        }
+
+        const candidatePortalUrl = process.env.CANDIDATE_PORTAL_URL || "https://candidate.verify.ozclu.in";
+        const setupUrl = `${candidatePortalUrl}/?email=${encodeURIComponent(emailLower)}&password=${encodeURIComponent(tempPassword)}`;
+
+        const initialAttempt = {
+          date: new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata", hour12: true }).replace(/\u202f/g, " ").toLowerCase(),
+          verifier: "Client Init",
+          status: "Processing",
+          notes: "Digital address verification request created by client. Awaiting candidate photo submission."
+        };
+
+        const dateFormatted = new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
+
+        await db.collection("verifications").insertOne({
+          id: finalId,
+          name: candidateName.trim(),
+          email: emailLower,
+          orgName: safeOrgName,
+          requestingOrgName: reqOrgName || safeOrgName,
+          candidateAddress: candidateAddress.trim(),
+          date: dateFormatted,
+          status: "Processing",
+          verifier: null,
+          notes: "Digital address verification request created. Awaiting candidate submission.",
+          type: "digital_address",
+          onboardingStatus: "active",
+          tempPassword,
+          attempts: [initialAttempt],
+          setupUrl,
+          digitalAddressSubmitted: false,
+          createdAt: new Date().toISOString()
+        });
+
+        if (reqOrgName && reqOrgName.trim()) {
+          await db.collection("settings").updateOne(
+            { companyName: safeOrgName },
+            { $addToSet: { recentRequestingOrgs: reqOrgName.trim() } },
+            { upsert: true }
+          );
+        }
+
+        await logAuditEvent(db, {
+          actorUserId: user.id,
+          actorEmail: user.email,
+          actorRole: user.role,
+          portal: "client",
+          action: "digital_address_verification_created",
+          targetType: "verification",
+          targetId: finalId,
+          ip,
+          userAgent,
+          outcome: "success"
+        });
+
+        return NextResponse.json({ success: true, id: finalId, setupUrl });
+      }
       default:
 
         return NextResponse.json({ error: `Unsupported action: ${action}` }, { status: 400 });
