@@ -221,10 +221,26 @@ function InterpolSuccessModal({ interpolCreatedId, candidateName, hasRecords, on
   onCreateAnother: () => void;
   onGoToSummary: () => void;
 }) {
+  const [reportTimer, setReportTimer] = useState(10);
+
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
     document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = ""; };
+
+    const interval = setInterval(() => {
+      setReportTimer((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      clearInterval(interval);
+      document.body.style.overflow = "";
+    };
   }, []);
 
   return (
@@ -264,13 +280,35 @@ function InterpolSuccessModal({ interpolCreatedId, candidateName, hasRecords, on
 
         <div className="flex flex-col gap-2.5 w-full">
           <button
+            disabled={reportTimer > 0}
             onClick={() => {
-              window.open(`/client/interpol-report?id=${interpolCreatedId}`, "_blank");
+              if (reportTimer === 0) {
+                window.open(`/client/interpol-report?id=${interpolCreatedId}`, "_blank");
+              }
             }}
-            className="w-full py-3 bg-[#181d16] hover:bg-[#1E293B] text-white font-bold rounded-xl transition-all cursor-pointer text-xs shadow-xs inline-flex items-center justify-center gap-1.5"
+            className={`w-full py-3 font-bold rounded-xl transition-all text-xs inline-flex items-center justify-center gap-1.5 ${
+              reportTimer > 0
+                ? "bg-slate-100 text-slate-500 cursor-not-allowed border border-slate-200"
+                : "bg-[#181d16] hover:bg-[#1E293B] text-white cursor-pointer shadow-xs"
+            }`}
           >
-            <span>View Verification Report</span>
-            <ExternalLink className="w-4 h-4" />
+            {reportTimer > 0 ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600" />
+                <span>
+                  {reportTimer >= 7
+                    ? "Step 1/3: Scanning Interpol NCB..."
+                    : reportTimer >= 3
+                    ? "Step 2/3: Cross-Checking Notices..."
+                    : "Step 3/3: Generating Certificate..."} ({reportTimer}s)
+                </span>
+              </>
+            ) : (
+              <>
+                <span>View Verification Report</span>
+                <ExternalLink className="w-4 h-4" />
+              </>
+            )}
           </button>
           
           <div className="grid grid-cols-2 gap-3">
@@ -300,10 +338,26 @@ function PassportSuccessModal({ passportCreatedId, candidateName, statusMessage,
   onCreateAnother: () => void;
   onGoToSummary: () => void;
 }) {
+  const [reportTimer, setReportTimer] = useState(5);
+
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
     document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = ""; };
+
+    const interval = setInterval(() => {
+      setReportTimer((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      clearInterval(interval);
+      document.body.style.overflow = "";
+    };
   }, []);
 
   return (
@@ -332,13 +386,35 @@ function PassportSuccessModal({ passportCreatedId, candidateName, statusMessage,
 
         <div className="flex flex-col gap-2.5 w-full">
           <button
+            disabled={reportTimer > 0}
             onClick={() => {
-              window.open(`/client/passport-report?id=${passportCreatedId}`, "_blank");
+              if (reportTimer === 0) {
+                window.open(`/client/passport-report?id=${passportCreatedId}`, "_blank");
+              }
             }}
-            className="w-full py-3 bg-[#181d16] hover:bg-[#1E293B] text-white font-bold rounded-xl transition-all cursor-pointer text-xs shadow-xs inline-flex items-center justify-center gap-1.5"
+            className={`w-full py-3 font-bold rounded-xl transition-all text-xs inline-flex items-center justify-center gap-1.5 ${
+              reportTimer > 0
+                ? "bg-slate-100 text-slate-500 cursor-not-allowed border border-slate-200"
+                : "bg-[#181d16] hover:bg-[#1E293B] text-white cursor-pointer shadow-xs"
+            }`}
           >
-            <span>View Verification Report</span>
-            <ExternalLink className="w-4 h-4" />
+            {reportTimer > 0 ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-red-600" />
+                <span>
+                  {reportTimer >= 4
+                    ? "Step 1/3: Connecting Registry..."
+                    : reportTimer >= 2
+                    ? "Step 2/3: Auditing Database..."
+                    : "Step 3/3: Generating Certificate..."} ({reportTimer}s)
+                </span>
+              </>
+            ) : (
+              <>
+                <span>View Verification Report</span>
+                <ExternalLink className="w-4 h-4" />
+              </>
+            )}
           </button>
           
           <div className="grid grid-cols-2 gap-3">
@@ -626,6 +702,13 @@ export default function IdentityVerification() {
   const [passportCreatedData, setPassportCreatedData] = useState<any>(null);
   const [passportErrorMsg, setPassportErrorMsg] = useState<string | null>(null);
   const [passportSuccessMsg, setPassportSuccessMsg] = useState("");
+  // ─── Passport 15-Second Loading Screen States ───
+  const [passportLoadingProgress, setPassportLoadingProgress] = useState(0);
+  const [passportLoadingStage, setPassportLoadingStage] = useState(0);
+  const [passportTimeRemaining, setPassportTimeRemaining] = useState(15);
+  const [showPassportLoadingModal, setShowPassportLoadingModal] = useState(false);
+
+
 
   // Service selector state
   const [activeService, setActiveService] = useState<ServiceType>("identity");
@@ -1269,59 +1352,27 @@ export default function IdentityVerification() {
     }
 
     setInterpolSubmitting(true);
-    setInterpolLoadingProgress(0);
-    setInterpolTimeRemaining(59);
-    setInterpolLoadingStage(0);
+    try {
+      const effectiveOrgName = isAdmin ? (orgName || profile?.org_name || "Ozclu") : (profile?.org_name || orgName);
+      const res = await addInterpolVerification({
+        candidateName: interpolCandidateName.trim(),
+        candidateDob: interpolCandidateDob.trim(),
+        birthCity: interpolBirthCity.trim(),
+        orgName: effectiveOrgName,
+        requestingOrgName: interpolRequestingOrgName.trim(),
+      });
 
-    const totalTimeMs = 59000;
-    const intervalMs = 100;
-    const startTime = Date.now();
-
-    const effectiveOrgName = isAdmin ? (orgName || profile?.org_name || "Ozclu") : (profile?.org_name || orgName);
-
-    // Trigger API request in parallel
-    const apiPromise = addInterpolVerification({
-      candidateName: interpolCandidateName.trim(),
-      candidateDob: interpolCandidateDob.trim(),
-      birthCity: interpolBirthCity.trim(),
-      orgName: effectiveOrgName,
-      requestingOrgName: interpolRequestingOrgName.trim(),
-    }).catch((err) => ({ success: false, error: err?.message || "Failed to run Interpol database check" }));
-
-    // Execute smooth 59-second loading countdown
-    await new Promise<void>((resolve) => {
-      const timer = setInterval(() => {
-        const elapsed = Date.now() - startTime;
-        const rawProgress = Math.min((elapsed / totalTimeMs) * 100, 100);
-        const secsLeft = Math.max(59 - Math.floor(elapsed / 1000), 0);
-
-        setInterpolLoadingProgress(Math.floor(rawProgress));
-        setInterpolTimeRemaining(secsLeft);
-
-        if (rawProgress < 18) setInterpolLoadingStage(0);
-        else if (rawProgress < 38) setInterpolLoadingStage(1);
-        else if (rawProgress < 58) setInterpolLoadingStage(2);
-        else if (rawProgress < 75) setInterpolLoadingStage(3);
-        else if (rawProgress < 90) setInterpolLoadingStage(4);
-        else setInterpolLoadingStage(5);
-
-        if (elapsed >= totalTimeMs) {
-          clearInterval(timer);
-          resolve();
-        }
-      }, intervalMs);
-    });
-
-    const res = await apiPromise;
-
-    if (res && res.success) {
-      setInterpolSuccessMsg(res.interpolHasRecords ? "Potential similarity match(es) found." : "Interpol database check completed successfully!");
-      setInterpolCreatedId(res.id);
-    } else {
-      setInterpolErrorMsg(res?.error || "Failed to run Interpol database check");
+      if (res && res.success) {
+        setInterpolSuccessMsg(res.interpolHasRecords ? "Potential similarity match(es) found." : "Interpol database check completed successfully!");
+        setInterpolCreatedId(res.id);
+      } else {
+        setInterpolErrorMsg(res?.error || "Failed to run Interpol database check");
+      }
+    } catch (err: any) {
+      setInterpolErrorMsg(err?.message || "Failed to run Interpol database check");
+    } finally {
+      setInterpolSubmitting(false);
     }
-
-    setInterpolSubmitting(false);
   };
 
   const handleInterpolCancel = () => {
@@ -1340,17 +1391,7 @@ export default function IdentityVerification() {
     setPassportErrorMsg(null);
     setPassportSuccessMsg("");
 
-    const isSettingsIncomplete = !settings ||
-      !settings.contactFirstName?.trim() ||
-      !settings.contactLastName?.trim() ||
-      !settings.address?.trim() ||
-      !settings.city?.trim() ||
-      !settings.postalCode?.trim();
 
-    if (isSettingsIncomplete) {
-      setPassportErrorMsg("Please complete your profile settings before creating requests.");
-      return;
-    }
 
     if (!passportFileNumber.trim() || !passportDob) {
       setPassportErrorMsg("Please enter both Passport File Number and Date of Birth.");
@@ -1575,24 +1616,7 @@ export default function IdentityVerification() {
         )}
       </div>
 
-      {/* Settings incomplete warning banner */}
-      {isSettingsIncomplete && (
-        <div className="bg-[#FFF8E6] text-[#8A5E00] border border-[#FFE7A3] rounded-xl p-4 font-body-sm flex items-start gap-3 max-w-2xl animate-fade-in shadow-2xs">
-          <AlertCircle className="w-5 h-5 text-[#D97706] shrink-0 mt-0.5" />
-          <div className="flex flex-col gap-1">
-            <span className="font-bold">Missing Required Profile Information</span>
-            <p className="text-xs text-[#92400E] font-semibold leading-relaxed">
-              You must set your First Name, Last Name, Address, City, and Postal Code (Zipcode) in Settings before you can create verification requests.
-            </p>
-            <button
-              onClick={() => router.push("/client/settings")}
-              className="mt-2 text-xs font-bold text-[#181d16] hover:underline flex items-center gap-1 w-fit"
-            >
-              Go to Settings <ExternalLink className="w-3 h-3" />
-            </button>
-          </div>
-        </div>
-      )}
+
 
       {/* ═══════════════════════════════════════════════════ */}
       {/* IDENTITY CHECK FORM (existing functionality) */}
@@ -3921,7 +3945,7 @@ export default function IdentityVerification() {
                       onChange={(e) => setPassportFileNumber(e.target.value.toUpperCase())}
                       autoComplete="off"
                       className="w-full border border-[#eaf0e4] rounded-xl pl-10 pr-3.5 py-3.5 font-mono text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] focus:border-[#181d16] transition-all bg-[#f6fbf0]/50 placeholder-slate-400 font-bold uppercase"
-                      placeholder="e.g. PA1065476374625"
+                      placeholder="123456789012345"
                       required
                     />
                   </div>
@@ -3969,7 +3993,7 @@ export default function IdentityVerification() {
                       onFocus={() => setPassportShowOrgDropdown(true)}
                       autoComplete="off"
                       className="w-full border border-[#eaf0e4] rounded-xl pl-10 pr-3.5 py-3.5 font-body-sm text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] focus:border-[#181d16] transition-all bg-[#f6fbf0]/50 placeholder-slate-400 font-semibold"
-                      placeholder="Enter requesting organization name"
+                      placeholder="e.g. Acme Corp"
                       required
                     />
                   </div>
@@ -4036,6 +4060,8 @@ export default function IdentityVerification() {
           <div className="lg:col-span-6 w-full lg:sticky lg:top-24">
             <FlowDiagram title="Passport Verification Workflow" activeService="passport" />
           </div>
+
+
 
           {/* Success Modal for Passport Check — rendered via Portal */}
           {passportCreatedId && typeof document !== "undefined" && createPortal(

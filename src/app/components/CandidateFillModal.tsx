@@ -4,6 +4,66 @@ import React, { useState, useEffect } from "react";
 import { X, Briefcase, GraduationCap, Send, CheckCircle, AlertCircle, Building2, Award } from "lucide-react";
 import { usePortal } from "src/context/PortalContext";
 import { INDIAN_STATES } from "src/lib/courts-mapping";
+import { Country, State, City } from "country-state-city";
+
+const ALLOWED_COUNTRIES = [
+  "Singapore", "Malaysia", "Philippines", "UAE",
+  "Saudi Arabia", "Qatar", "Kuwait", "Oman", "Bahrain", "India"
+];
+
+const getStatesForCountry = (countryName: string) => {
+  if (!countryName) return [];
+  if (countryName === "India") {
+    return INDIAN_STATES.map(s => ({ name: s.name, code: s.code })).sort((a, b) => a.name.localeCompare(b.name));
+  }
+  const countryObj = Country.getAllCountries().find(c => c.name.toLowerCase() === countryName.toLowerCase());
+  if (countryObj) {
+    const states = State.getStatesOfCountry(countryObj.isoCode);
+    if (states.length > 0) {
+      return states.map(s => ({ name: s.name, code: s.isoCode })).sort((a, b) => a.name.localeCompare(b.name));
+    }
+  }
+  if (countryName === "Singapore") {
+    return [
+      { name: "Central Singapore", code: "SG-01" },
+      { name: "North East", code: "SG-02" },
+      { name: "North West", code: "SG-03" },
+      { name: "South East", code: "SG-04" },
+      { name: "South West", code: "SG-05" }
+    ];
+  }
+  return [];
+};
+
+const getCitiesForState = (countryName: string, stateName: string) => {
+  if (!countryName || !stateName) return [];
+  const countryObj = Country.getAllCountries().find(c => c.name.toLowerCase() === countryName.toLowerCase());
+  if (!countryObj) return [];
+
+  const countryStates = State.getStatesOfCountry(countryObj.isoCode);
+  const cleanStateName = stateName.startsWith("Other:") ? stateName.substring(6) : stateName;
+  const stateObj = countryStates.find(s => s.name.toLowerCase() === cleanStateName.toLowerCase() || s.isoCode.toLowerCase() === cleanStateName.toLowerCase());
+
+  if (stateObj) {
+    const cities = City.getCitiesOfState(countryObj.isoCode, stateObj.isoCode);
+    if (cities.length > 0) {
+      return cities.map(c => c.name).sort((a, b) => a.localeCompare(b));
+    }
+  }
+
+  const allCountryCities = City.getCitiesOfCountry(countryObj.isoCode) || [];
+  if (allCountryCities.length > 0) {
+    return Array.from(new Set(allCountryCities.map(c => c.name))).sort((a, b) => a.localeCompare(b));
+  }
+
+  if (countryName === "Singapore") {
+    return ["Singapore", "Bedok", "Jurong East", "Tampines", "Woodlands", "Yishun", "Ang Mo Kio", "Choa Chu Kang", "Hougang", "Sengkang"];
+  }
+  if (countryName === "UAE") {
+    return ["Dubai", "Abu Dhabi", "Sharjah", "Al Ain", "Ajman", "Ras Al Khaimah", "Fujairah", "Umm Al Quwain"];
+  }
+  return [];
+};
 
 
 interface CandidateFillModalProps {
@@ -75,6 +135,7 @@ export default function CandidateFillModal({
 
   // Education Form State
   const [eduForm, setEduForm] = useState({
+    country: "India",
     degreeType: "",
     courseName: "",
     boardUniversity: "",
@@ -301,7 +362,7 @@ export default function CandidateFillModal({
                   {/* Company Location & Contact */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t border-[#eaf0e4]/80">
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-bold text-slate-500 uppercase">Country</label>
+                      <label className="text-[10px] font-bold text-slate-500 uppercase">Country *</label>
                       <select
                         value={emp.country}
                         onChange={(e) => {
@@ -311,48 +372,95 @@ export default function CandidateFillModal({
                         }}
                         className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none"
                       >
-                        <option value="India">India</option>
-                        <option value="Singapore">Singapore</option>
-                        <option value="Malaysia">Malaysia</option>
-                        <option value="Philippines">Philippines</option>
-                        <option value="UAE">UAE</option>
+                        <option value="">Select Country</option>
+                        {ALLOWED_COUNTRIES.map((c) => (
+                          <option key={c} value={c}>{c}</option>
+                        ))}
                       </select>
                     </div>
 
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-bold text-slate-500 uppercase">State / Province</label>
-                      {emp.country === "India" ? (
-                        <select
-                          value={emp.state}
-                          onChange={(e) => updateEmploymentItem(emp.id, "state", e.target.value)}
-                          className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none"
-                        >
-                          <option value="">Select State</option>
-                          {[...INDIAN_STATES].sort((a, b) => a.name.localeCompare(b.name)).map((s) => (
-                            <option key={s.code} value={s.name}>{s.name}</option>
-                          ))}
-                        </select>
-                      ) : (
-                        <input
-                          type="text"
-                          value={emp.state}
-                          onChange={(e) => updateEmploymentItem(emp.id, "state", e.target.value)}
-                          placeholder="State name"
-                          className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none"
-                        />
-                      )}
-                    </div>
+                    {(() => {
+                      const stateList = getStatesForCountry(emp.country);
+                      return (
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase">State / Province *</label>
+                          {stateList.length > 0 ? (
+                            <select
+                              value={emp.state.startsWith("Other:") ? "Other" : emp.state}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                updateEmploymentItem(emp.id, "state", val);
+                                updateEmploymentItem(emp.id, "city", "");
+                              }}
+                              className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none"
+                            >
+                              <option value="">Select State / Province</option>
+                              {stateList.map((s) => (
+                                <option key={s.code || s.name} value={s.name}>{s.name}</option>
+                              ))}
+                              <option value="Other">Other / Enter Manually</option>
+                            </select>
+                          ) : (
+                            <input
+                              type="text"
+                              value={emp.state}
+                              onChange={(e) => updateEmploymentItem(emp.id, "state", e.target.value)}
+                              placeholder="Enter state / province"
+                              className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none"
+                            />
+                          )}
+                          {(emp.state === "Other" || emp.state?.startsWith("Other:")) && (
+                            <input
+                              type="text"
+                              value={emp.state.startsWith("Other:") ? emp.state.substring(6) : ""}
+                              onChange={(e) => updateEmploymentItem(emp.id, "state", "Other:" + e.target.value)}
+                              placeholder="Enter custom state name"
+                              className="border border-[#eaf0e4] rounded-xl p-2 text-xs font-semibold text-[#181d16] bg-white focus:outline-none mt-1"
+                            />
+                          )}
+                        </div>
+                      );
+                    })()}
 
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-bold text-slate-500 uppercase">City</label>
-                      <input
-                        type="text"
-                        value={emp.city}
-                        onChange={(e) => updateEmploymentItem(emp.id, "city", e.target.value)}
-                        placeholder="City name"
-                        className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none"
-                      />
-                    </div>
+                    {(() => {
+                      const cityList = getCitiesForState(emp.country, emp.state);
+                      return (
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase">City *</label>
+                          {cityList.length > 0 ? (
+                            <select
+                              value={emp.city.startsWith("Other:") ? "Other" : emp.city}
+                              onChange={(e) => updateEmploymentItem(emp.id, "city", e.target.value)}
+                              disabled={!emp.state}
+                              className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none disabled:opacity-50"
+                            >
+                              <option value="">{!emp.state ? "Select State First" : "Select City"}</option>
+                              {cityList.map((c) => (
+                                <option key={c} value={c}>{c}</option>
+                              ))}
+                              <option value="Other">Other / Enter Manually</option>
+                            </select>
+                          ) : (
+                            <input
+                              type="text"
+                              value={emp.city}
+                              onChange={(e) => updateEmploymentItem(emp.id, "city", e.target.value)}
+                              placeholder="Enter city name"
+                              className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none"
+                            />
+                          )}
+                          {(emp.city === "Other" || emp.city?.startsWith("Other:")) && (
+                            <input
+                              type="text"
+                              value={emp.city.startsWith("Other:") ? emp.city.substring(6) : ""}
+                              onChange={(e) => updateEmploymentItem(emp.id, "city", "Other:" + e.target.value)}
+                              placeholder="Enter custom city name"
+                              className="border border-[#eaf0e4] rounded-xl p-2 text-xs font-semibold text-[#181d16] bg-white focus:outline-none mt-1"
+                            />
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   {/* Employment Period & Identifiers */}
@@ -489,6 +597,21 @@ export default function CandidateFillModal({
                   <span className="font-bold text-xs uppercase text-[#181d16] tracking-wider">Academic Credentials</span>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1.5 md:col-span-2">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase">Country of Institution *</label>
+                    <select
+                      value={eduForm.country}
+                      onChange={(e) => updateEdu("country", e.target.value)}
+                      className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none"
+                    >
+                      <option value="Singapore">Singapore</option>
+                      <option value="Malaysia">Malaysia</option>
+                      <option value="Philippines">Philippines</option>
+                      <option value="UAE">UAE</option>
+                      <option value="India">India</option>
+                    </select>
+                  </div>
+
                   <div className="flex flex-col gap-1.5 md:col-span-2">
                     <label className="text-[10px] font-bold text-slate-500 uppercase">Degree Category *</label>
                     <select

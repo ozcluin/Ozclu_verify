@@ -833,6 +833,7 @@ export async function POST(req: NextRequest) {
           {
             $set: {
               educationData: {
+                country: educationData.country || "",
                 degreeType: educationData.degreeType || "",
                 courseName: educationData.courseName || "",
                 boardUniversity: educationData.boardUniversity || "",
@@ -840,6 +841,7 @@ export async function POST(req: NextRequest) {
                 rollNumber: educationData.rollNumber || "",
                 passingYear: educationData.passingYear || "",
                 certificateFile: educationData.certificateFile || "",
+                certificateFileName: educationData.certificateFileName || "",
               },
               educationDataSubmitted: true,
               educationDataSubmittedAt: new Date().toISOString(),
@@ -1132,7 +1134,8 @@ export async function POST(req: NextRequest) {
           }
         }
 
-        const headers = {
+        // ── API1: Passport Seva (primary) ──
+        const api1Headers = {
           'Content-Type': 'application/json',
           'Accept': 'application/json, text/plain, */*',
           'Accept-Language': 'en-US,en;q=0.9',
@@ -1141,8 +1144,8 @@ export async function POST(req: NextRequest) {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
         };
 
-        const apiUrl = 'https://api1.passportindia.gov.in/v1/online/trackStatusForFileNo';
-        const apiPayload = {
+        const api1Url = 'https://api1.passportindia.gov.in/v1/online/trackStatusForFileNo';
+        const api1Payload = {
           requestResponseMap: {
             fileNo: fileNumber.trim().toUpperCase(),
             applDob: formattedDob,
@@ -1151,33 +1154,82 @@ export async function POST(req: NextRequest) {
         };
 
         let passportResult: any = null;
-        let apiError: string | null = null;
+        let api1Error: string | null = null;
+        let dataSource: string = 'api1';
 
         try {
-          const apiRes = await fetch(apiUrl, {
+          const apiRes = await fetch(api1Url, {
             method: 'POST',
-            headers,
-            body: JSON.stringify(apiPayload)
+            headers: api1Headers,
+            body: JSON.stringify(api1Payload)
           });
 
           if (!apiRes.ok) {
             const errText = await apiRes.text();
-            apiError = `Passport India portal returned status ${apiRes.status}.`;
+            api1Error = `Passport India portal returned status ${apiRes.status}.`;
           } else {
             const data = await apiRes.json();
             if (data.strReturnString === 'error' || (data.fieldErrors && Object.keys(data.fieldErrors).length > 0)) {
               const fieldMsg = data.fieldErrors ? Object.values(data.fieldErrors).flat().join(', ') : '';
-              apiError = fieldMsg || 'Invalid File Number or Date of Birth.';
+              api1Error = fieldMsg || 'Invalid File Number or Date of Birth.';
             } else {
               passportResult = data;
             }
           }
         } catch (err: any) {
-          apiError = err?.message || 'Failed to connect to Passport India server.';
+          api1Error = err?.message || 'Failed to connect to Passport India server.';
         }
 
-        if (apiError || !passportResult) {
-          return NextResponse.json({ error: apiError || 'Passport verification query failed' }, { status: 400 });
+        // ── API2: Mission Portal (fallback) — only if API1 failed ──
+        if (api1Error || !passportResult) {
+          let api2Error: string | null = null;
+
+          const api2Headers = {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json, text/plain, */*',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Origin': 'https://mportal.passportindia.gov.in',
+            'Referer': 'https://mportal.passportindia.gov.in/',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36'
+          };
+
+          const api2Url = 'https://api2.passportindia.gov.in/v1/mproddc/online/gpsp/trackApplicationStatus';
+          const api2Payload = {
+            requestResponseMap: {
+              refNo: fileNumber.trim().toUpperCase(),
+              applDob: formattedDob,
+              optStatus: 'Application_Status'
+            }
+          };
+
+          try {
+            const api2Res = await fetch(api2Url, {
+              method: 'POST',
+              headers: api2Headers,
+              body: JSON.stringify(api2Payload)
+            });
+
+            if (!api2Res.ok) {
+              const errText = await api2Res.text();
+              api2Error = `Mission Portal returned status ${api2Res.status}.`;
+            } else {
+              const data2 = await api2Res.json();
+              if (data2.strReturnString === 'error') {
+                const errMsg2 = data2.actionErrors?.join(', ') || 'Invalid ARN / File Number or Date of Birth.';
+                api2Error = errMsg2;
+              } else {
+                passportResult = data2;
+                dataSource = 'api2_mportal';
+              }
+            }
+          } catch (err2: any) {
+            api2Error = err2?.message || 'Failed to connect to Mission Portal server.';
+          }
+
+          // If both APIs failed, return error
+          if (api2Error || !passportResult) {
+            return NextResponse.json({ error: api2Error || api1Error || 'Passport verification query failed on both portals.' }, { status: 400 });
+          }
         }
 
         const map = passportResult.requestResponseMap || {};
@@ -1186,13 +1238,18 @@ export async function POST(req: NextRequest) {
           : {};
 
         const passportData = {
-          fileNumber: appStatusObj.FILE_NO || map.fileNo || fileNumber.trim().toUpperCase(),
+          fileNumber: appStatusObj.FILE_NO || map.fileNo || map.refNo || fileNumber.trim().toUpperCase(),
           dateOfBirth: appStatusObj.DATE_OF_BIRTH || map.applDob || formattedDob,
           givenName: appStatusObj.APPL_GIVEN_NAME || '—',
           surname: appStatusObj.APPL_SURNAME || '—',
+          applicantName: appStatusObj.APPL_GIVEN_NAME && appStatusObj.APPL_SURNAME
+            ? `${appStatusObj.APPL_GIVEN_NAME} ${appStatusObj.APPL_SURNAME}`
+            : appStatusObj.APPL_GIVEN_NAME || appStatusObj.APPL_SURNAME || '—',
           typeOfApplication: appStatusObj.PARAM_VALUE || 'Normal',
           applicationReceivedDate: appStatusObj.APP_SUB_DATE || '—',
+          applicationRefNo: appStatusObj.APP_REF_NO_FK || '—',
           statusMessage: map.statusMessage || appStatusObj.STATUS_MESSAGE || 'Status Retrieved Successfully',
+          dataSource,
           rawResponse: passportResult
         };
 

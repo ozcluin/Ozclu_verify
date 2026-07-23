@@ -35,6 +35,8 @@ export interface Verification {
   setupUrl?: string;
   skipCandidateLogin?: boolean;
   createdAt?: string;
+  country?: string;
+  perCheckRate?: number;
   itemCount?: number;
   serviceCharge?: number;
   employments?: Array<{ companyName: string; position: string; joiningYear?: string; leavingYear?: string; employeeCode?: string }>;
@@ -136,6 +138,7 @@ export interface Verification {
   }>;
   // Education Verification fields
   educationData?: {
+    country?: string;
     degreeType?: string;
     courseName?: string;
     boardUniversity?: string;

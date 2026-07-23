@@ -108,6 +108,38 @@ function SearchProgressIndicator({ verification, now }: { verification: Verifica
   );
 }
 
+function QuickReportProgressIndicator({ verification, now }: { verification: Verification; now: number }) {
+  const isPassport = (verification.type as string) === "passport";
+  const MIN_HOLD_S = isPassport ? 5 : 10;
+  const startedAt = verification.createdAt;
+  let elapsedSeconds = 0;
+  if (startedAt) {
+    elapsedSeconds = Math.max(0, Math.floor((now - new Date(startedAt).getTime()) / 1000));
+  }
+  const remainingSeconds = Math.max(1, MIN_HOLD_S - elapsedSeconds);
+
+  let stepText = isPassport ? "Step 1/3: Connecting..." : "Step 1/3: Scanning NCB...";
+  if (isPassport) {
+    if (remainingSeconds <= 3 && remainingSeconds >= 2) stepText = "Step 2/3: Auditing DB...";
+    else if (remainingSeconds <= 1) stepText = "Step 3/3: Generating...";
+  } else {
+    if (remainingSeconds <= 6 && remainingSeconds >= 3) stepText = "Step 2/3: Checking Notices...";
+    else if (remainingSeconds <= 2) stepText = "Step 3/3: Generating...";
+  }
+
+  return (
+    <div className="flex flex-col items-end gap-1 min-w-[140px]">
+      <div className="flex items-center gap-1.5">
+        <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shrink-0"></div>
+        <span className="text-[11px] text-[#00684A] font-bold">{stepText}</span>
+      </div>
+      <span className="text-[9px] text-[#475569] font-mono font-semibold">
+        Ready in {remainingSeconds}s
+      </span>
+    </div>
+  );
+}
+
 export default function OrderSummaryPage() {
   const { verifications, invoices, settings, organisation, submitPaymentProof, fetchVerificationDetail, refreshData } = usePortal();
 
@@ -140,10 +172,18 @@ export default function OrderSummaryPage() {
     });
   };
 
-  // Check if any court record searches are currently active
-  const hasActiveSearches = verifications.some(
-    (v) => v.type === "court_record" && v.status === "Processing" && v.courtRecordStatus !== "completed" && v.courtRecordStatus !== "error" && v.courtRecordStatus !== "needs_admin_retry"
-  );
+  // Check if any searches or quick report generation timers are active
+  const hasActiveSearches = verifications.some((v) => {
+    if (v.type === "court_record" && v.status === "Processing" && v.courtRecordStatus !== "completed" && v.courtRecordStatus !== "error" && v.courtRecordStatus !== "needs_admin_retry") {
+      return true;
+    }
+    if (((v.type as string) === "passport" || v.type === "interpol") && v.createdAt) {
+      const elapsed = Math.floor((tickNow - new Date(v.createdAt).getTime()) / 1000);
+      const minHold = (v.type as string) === "passport" ? 5 : 10;
+      if (elapsed < minHold) return true;
+    }
+    return false;
+  });
 
   // Tick every second while searches are active (for live timer)
   useEffect(() => {
@@ -1002,32 +1042,50 @@ export default function OrderSummaryPage() {
                       </td>
                       <td className="py-3.5 px-2.5 text-right">
                         {(v.type as string) === "court_record" || (v.type as string) === "interpol" || (v.type as string) === "passport" ? (
-                          v.sendToCustomer || v.status === "Completed" || v.courtRecordStatus === "completed" || v.status === "Needs Attention" ? (
-                            <button
-                              onClick={() => window.open(
-                                (v.type as string) === "interpol"
-                                  ? `/client/interpol-report?id=${v.id}`
-                                  : (v.type as string) === "passport"
-                                  ? `/client/passport-report?id=${v.id}`
-                                  : `/client/court-record-report?id=${v.id}`,
-                                "_blank"
-                              )}
-                              className="font-bold text-[11px] px-3 py-1.5 rounded-lg bg-[#eaf0e4]/40 text-[#181d16] hover:bg-[#eaf0e4] transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs"
-                            >
-                              <span>View Report</span>
-                              <ArrowRight className="w-3.5 h-3.5" />
-                            </button>
-                          ) : (v.courtRecordStatus === "admin_review" || v.courtRecordStatus === "needs_admin_retry") ? (
-                            <div className="flex flex-col items-end gap-1 min-w-[140px]">
-                              <div className="flex items-center gap-1.5">
-                                <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse shrink-0"></div>
-                                <span className="text-[11px] text-amber-700 font-bold">Reviewing with attorney</span>
-                              </div>
-                              <span className="text-[9px] text-[#475569] font-medium text-right leading-tight">Will complete within<br/>24 hours.</span>
-                            </div>
-                          ) : (
-                            <SearchProgressIndicator verification={v} now={tickNow} />
-                          )
+                          (() => {
+                            const isPassport = (v.type as string) === "passport";
+                            const isQuickCheck = isPassport || (v.type as string) === "interpol";
+                            const minHoldS = isPassport ? 5 : 10;
+                            const elapsedSeconds = v.createdAt ? Math.floor((tickNow - new Date(v.createdAt).getTime()) / 1000) : 999;
+                            const isHolding = isQuickCheck && elapsedSeconds < minHoldS;
+
+                            if (isHolding) {
+                              return <QuickReportProgressIndicator verification={v} now={tickNow} />;
+                            }
+
+                            if (v.sendToCustomer || v.status === "Completed" || v.courtRecordStatus === "completed" || v.status === "Needs Attention") {
+                              return (
+                                <button
+                                  onClick={() => window.open(
+                                    (v.type as string) === "interpol"
+                                      ? `/client/interpol-report?id=${v.id}`
+                                      : (v.type as string) === "passport"
+                                      ? `/client/passport-report?id=${v.id}`
+                                      : `/client/court-record-report?id=${v.id}`,
+                                    "_blank"
+                                  )}
+                                  className="font-bold text-[11px] px-3 py-1.5 rounded-lg bg-[#eaf0e4]/40 text-[#181d16] hover:bg-[#eaf0e4] transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs"
+                                >
+                                  <span>View Report</span>
+                                  <ArrowRight className="w-3.5 h-3.5" />
+                                </button>
+                              );
+                            }
+
+                            if (v.courtRecordStatus === "admin_review" || v.courtRecordStatus === "needs_admin_retry") {
+                              return (
+                                <div className="flex flex-col items-end gap-1 min-w-[140px]">
+                                  <div className="flex items-center gap-1.5">
+                                    <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse shrink-0"></div>
+                                    <span className="text-[11px] text-amber-700 font-bold">Reviewing with attorney</span>
+                                  </div>
+                                  <span className="text-[9px] text-[#475569] font-medium text-right leading-tight">Will complete within<br/>24 hours.</span>
+                                </div>
+                              );
+                            }
+
+                            return <SearchProgressIndicator verification={v} now={tickNow} />;
+                          })()
                         ) : ((v.type === "employment" || v.type === "education") && !v.sendToCustomer) ? (
                           (v.type === "employment" ? v.employmentDataSubmitted : v.educationDataSubmitted) ? (
                             <div className="flex items-center gap-1.5 justify-end">
