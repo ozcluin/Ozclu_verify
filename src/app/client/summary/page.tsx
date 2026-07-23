@@ -496,36 +496,83 @@ export default function OrderSummaryPage() {
     .filter((inv) => inv.status === "Unpaid" || inv.status === "Overdue")
     .reduce((sum, inv) => sum + inv.amount, 0);
 
-  // Real-time: count all COMPLETED verifications that have NOT been invoiced yet
-  const completedVerifications = clientVerifications.filter((v) => v.status === "Completed");
+  // Real-time: count all COMPLETED/READY verifications that have NOT been invoiced yet
+  const uninvoicedVerifications = clientVerifications.filter((v) => {
+    const isCompleted = v.status === "Completed" || v.courtRecordStatus === "completed" || (v as any).sendToCustomer;
+    if (!isCompleted) return false;
 
-  // Check which completed verifications do not have an invoice generated for their completion month and year
-  const uninvoicedVerifications = completedVerifications.filter((v) => {
+    if ((v as any).invoiced === true || (v as any).invoiceId) return false;
+
     try {
-      const d = new Date(v.completedAt || v.date);
-      if (isNaN(d.getTime())) return true;
-      const mName = d.toLocaleDateString("en-US", { month: "long" }).toLowerCase();
-      const yVal = d.getFullYear();
+      const rawDate = v.completedAt || v.date || v.createdAt;
+      if (!rawDate) return true;
+      const vDate = new Date(rawDate);
+      if (isNaN(vDate.getTime())) return true;
+
+      const mName = vDate.toLocaleDateString("en-US", { month: "long" }).toLowerCase();
+      const yVal = vDate.getFullYear();
 
       // Look for an invoice matching this month and year
-      const hasInvoice = clientInvoices.some(
+      const matchingInvoice = clientInvoices.find(
         (inv) => {
           const invMonth = inv.month?.toLowerCase();
           return invMonth === mName && inv.year === yVal && (inv as any).isDeleted !== true;
         }
       );
-      return !hasInvoice;
+
+      if (!matchingInvoice) return true;
+
+      // If an invoice exists for this month, check if verification occurred AFTER the invoice issue date/createdAt
+      const invRawDate = (matchingInvoice as any).createdAt || matchingInvoice.date;
+      if (invRawDate) {
+        const invDate = new Date(invRawDate);
+        if (!isNaN(invDate.getTime())) {
+          return vDate.getTime() > invDate.getTime();
+        }
+      }
+      return false;
     } catch {
       return true;
     }
   });
 
   const currentMonthCompleted = uninvoicedVerifications.length;
-  const perVerificationRate = organisation?.monthlyRate || 0;
-  const courtRecordRate = organisation?.courtRecordRate !== undefined ? organisation.courtRecordRate : perVerificationRate;
 
   const currentMonthRunningTotal = uninvoicedVerifications.reduce((sum, v) => {
-    const rate = v.type === "court_record" ? courtRecordRate : perVerificationRate;
+    if ((v as any).price !== undefined && (v as any).price !== null) {
+      return sum + Number((v as any).price);
+    }
+    const verType = (v.type as string) || "identity";
+    let rate = 1;
+    if (verType === "court_record") {
+      rate = organisation?.courtRecordRate !== undefined ? organisation.courtRecordRate : 12;
+    } else if (verType === "interpol") {
+      rate = organisation?.interpolRate !== undefined ? organisation.interpolRate : 10;
+    } else if (verType === "passport") {
+      rate = organisation?.passportRate !== undefined ? organisation.passportRate : 8;
+    } else if (verType === "digital_address") {
+      rate = organisation?.digitalAddressRate !== undefined ? organisation.digitalAddressRate : 5;
+    } else if (verType === "employment") {
+      const c = v.country || (v as any).employmentData?.country || (v as any).addresses?.[0]?.country || "";
+      if (c && organisation?.employmentRates && organisation.employmentRates[c] !== undefined) {
+        rate = organisation.employmentRates[c];
+      } else if (organisation?.employmentRates?.["Default"] !== undefined) {
+        rate = organisation.employmentRates["Default"];
+      } else {
+        rate = organisation?.employmentRate !== undefined ? organisation.employmentRate : 5;
+      }
+    } else if (verType === "education") {
+      const c = v.country || (v as any).educationData?.country || (v as any).addresses?.[0]?.country || "";
+      if (c && organisation?.educationRates && organisation.educationRates[c] !== undefined) {
+        rate = organisation.educationRates[c];
+      } else if (organisation?.educationRates?.["Default"] !== undefined) {
+        rate = organisation.educationRates["Default"];
+      } else {
+        rate = organisation?.educationRate !== undefined ? organisation.educationRate : 5;
+      }
+    } else {
+      rate = organisation?.identityRate !== undefined ? organisation.identityRate : 1;
+    }
     return sum + rate;
   }, 0);
 

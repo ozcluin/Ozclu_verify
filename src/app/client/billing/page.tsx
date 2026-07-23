@@ -149,27 +149,44 @@ export default function ClientBillingPage() {
   const currentMonthName = nowVal.toLocaleDateString("en-US", { month: "long" });
   const currentYear = nowVal.getFullYear();
 
-  const hasCurrentMonthInvoice = clientInvoices.some(
-    (inv) => inv.month?.toLowerCase() === currentMonthName.toLowerCase() && inv.year === currentYear
-  );
+  const currentMonthCompleted = verifications.filter((v) => {
+    if (clientCompany && v.orgName.toLowerCase() !== clientCompany.toLowerCase()) return false;
+    const isCompleted = v.status === "Completed" || v.courtRecordStatus === "completed" || (v as any).sendToCustomer;
+    if (!isCompleted) return false;
+    if ((v as any).invoiced === true || (v as any).invoiceId) return false;
 
-  let liveTotal = 0;
-  if (!hasCurrentMonthInvoice) {
-    const currentMonthCompleted = verifications.filter((v) => {
-      if (clientCompany && v.orgName.toLowerCase() !== clientCompany.toLowerCase()) return false;
-      if (v.status !== "Completed" && v.courtRecordStatus !== "completed" && !(v as any).sendToCustomer) return false;
-      try {
-        const rawDate = v.completedAt || v.date || v.createdAt;
-        if (!rawDate) return false;
-        const d = new Date(rawDate);
-        if (isNaN(d.getTime())) return false;
-        return d.getMonth() === nowVal.getMonth() && d.getFullYear() === currentYear;
-      } catch {
-        return false;
+    try {
+      const rawDate = v.completedAt || v.date || v.createdAt;
+      if (!rawDate) return false;
+      const vDate = new Date(rawDate);
+      if (isNaN(vDate.getTime())) return false;
+
+      const mName = vDate.toLocaleDateString("en-US", { month: "long" }).toLowerCase();
+      const yVal = vDate.getFullYear();
+
+      const matchingInvoice = clientInvoices.find(
+        (inv) => {
+          const invMonth = inv.month?.toLowerCase();
+          return invMonth === mName && inv.year === yVal && (inv as any).isDeleted !== true;
+        }
+      );
+
+      if (!matchingInvoice) return true;
+
+      const invRawDate = (matchingInvoice as any).createdAt || matchingInvoice.date;
+      if (invRawDate) {
+        const invDate = new Date(invRawDate);
+        if (!isNaN(invDate.getTime())) {
+          return vDate.getTime() > invDate.getTime();
+        }
       }
-    });
+      return false;
+    } catch {
+      return true;
+    }
+  });
 
-    liveTotal = currentMonthCompleted.reduce((sum, v) => {
+  const liveTotal = currentMonthCompleted.reduce((sum, v) => {
       if ((v as any).price !== undefined && (v as any).price !== null) {
         return sum + Number((v as any).price);
       }
@@ -206,7 +223,6 @@ export default function ClientBillingPage() {
       }
       return sum + rate;
     }, 0);
-  }
 
   const totalDues = unpaidBalance + liveTotal;
 
