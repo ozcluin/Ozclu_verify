@@ -1125,7 +1125,41 @@ export default function OrderSummaryPage() {
                         </span>
                       </td>
                       <td className="py-3.5 px-2.5 text-right">
-                        {(v.type as string) === "court_record" || (v.type as string) === "interpol" || (v.type as string) === "passport" || (v.type as string) === "digital_address" ? (
+                        {(v.type as string) === "digital_address" ? (
+                          v.sendToCustomer || v.status === "Completed" ? (
+                            <button
+                              onClick={() => window.open(`/client/digital-address-report?id=${v.id}`, "_blank")}
+                              className="font-bold text-[11px] px-3 py-1.5 rounded-lg bg-[#eaf0e4]/40 text-[#181d16] hover:bg-[#eaf0e4] transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs"
+                            >
+                              <span>View Report</span>
+                              <ArrowRight className="w-3.5 h-3.5" />
+                            </button>
+                          ) : (
+                            <div className="flex items-center gap-2 justify-end">
+                              <div className="flex flex-col items-end gap-0.5 min-w-[130px]">
+                                <div className="flex items-center gap-1.5">
+                                  <div className="w-2 h-2 bg-[#0891b2] rounded-full animate-pulse shrink-0"></div>
+                                  <span className="text-[11px] text-[#0369A1] font-bold">
+                                    {v.digitalAddressSubmitted || v.digitalAddressData?.selfieImage ? "Verifying GPS & Photos..." : "Awaiting Capture"}
+                                  </span>
+                                </div>
+                                <span className="text-[9px] text-[#475569] font-medium text-right leading-tight">
+                                  {v.digitalAddressSubmitted || v.digitalAddressData?.selfieImage ? "Processing..." : "Live camera link active"}
+                                </span>
+                              </div>
+                              {!v.skipCandidateLogin && (
+                                <button
+                                  onClick={() => handleViewReport(v)}
+                                  className="font-bold text-[11px] px-2.5 py-1.5 rounded-lg bg-[#f0f5ea]/65 text-[#181d16] hover:bg-[#f0f5ea] transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs border border-[#eaf0e4]"
+                                  title="View Candidate Login Credentials & Direct Link"
+                                >
+                                  <span>Credentials</span>
+                                  <Key className="w-3.5 h-3.5 text-[#181d16]" />
+                                </button>
+                              )}
+                            </div>
+                          )
+                        ) : (v.type as string) === "court_record" || (v.type as string) === "interpol" || (v.type as string) === "passport" ? (
                           (() => {
                             const isPassport = (v.type as string) === "passport";
                             const isQuickCheck = isPassport || (v.type as string) === "interpol";
@@ -1145,8 +1179,6 @@ export default function OrderSummaryPage() {
                                       ? `/client/interpol-report?id=${v.id}`
                                       : (v.type as string) === "passport"
                                       ? `/client/passport-report?id=${v.id}`
-                                      : (v.type as string) === "digital_address"
-                                      ? `/client/digital-address-report?id=${v.id}`
                                       : `/client/court-record-report?id=${v.id}`,
                                     "_blank"
                                   )}
