@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 
 export default function ClientBillingPage() {
-  const { invoices, settings, submitPaymentProof, refreshData } = usePortal();
+  const { verifications, invoices, settings, organisation, submitPaymentProof, refreshData } = usePortal();
 
   const [activeInvoice, setActiveInvoice] = useState<Invoice | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<"wire" | "paypal">("wire");
@@ -144,6 +144,72 @@ export default function ClientBillingPage() {
     .filter((inv) => inv.status === "Unpaid" || inv.status === "Overdue" || inv.status === "Pending")
     .reduce((sum, inv) => sum + inv.amount, 0);
 
+  // Live Month Dues Calculation
+  const nowVal = new Date();
+  const currentMonthName = nowVal.toLocaleDateString("en-US", { month: "long" });
+  const currentYear = nowVal.getFullYear();
+
+  const hasCurrentMonthInvoice = clientInvoices.some(
+    (inv) => inv.month?.toLowerCase() === currentMonthName.toLowerCase() && inv.year === currentYear
+  );
+
+  let liveTotal = 0;
+  if (!hasCurrentMonthInvoice) {
+    const currentMonthCompleted = verifications.filter((v) => {
+      if (clientCompany && v.orgName.toLowerCase() !== clientCompany.toLowerCase()) return false;
+      if (v.status !== "Completed" && v.courtRecordStatus !== "completed" && !(v as any).sendToCustomer) return false;
+      try {
+        const rawDate = v.completedAt || v.date || v.createdAt;
+        if (!rawDate) return false;
+        const d = new Date(rawDate);
+        if (isNaN(d.getTime())) return false;
+        return d.getMonth() === nowVal.getMonth() && d.getFullYear() === currentYear;
+      } catch {
+        return false;
+      }
+    });
+
+    liveTotal = currentMonthCompleted.reduce((sum, v) => {
+      if ((v as any).price !== undefined && (v as any).price !== null) {
+        return sum + Number((v as any).price);
+      }
+      const verType = (v.type as string) || "identity";
+      let rate = 1;
+      if (verType === "court_record") {
+        rate = organisation?.courtRecordRate !== undefined ? organisation.courtRecordRate : 12;
+      } else if (verType === "interpol") {
+        rate = organisation?.interpolRate !== undefined ? organisation.interpolRate : 10;
+      } else if (verType === "passport") {
+        rate = organisation?.passportRate !== undefined ? organisation.passportRate : 8;
+      } else if (verType === "digital_address") {
+        rate = organisation?.digitalAddressRate !== undefined ? organisation.digitalAddressRate : 5;
+      } else if (verType === "employment") {
+        const c = v.country || (v as any).employmentData?.country || (v as any).addresses?.[0]?.country || "";
+        if (c && organisation?.employmentRates && organisation.employmentRates[c] !== undefined) {
+          rate = organisation.employmentRates[c];
+        } else if (organisation?.employmentRates?.["Default"] !== undefined) {
+          rate = organisation.employmentRates["Default"];
+        } else {
+          rate = organisation?.employmentRate !== undefined ? organisation.employmentRate : 5;
+        }
+      } else if (verType === "education") {
+        const c = v.country || (v as any).educationData?.country || (v as any).addresses?.[0]?.country || "";
+        if (c && organisation?.educationRates && organisation.educationRates[c] !== undefined) {
+          rate = organisation.educationRates[c];
+        } else if (organisation?.educationRates?.["Default"] !== undefined) {
+          rate = organisation.educationRates["Default"];
+        } else {
+          rate = organisation?.educationRate !== undefined ? organisation.educationRate : 5;
+        }
+      } else {
+        rate = organisation?.identityRate !== undefined ? organisation.identityRate : 1;
+      }
+      return sum + rate;
+    }, 0);
+  }
+
+  const totalDues = unpaidBalance + liveTotal;
+
   return (
     <div className="flex flex-col gap-6 pt-4 animate-fade-in pb-12">
       {/* Page Header */}
@@ -167,6 +233,50 @@ export default function ClientBillingPage() {
             <Clock className={`w-4 h-4 text-[#00450e] ${isRefreshing ? "animate-spin" : ""}`} />
             <span>Sync Data</span>
           </button>
+        </div>
+      </div>
+
+      {/* Billing Cycle / Current Dues Summary Card */}
+      <div className="bg-[#016e1c]/5 border border-[#016e1c]/15 rounded-3xl p-6 max-w-6xl shadow-xs relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="flex flex-col gap-1.5 text-left">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-[18px] text-[#00450e]">calendar_today</span>
+            <span className="font-label-caps text-[#00450e] text-[10px] uppercase tracking-wider font-extrabold">BILLING CYCLE ACCOUNT SUMMARY</span>
+          </div>
+          <p className="text-xs text-slate-600 font-medium">
+            Invoices are automatically generated on the <span className="font-extrabold text-slate-900">last day</span> of every month at <span className="font-extrabold text-slate-900">11:59 PM</span>.
+          </p>
+          <div className="flex items-center gap-6 mt-2">
+            <div>
+              <span className="text-xl font-extrabold text-slate-900 font-mono">{clientInvoices.length}</span>
+              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Invoices</span>
+            </div>
+            <div className="w-px h-7 bg-slate-200"></div>
+            <div>
+              <span className="text-xl font-extrabold text-emerald-600 font-mono">{clientInvoices.filter(i => i.status === "Paid").length}</span>
+              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Paid</span>
+            </div>
+            <div className="w-px h-7 bg-slate-200"></div>
+            <div>
+              <span className="text-xl font-extrabold text-red-600 font-mono">{clientInvoices.filter(i => i.status !== "Paid").length}</span>
+              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Outstanding</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white/80 border border-[#016e1c]/20 rounded-2xl p-4 min-w-[280px] flex flex-col gap-2 shadow-sm">
+          <div className="flex justify-between items-baseline text-xs">
+            <span className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">Unpaid Invoices</span>
+            <span className="font-bold text-slate-800 font-mono">${unpaidBalance.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between items-baseline text-xs border-b border-slate-200/60 pb-2 mb-1">
+            <span className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">{currentMonthName} {currentYear} (Live)</span>
+            <span className="font-bold text-emerald-700 font-mono">${liveTotal.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between items-baseline">
+            <span className="text-[10px] text-[#00450e] uppercase tracking-wider font-extrabold">Current Dues</span>
+            <span className="font-black text-xl text-[#00450e] font-mono">${totalDues.toFixed(2)}</span>
+          </div>
         </div>
       </div>
 
