@@ -583,10 +583,10 @@ export default function CandidateFillModal({
                       />
                     </div>
 
-                    {/* Relieving / Experience Letter Attachment (Max 2MB) */}
+                    {/* Relieving / Experience Letter Attachment (Max 1MB UI label, 2MB hard limit) */}
                     <div className="flex flex-col gap-1.5 md:col-span-2 pt-2 border-t border-[#eaf0e4]/80">
                       <label className="text-[10px] font-bold text-[#00450e] uppercase tracking-wider">
-                        Relieving / Experience Letter Attachment (PDF / Image, Max 2MB)
+                        Relieving / Experience Letter Attachment (PDF / Image, Max 1MB)
                       </label>
                       {emp.experienceLetterFile ? (
                         <div className="border border-emerald-200 rounded-xl p-3 bg-emerald-50/50 flex items-center justify-between">
@@ -612,7 +612,7 @@ export default function CandidateFillModal({
                         </div>
                       ) : (
                         <label className="border-2 border-dashed border-[#d0dbc6] hover:border-[#00450e] rounded-xl p-3 bg-white hover:bg-[#f6fbf0]/50 transition-all flex items-center justify-center gap-2 cursor-pointer">
-                          <span className="text-xs font-bold text-[#00450e]">📎 Upload Relieving / Experience Letter (Max 2MB)</span>
+                          <span className="text-xs font-bold text-[#00450e]">📎 Upload Relieving / Experience Letter (Max 1MB)</span>
                           <input
                             type="file"
                             accept=".pdf,.jpg,.jpeg,.png"
@@ -621,7 +621,7 @@ export default function CandidateFillModal({
                               const file = e.target.files?.[0];
                               if (!file) return;
                               if (file.size > 2 * 1024 * 1024) {
-                                setErrorMsg(`File "${file.name}" exceeds 2MB limit. Please upload a file smaller than 2MB.`);
+                                setErrorMsg(`File "${file.name}" exceeds 1MB limit. Please upload a file smaller than 1MB.`);
                                 return;
                               }
                               const fileName = file.name;
