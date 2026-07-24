@@ -298,12 +298,16 @@ interface PortalContextType {
     birthCity?: string;
     orgName: string;
     requestingOrgName: string;
+    idProofFile?: string | null;
+    idProofFileName?: string;
   }) => Promise<any>;
   addPassportVerification: (params: {
     fileNumber: string;
     dateOfBirth: string;
     orgName: string;
     requestingOrgName: string;
+    idProofFile?: string | null;
+    idProofFileName?: string;
   }) => Promise<any>;
   addDigitalAddressVerification: (params: {
     candidateName: string;
@@ -787,6 +791,8 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     birthCity?: string;
     orgName: string;
     requestingOrgName: string;
+    idProofFile?: string | null;
+    idProofFileName?: string;
   }) => {
     try {
       const res = await fetch("/api/portal-data", {
@@ -814,6 +820,8 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     dateOfBirth: string;
     orgName: string;
     requestingOrgName: string;
+    idProofFile?: string | null;
+    idProofFileName?: string;
   }) => {
     try {
       const res = await fetch("/api/portal-data", {

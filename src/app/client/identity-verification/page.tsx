@@ -687,6 +687,8 @@ export default function IdentityVerification() {
   const [interpolErrorMsg, setInterpolErrorMsg] = useState("");
   const [interpolSubmitting, setInterpolSubmitting] = useState(false);
   const [interpolCreatedId, setInterpolCreatedId] = useState<string | null>(null);
+  const [interpolIdProofFile, setInterpolIdProofFile] = useState<string | null>(null);
+  const [interpolIdProofFileName, setInterpolIdProofFileName] = useState("");
 
   // ─── Interpol 59-Second Loading Screen States ───
   const [interpolLoadingProgress, setInterpolLoadingProgress] = useState(0);
@@ -709,6 +711,8 @@ export default function IdentityVerification() {
   const [passportCreatedData, setPassportCreatedData] = useState<any>(null);
   const [passportErrorMsg, setPassportErrorMsg] = useState<string | null>(null);
   const [passportSuccessMsg, setPassportSuccessMsg] = useState("");
+  const [passportIdProofFile, setPassportIdProofFile] = useState<string | null>(null);
+  const [passportIdProofFileName, setPassportIdProofFileName] = useState("");
   // ─── Passport 15-Second Loading Screen States ───
   const [passportLoadingProgress, setPassportLoadingProgress] = useState(0);
   const [passportLoadingStage, setPassportLoadingStage] = useState(0);
@@ -1390,11 +1394,15 @@ export default function IdentityVerification() {
         birthCity: interpolBirthCity.trim(),
         orgName: effectiveOrgName,
         requestingOrgName: interpolRequestingOrgName.trim(),
+        idProofFile: interpolIdProofFile,
+        idProofFileName: interpolIdProofFileName,
       });
 
       if (res && res.success) {
         setInterpolSuccessMsg(res.interpolHasRecords ? "Potential similarity match(es) found." : "Interpol database check completed successfully!");
         setInterpolCreatedId(res.id);
+        setInterpolIdProofFile(null);
+        setInterpolIdProofFileName("");
       } else {
         setInterpolErrorMsg(res?.error || "Failed to run Interpol database check");
       }
@@ -1413,6 +1421,8 @@ export default function IdentityVerification() {
     setInterpolErrorMsg("");
     setInterpolSuccessMsg("");
     setInterpolCreatedId(null);
+    setInterpolIdProofFile(null);
+    setInterpolIdProofFileName("");
   };
 
   // ─── Passport Check Handlers ───
@@ -1420,8 +1430,6 @@ export default function IdentityVerification() {
     e.preventDefault();
     setPassportErrorMsg(null);
     setPassportSuccessMsg("");
-
-
 
     if (!passportFileNumber.trim() || !passportDob) {
       setPassportErrorMsg("Please enter both Passport File Number and Date of Birth.");
@@ -1441,12 +1449,16 @@ export default function IdentityVerification() {
         dateOfBirth: passportDob,
         orgName: effectiveOrgName,
         requestingOrgName: passportRequestingOrgName.trim(),
+        idProofFile: passportIdProofFile,
+        idProofFileName: passportIdProofFileName,
       });
 
       if (res && res.success) {
         setPassportCreatedId(res.id);
         setPassportCreatedData(res.passportData);
         setPassportSuccessMsg("Passport verification completed successfully!");
+        setPassportIdProofFile(null);
+        setPassportIdProofFileName("");
       } else {
         setPassportErrorMsg(res?.error || "Failed to query Passport Seva portal.");
       }
@@ -1465,6 +1477,8 @@ export default function IdentityVerification() {
     setPassportSuccessMsg("");
     setPassportCreatedId(null);
     setPassportCreatedData(null);
+    setPassportIdProofFile(null);
+    setPassportIdProofFileName("");
   };
 
   // ─── Digital Address Verification Handlers ───
@@ -3738,6 +3752,56 @@ export default function IdentityVerification() {
                 )}
               </div>
 
+              {/* ID Attachment (Optional, Max 1MB) */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center justify-between">
+                  <span>ID Attachment (Optional)</span>
+                  <span className="text-slate-400 font-semibold">(Max 1MB)</span>
+                </label>
+                {interpolIdProofFile ? (
+                  <div className="border border-emerald-200 rounded-xl p-3 bg-emerald-50/50 flex items-center justify-between">
+                    <div className="flex items-center gap-2 overflow-hidden">
+                      <FileText className="w-4 h-4 text-emerald-700 shrink-0" />
+                      <span className="text-xs font-bold text-slate-800 truncate">{interpolIdProofFileName || "ID_Proof.pdf"}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setInterpolIdProofFile(null);
+                        setInterpolIdProofFileName("");
+                      }}
+                      className="text-slate-400 hover:text-red-500 transition-colors p-1 rounded-lg hover:bg-red-50 cursor-pointer"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="border border-dashed border-slate-300 hover:border-blue-500 rounded-xl p-3 bg-slate-50/50 hover:bg-white transition-all flex items-center justify-center gap-2 cursor-pointer">
+                    <UploadCloud className="w-4 h-4 text-slate-400" />
+                    <span className="text-xs font-bold text-slate-700">Upload ID Attachment (Optional, Max 1MB)</span>
+                    <input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        if (file.size > 2 * 1024 * 1024) {
+                          setInterpolErrorMsg("File size exceeds 1MB limit.");
+                          return;
+                        }
+                        setInterpolIdProofFileName(file.name);
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          setInterpolIdProofFile(reader.result as string);
+                        };
+                        reader.readAsDataURL(file);
+                      }}
+                    />
+                  </label>
+                )}
+              </div>
+
               {/* Action Buttons */}
               <div className="flex gap-4 mt-4">
                 <button
@@ -3934,6 +3998,56 @@ export default function IdentityVerification() {
                         </button>
                       ))}
                     </div>
+                  )}
+                </div>
+
+                {/* ID Attachment (Optional - Passport, Max 1MB) */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-bold text-[#475569] uppercase tracking-wider font-label-caps flex items-center justify-between">
+                    <span>ID Attachment (Optional - Passport)</span>
+                    <span className="text-slate-400 font-semibold">(Max 1MB)</span>
+                  </label>
+                  {passportIdProofFile ? (
+                    <div className="border border-emerald-200 rounded-xl p-3 bg-emerald-50/50 flex items-center justify-between">
+                      <div className="flex items-center gap-2 overflow-hidden">
+                        <FileText className="w-4 h-4 text-emerald-700 shrink-0" />
+                        <span className="text-xs font-bold text-slate-800 truncate">{passportIdProofFileName || "Passport_Copy.pdf"}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPassportIdProofFile(null);
+                          setPassportIdProofFileName("");
+                        }}
+                        className="text-slate-400 hover:text-red-500 transition-colors p-1 rounded-lg hover:bg-red-50 cursor-pointer"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="border border-dashed border-[#eaf0e4] hover:border-red-500 rounded-xl p-3.5 bg-[#f6fbf0]/50 hover:bg-white transition-all flex items-center justify-center gap-2 cursor-pointer">
+                      <UploadCloud className="w-4 h-4 text-slate-400" />
+                      <span className="text-xs font-bold text-slate-700">Upload Passport Copy / ID Attachment (Optional, Max 1MB)</span>
+                      <input
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          if (file.size > 2 * 1024 * 1024) {
+                            setPassportErrorMsg("File size exceeds 1MB limit.");
+                            return;
+                          }
+                          setPassportIdProofFileName(file.name);
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            setPassportIdProofFile(reader.result as string);
+                          };
+                          reader.readAsDataURL(file);
+                        }}
+                      />
+                    </label>
                   )}
                 </div>
 

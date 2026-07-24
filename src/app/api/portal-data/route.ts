@@ -1149,6 +1149,8 @@ export async function POST(req: NextRequest) {
           birthCity: birthCity?.trim() || "",
           interpolHasRecords: hasRecords,
           interpolMatches: sanitizedMatches,
+          idProofFile: payload.idProofFile || null,
+          idProofFileName: payload.idProofFileName || "",
           interpolCompletedAt: new Date().toISOString(),
           createdAt: new Date().toISOString()
         });
@@ -1348,6 +1350,8 @@ export async function POST(req: NextRequest) {
           notes: `Passport status tracked successfully: ${passportData.statusMessage}`,
           type: "passport",
           passportData,
+          idProofFile: payload.idProofFile || null,
+          idProofFileName: payload.idProofFileName || "",
           price: 15,
           createdAt: new Date().toISOString()
         });
