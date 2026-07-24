@@ -369,7 +369,7 @@ export default function CandidateFillModal({
 
                   {/* Verification Country Dropdown */}
                   <div className="flex flex-col gap-1.5 md:col-span-2">
-                    <label className="text-[10px] font-bold text-[#475569] uppercase tracking-wider">Verification Country *</label>
+                    <label className="text-[10px] font-bold text-[#475569] uppercase tracking-wider">Country *</label>
                     <select
                       value={emp.country || "India"}
                       onChange={(e) => {
@@ -607,7 +607,7 @@ export default function CandidateFillModal({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Verification Country Dropdown */}
                   <div className="flex flex-col gap-1.5 md:col-span-2">
-                    <label className="text-[10px] font-bold text-[#475569] uppercase tracking-wider">Country of Institution *</label>
+                    <label className="text-[10px] font-bold text-[#475569] uppercase tracking-wider">Country *</label>
                     <select
                       value={eduForm.country || "India"}
                       onChange={(e) => updateEdu("country", e.target.value)}
