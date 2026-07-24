@@ -55,6 +55,10 @@ function BillableSummaryContent() {
   const perVerificationRate = organisation?.monthlyRate || 100.00;
   const subTotal = filteredVerifications.reduce((sum, v) => {
     const verType = (v.type as string) || "identity";
+    // For employment/education, use the stored serviceCharge (which already accounts for per-item country pricing)
+    if ((verType === "employment" || verType === "education") && (v as any).serviceCharge !== undefined) {
+      return sum + (v as any).serviceCharge;
+    }
     const rate = verType === "court_record"
       ? (organisation?.courtRecordRate !== undefined ? organisation.courtRecordRate : perVerificationRate)
       : verType === "passport"
@@ -279,7 +283,7 @@ function BillableSummaryContent() {
                     : verType === "education"
                     ? "Education Check"
                     : "Identity Verification";
-                  const rate = (v as any).price || (verType === "court_record"
+                  const rate = (v as any).serviceCharge || ((v as any).price || (verType === "court_record"
                     ? (organisation?.courtRecordRate !== undefined ? organisation.courtRecordRate : perVerificationRate)
                     : verType === "passport"
                     ? (organisation?.passportRate !== undefined ? organisation.passportRate : 8)
@@ -291,7 +295,7 @@ function BillableSummaryContent() {
                     ? (organisation?.employmentRate !== undefined ? organisation.employmentRate : 5)
                     : verType === "education"
                     ? (organisation?.educationRate !== undefined ? organisation.educationRate : 5)
-                    : (organisation?.identityRate !== undefined ? organisation.identityRate : perVerificationRate));
+                    : (organisation?.identityRate !== undefined ? organisation.identityRate : perVerificationRate)));
 
                   return (
                     <tr key={v.id || idx} className="hover:bg-slate-50/50">
@@ -302,7 +306,7 @@ function BillableSummaryContent() {
                       <td className="py-2 px-2">{v.requestingOrgName || settings.companyName || v.orgName}</td>
                       <td className="py-2 px-2 font-bold text-emerald-700 whitespace-nowrap">Verified</td>
                       <td className="py-2 px-2">{serviceName}</td>
-                      <td className="py-2 px-2">India</td>
+                      <td className="py-2 px-2">{(v as any).country || "India"}</td>
                       <td className="py-2 px-2 whitespace-nowrap">USD</td>
                       <td className="py-2 px-2 text-right font-mono whitespace-nowrap">${rate.toFixed(2)}</td>
                       <td className="py-2 px-2 text-right font-mono whitespace-nowrap">${rate.toFixed(2)}</td>

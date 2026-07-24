@@ -313,8 +313,8 @@ interface PortalContextType {
     requestingOrgName: string;
   }) => Promise<any>;
   addVerification: (name: string, email: string, orgName: string, requestingOrgName?: string) => Promise<any>;
-  addEmploymentVerification: (name: string, mobile: string, email: string, orgName: string, requestingOrgName?: string, skipCandidateLogin?: boolean, employments?: Array<{ companyName: string; position: string; joiningYear?: string; leavingYear?: string; employeeCode?: string }>, country?: string) => Promise<any>;
-  addEducationVerification: (name: string, mobile: string, email: string, orgName: string, requestingOrgName?: string, skipCandidateLogin?: boolean, educationList?: Array<{ boardUniversity: string; courseName: string; passingYear?: string; rollNumber?: string }>, country?: string) => Promise<any>;
+  addEmploymentVerification: (name: string, mobile: string, email: string, orgName: string, requestingOrgName?: string, skipCandidateLogin?: boolean, employments?: Array<{ companyName: string; position: string; joiningYear?: string; leavingYear?: string; employeeCode?: string; country?: string }>) => Promise<any>;
+  addEducationVerification: (name: string, mobile: string, email: string, orgName: string, requestingOrgName?: string, skipCandidateLogin?: boolean, educationList?: Array<{ boardUniversity: string; courseName: string; passingYear?: string; rollNumber?: string; country?: string }>) => Promise<any>;
   submitEmploymentData: (verificationId: string, employmentData: any) => Promise<any>;
   submitEducationData: (verificationId: string, educationData: any) => Promise<any>;
   addCourtRecordVerification: (params: {
@@ -845,8 +845,7 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     orgName: string,
     requestingOrgName?: string,
     skipCandidateLogin?: boolean,
-    employments?: Array<{ companyName: string; position: string; joiningYear?: string; leavingYear?: string; employeeCode?: string }>,
-    country?: string
+    employments?: Array<{ companyName: string; position: string; joiningYear?: string; leavingYear?: string; employeeCode?: string; country?: string }>
   ) => {
     try {
       const res = await fetch("/api/portal-data", {
@@ -861,8 +860,7 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             orgName,
             requestingOrgName: requestingOrgName || orgName,
             skipCandidateLogin: !!skipCandidateLogin,
-            employments: employments || [],
-            country: country || "India"
+            employments: employments || []
           },
         }),
       });
@@ -885,8 +883,7 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     orgName: string,
     requestingOrgName?: string,
     skipCandidateLogin?: boolean,
-    educationList?: Array<{ boardUniversity: string; courseName: string; passingYear?: string; rollNumber?: string }>,
-    country?: string
+    educationList?: Array<{ boardUniversity: string; courseName: string; passingYear?: string; rollNumber?: string; country?: string }>
   ) => {
     try {
       const res = await fetch("/api/portal-data", {
@@ -901,8 +898,7 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             orgName,
             requestingOrgName: requestingOrgName || orgName,
             skipCandidateLogin: !!skipCandidateLogin,
-            educationList: educationList || [],
-            country: country || "India"
+            educationList: educationList || []
           },
         }),
       });

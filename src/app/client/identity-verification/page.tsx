@@ -781,9 +781,6 @@ export default function IdentityVerification() {
     { code: "UAE", label: "UAE", flag: "🇦🇪", defaultRate: 20 }
   ];
 
-  const [empCountry, setEmpCountry] = useState("India");
-  const [eduCountry, setEduCountry] = useState("India");
-
   const getEmpCountryRate = (countryCode: string) => {
     return (organisation as any)?.employmentRates?.[countryCode] ?? (SUPPORTED_COUNTRIES.find(c => c.code === countryCode)?.defaultRate || 5);
   };
@@ -791,14 +788,17 @@ export default function IdentityVerification() {
     return (organisation as any)?.educationRates?.[countryCode] ?? (SUPPORTED_COUNTRIES.find(c => c.code === countryCode)?.defaultRate || 5);
   };
 
-  // Dynamic multi-employment items
-  const [empItems, setEmpItems] = useState<Array<{ id: string; companyName: string; position: string; joiningYear: string; leavingYear: string; employeeCode: string }>>([
-    { id: "emp-1", companyName: "", position: "", joiningYear: "", leavingYear: "", employeeCode: "" }
+  // Dynamic multi-employment items (each item has its own country)
+  const [empItems, setEmpItems] = useState<Array<{ id: string; companyName: string; position: string; joiningYear: string; leavingYear: string; employeeCode: string; country: string }>>([
+    { id: "emp-1", companyName: "", position: "", joiningYear: "", leavingYear: "", employeeCode: "", country: "India" }
   ]);
 
   const addEmpItem = () => {
-    setEmpItems(prev => [...prev, { id: `emp-${Date.now()}`, companyName: "", position: "", joiningYear: "", leavingYear: "", employeeCode: "" }]);
+    setEmpItems(prev => [...prev, { id: `emp-${Date.now()}`, companyName: "", position: "", joiningYear: "", leavingYear: "", employeeCode: "", country: "India" }]);
   };
+
+  // Compute total employment price across all items (each with its own country rate)
+  const empTotalPrice = empItems.reduce((sum, item) => sum + getEmpCountryRate(item.country), 0);
 
   const removeEmpItem = (id: string) => {
     if (empItems.length <= 1) return;
@@ -828,14 +828,17 @@ export default function IdentityVerification() {
   const [eduCopiedUrl, setEduCopiedUrl] = useState(false);
   const [eduSubmitting, setEduSubmitting] = useState(false);
 
-  // Dynamic multi-education items
-  const [eduItems, setEduItems] = useState<Array<{ id: string; boardUniversity: string; courseName: string; passingYear: string; rollNumber: string }>>([
-    { id: "edu-1", boardUniversity: "", courseName: "", passingYear: "", rollNumber: "" }
+  // Dynamic multi-education items (each item has its own country)
+  const [eduItems, setEduItems] = useState<Array<{ id: string; boardUniversity: string; courseName: string; passingYear: string; rollNumber: string; country: string }>>([
+    { id: "edu-1", boardUniversity: "", courseName: "", passingYear: "", rollNumber: "", country: "India" }
   ]);
 
   const addEduItem = () => {
-    setEduItems(prev => [...prev, { id: `edu-${Date.now()}`, boardUniversity: "", courseName: "", passingYear: "", rollNumber: "" }]);
+    setEduItems(prev => [...prev, { id: `edu-${Date.now()}`, boardUniversity: "", courseName: "", passingYear: "", rollNumber: "", country: "India" }]);
   };
+
+  // Compute total education price across all items (each with its own country rate)
+  const eduTotalPrice = eduItems.reduce((sum, item) => sum + getEduCountryRate(item.country), 0);
 
   const removeEduItem = (id: string) => {
     if (eduItems.length <= 1) return;
@@ -1081,8 +1084,7 @@ export default function IdentityVerification() {
         effectiveOrgName,
         empRequestingOrgName.trim(),
         empSkipCandidateLogin,
-        empItems.map(i => ({ companyName: i.companyName.trim(), position: i.position.trim(), joiningYear: i.joiningYear.trim(), leavingYear: i.leavingYear.trim(), employeeCode: i.employeeCode.trim() })),
-        empCountry
+        empItems.map(i => ({ companyName: i.companyName.trim(), position: i.position.trim(), joiningYear: i.joiningYear.trim(), leavingYear: i.leavingYear.trim(), employeeCode: i.employeeCode.trim(), country: i.country }))
       );
       if (res && res.success) {
         setEmpSuccessMsg("Employment verification request initiated successfully!");
@@ -1098,7 +1100,7 @@ export default function IdentityVerification() {
         setEmpCandidateEmail("");
         setEmpRequestingOrgName("");
         setEmpSkipCandidateLogin(false);
-        setEmpItems([{ id: "emp-1", companyName: "", position: "", joiningYear: "", leavingYear: "", employeeCode: "" }]);
+        setEmpItems([{ id: "emp-1", companyName: "", position: "", joiningYear: "", leavingYear: "", employeeCode: "", country: "India" }]);
       } else {
         setEmpErrorMsg("Failed to initiate employment verification request");
       }
@@ -1115,7 +1117,7 @@ export default function IdentityVerification() {
     setEmpCandidateEmail("");
     setEmpRequestingOrgName("");
     setEmpSkipCandidateLogin(false);
-    setEmpItems([{ id: "emp-1", companyName: "", position: "", joiningYear: "", leavingYear: "", employeeCode: "" }]);
+    setEmpItems([{ id: "emp-1", companyName: "", position: "", joiningYear: "", leavingYear: "", employeeCode: "", country: "India" }]);
     setEmpErrorMsg("");
     setEmpSuccessMsg("");
   };
@@ -1161,8 +1163,7 @@ export default function IdentityVerification() {
         effectiveOrgName,
         eduRequestingOrgName.trim(),
         eduSkipCandidateLogin,
-        eduItems.map(i => ({ boardUniversity: i.boardUniversity.trim(), courseName: i.courseName.trim(), passingYear: i.passingYear.trim(), rollNumber: i.rollNumber.trim() })),
-        eduCountry
+        eduItems.map(i => ({ boardUniversity: i.boardUniversity.trim(), courseName: i.courseName.trim(), passingYear: i.passingYear.trim(), rollNumber: i.rollNumber.trim(), country: i.country }))
       );
       if (res && res.success) {
         setEduSuccessMsg("Education verification request initiated successfully!");
@@ -1178,7 +1179,7 @@ export default function IdentityVerification() {
         setEduCandidateEmail("");
         setEduRequestingOrgName("");
         setEduSkipCandidateLogin(false);
-        setEduItems([{ id: "edu-1", boardUniversity: "", courseName: "", passingYear: "", rollNumber: "" }]);
+        setEduItems([{ id: "edu-1", boardUniversity: "", courseName: "", passingYear: "", rollNumber: "", country: "India" }]);
       } else {
         setEduErrorMsg("Failed to initiate education verification request");
       }
@@ -1195,7 +1196,7 @@ export default function IdentityVerification() {
     setEduCandidateEmail("");
     setEduRequestingOrgName("");
     setEduSkipCandidateLogin(false);
-    setEduItems([{ id: "edu-1", boardUniversity: "", courseName: "", passingYear: "", rollNumber: "" }]);
+    setEduItems([{ id: "edu-1", boardUniversity: "", courseName: "", passingYear: "", rollNumber: "", country: "India" }]);
     setEduErrorMsg("");
     setEduSuccessMsg("");
   };
@@ -3004,44 +3005,15 @@ export default function IdentityVerification() {
 
               {/* Dynamic Employment Items */}
               <div className="flex flex-col gap-4 border-t border-[#eaf0e4] pt-5">
-                {/* Target Country Selector */}
-                <div className="flex flex-col gap-2">
-                  <label className="font-label-caps text-[#475569] text-xs font-semibold uppercase tracking-wider">
-                    Verification Country Rate
-                  </label>
-                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                    {SUPPORTED_COUNTRIES.map((c) => {
-                      const isSelected = empCountry === c.code;
-                      const rate = getEmpCountryRate(c.code);
-                      return (
-                        <button
-                          key={c.code}
-                          type="button"
-                          onClick={() => setEmpCountry(c.code)}
-                          className={`p-2.5 rounded-xl border text-xs font-bold transition-all flex flex-col items-center justify-center gap-1 cursor-pointer ${
-                            isSelected
-                              ? "border-[#00450e] bg-[#f0f5ea] text-[#00450e] shadow-2xs ring-2 ring-[#00450e]/20"
-                              : "border-[#eaf0e4] bg-white text-slate-700 hover:border-[#d0dbc6]"
-                          }`}
-                        >
-                          <span className="text-base">{c.flag}</span>
-                          <span>{c.label}</span>
-                          <span className="text-[10px] text-slate-500 font-semibold">${rate.toFixed(2)}/check</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="font-semibold text-xs text-[#181d16] uppercase tracking-wider font-label-caps">
-                      Employment History Checks (${getEmpCountryRate(empCountry).toFixed(2)} / Check - {empCountry})
+                      Employment History Checks
                     </h4>
-                    <p className="text-[11px] text-[#64748B]">Add company records to be verified in {empCountry}.</p>
+                    <p className="text-[11px] text-[#64748B]">Add company records to be verified. Select a country for each employer.</p>
                   </div>
                   <span className="text-xs font-bold text-[#00450e] bg-[#eaf0e4]/60 px-3 py-1 rounded-full border border-[#d0dbc6]">
-                    Total: ${(empItems.length * getEmpCountryRate(empCountry)).toFixed(2)} ({empItems.length} {empItems.length === 1 ? 'Check' : 'Checks'})
+                    Total: ${empTotalPrice.toFixed(2)} ({empItems.length} {empItems.length === 1 ? 'Check' : 'Checks'})
                   </span>
                 </div>
 
@@ -3051,6 +3023,7 @@ export default function IdentityVerification() {
                       <span className="text-xs font-bold text-[#181d16] flex items-center gap-1.5">
                         <Briefcase className="w-3.5 h-3.5 text-[#00450e]" />
                         <span>Employer #{idx + 1}</span>
+                        <span className="text-[10px] font-semibold text-slate-500 ml-1">— {item.country} (${getEmpCountryRate(item.country).toFixed(2)})</span>
                       </span>
                       {empItems.length > 1 && (
                         <button
@@ -3062,6 +3035,33 @@ export default function IdentityVerification() {
                           <Trash2 className="w-4 h-4" />
                         </button>
                       )}
+                    </div>
+
+                    {/* Per-item Country Selector */}
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-semibold text-[#475569] uppercase tracking-wider">Verification Country</label>
+                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
+                        {SUPPORTED_COUNTRIES.map((c) => {
+                          const isSelected = item.country === c.code;
+                          const rate = getEmpCountryRate(c.code);
+                          return (
+                            <button
+                              key={c.code}
+                              type="button"
+                              onClick={() => updateEmpItem(item.id, "country", c.code)}
+                              className={`p-2 rounded-lg border text-[10px] font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                                isSelected
+                                  ? "border-[#00450e] bg-[#f0f5ea] text-[#00450e] shadow-2xs ring-1 ring-[#00450e]/20"
+                                  : "border-[#eaf0e4] bg-white text-slate-600 hover:border-[#d0dbc6]"
+                              }`}
+                            >
+                              <span className="text-sm">{c.flag}</span>
+                              <span>{c.label}</span>
+                              <span className="text-[9px] text-slate-400 font-semibold">${rate.toFixed(0)}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -3113,7 +3113,7 @@ export default function IdentityVerification() {
                   className="w-full py-2.5 border-2 border-dashed border-[#d0dbc6] rounded-xl text-xs font-bold text-[#00450e] hover:bg-[#f0f5ea]/50 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <Plus className="w-4 h-4" />
-                  <span>Add Another Employment Check (+$5.00)</span>
+                  <span>Add Another Employment Check (+${getEmpCountryRate("India").toFixed(2)})</span>
                 </button>
               </div>
 
@@ -3489,44 +3489,15 @@ export default function IdentityVerification() {
 
               {/* Dynamic Education Items */}
               <div className="flex flex-col gap-4 border-t border-[#eaf0e4] pt-5">
-                {/* Target Country Selector */}
-                <div className="flex flex-col gap-2">
-                  <label className="font-label-caps text-[#475569] text-xs font-semibold uppercase tracking-wider">
-                    Verification Country Rate
-                  </label>
-                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                    {SUPPORTED_COUNTRIES.map((c) => {
-                      const isSelected = eduCountry === c.code;
-                      const rate = getEduCountryRate(c.code);
-                      return (
-                        <button
-                          key={c.code}
-                          type="button"
-                          onClick={() => setEduCountry(c.code)}
-                          className={`p-2.5 rounded-xl border text-xs font-bold transition-all flex flex-col items-center justify-center gap-1 cursor-pointer ${
-                            isSelected
-                              ? "border-purple-600 bg-purple-50 text-purple-900 shadow-2xs ring-2 ring-purple-500/20"
-                              : "border-[#eaf0e4] bg-white text-slate-700 hover:border-[#d0dbc6]"
-                          }`}
-                        >
-                          <span className="text-base">{c.flag}</span>
-                          <span>{c.label}</span>
-                          <span className="text-[10px] text-slate-500 font-semibold">${rate.toFixed(2)}/check</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="font-semibold text-xs text-[#181d16] uppercase tracking-wider font-label-caps">
-                      Education Credential Checks (${getEduCountryRate(eduCountry).toFixed(2)} / Check - {eduCountry})
+                      Education Credential Checks
                     </h4>
-                    <p className="text-[11px] text-[#64748B]">Add degree/board records to be verified in {eduCountry}.</p>
+                    <p className="text-[11px] text-[#64748B]">Add degree/board records to be verified. Select a country for each credential.</p>
                   </div>
                   <span className="text-xs font-bold text-purple-700 bg-purple-50 px-3 py-1 rounded-full border border-purple-200">
-                    Total: ${(eduItems.length * getEduCountryRate(eduCountry)).toFixed(2)} ({eduItems.length} {eduItems.length === 1 ? 'Check' : 'Checks'})
+                    Total: ${eduTotalPrice.toFixed(2)} ({eduItems.length} {eduItems.length === 1 ? 'Check' : 'Checks'})
                   </span>
                 </div>
 
@@ -3536,6 +3507,7 @@ export default function IdentityVerification() {
                       <span className="text-xs font-bold text-[#181d16] flex items-center gap-1.5">
                         <GraduationCap className="w-3.5 h-3.5 text-purple-700" />
                         <span>Credential #{idx + 1}</span>
+                        <span className="text-[10px] font-semibold text-slate-500 ml-1">— {item.country} (${getEduCountryRate(item.country).toFixed(2)})</span>
                       </span>
                       {eduItems.length > 1 && (
                         <button
@@ -3547,6 +3519,33 @@ export default function IdentityVerification() {
                           <Trash2 className="w-4 h-4" />
                         </button>
                       )}
+                    </div>
+
+                    {/* Per-item Country Selector */}
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-semibold text-[#475569] uppercase tracking-wider">Verification Country</label>
+                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
+                        {SUPPORTED_COUNTRIES.map((c) => {
+                          const isSelected = item.country === c.code;
+                          const rate = getEduCountryRate(c.code);
+                          return (
+                            <button
+                              key={c.code}
+                              type="button"
+                              onClick={() => updateEduItem(item.id, "country", c.code)}
+                              className={`p-2 rounded-lg border text-[10px] font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                                isSelected
+                                  ? "border-purple-600 bg-purple-50 text-purple-900 shadow-2xs ring-1 ring-purple-500/20"
+                                  : "border-[#eaf0e4] bg-white text-slate-600 hover:border-[#d0dbc6]"
+                              }`}
+                            >
+                              <span className="text-sm">{c.flag}</span>
+                              <span>{c.label}</span>
+                              <span className="text-[9px] text-slate-400 font-semibold">${rate.toFixed(0)}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -3591,7 +3590,7 @@ export default function IdentityVerification() {
                   className="w-full py-2.5 border-2 border-dashed border-purple-200 rounded-xl text-xs font-bold text-purple-700 hover:bg-purple-50/50 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <Plus className="w-4 h-4" />
-                  <span>Add Another Education Check (+$5.00)</span>
+                  <span>Add Another Education Check (+${getEduCountryRate("India").toFixed(2)})</span>
                 </button>
               </div>
 

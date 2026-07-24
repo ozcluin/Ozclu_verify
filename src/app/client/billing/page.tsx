@@ -187,6 +187,9 @@ export default function ClientBillingPage() {
   });
 
   const liveTotal = currentMonthCompleted.reduce((sum, v) => {
+      if ((v as any).serviceCharge !== undefined && (v as any).serviceCharge !== null) {
+        return sum + Number((v as any).serviceCharge);
+      }
       if ((v as any).price !== undefined && (v as any).price !== null) {
         return sum + Number((v as any).price);
       }

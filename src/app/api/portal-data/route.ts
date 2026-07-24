@@ -519,8 +519,7 @@ export async function POST(req: NextRequest) {
         break;
       }
       case "addEmploymentVerification": {
-        const { name, mobile, email, orgName, requestingOrgName: empReqOrgName, skipCandidateLogin, employments, country } = payload;
-        const selectedCountry = country || "India";
+        const { name, mobile, email, orgName, requestingOrgName: empReqOrgName, skipCandidateLogin, employments } = payload;
 
         if (!name?.trim()) {
           return NextResponse.json({ error: "Candidate name is required" }, { status: 400 });
@@ -539,8 +538,23 @@ export async function POST(req: NextRequest) {
         const orgDoc = await db.collection("organisations").findOne({
           name: { $regex: new RegExp("^" + (safeOrgName || "").replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + "$", "i") }
         });
-        const perCheckRate = orgDoc?.employmentRates?.[selectedCountry] ?? (defaultCountryRates[selectedCountry] || 5);
-        const serviceCharge = itemCount * perCheckRate;
+
+        // Calculate per-item country-specific pricing
+        const employmentsWithCountry = validEmployments.map(e => ({
+          ...e,
+          country: e.country || "India"
+        }));
+        const serviceCharge = employmentsWithCountry.length > 0
+          ? employmentsWithCountry.reduce((sum: number, e: any) => {
+              const itemCountry = e.country || "India";
+              const rate = orgDoc?.employmentRates?.[itemCountry] ?? (defaultCountryRates[itemCountry] || 5);
+              return sum + rate;
+            }, 0)
+          : (orgDoc?.employmentRates?.["India"] ?? (defaultCountryRates["India"] || 5));
+
+        // Derive countries list for the verification document
+        const countriesList = [...new Set(employmentsWithCountry.map(e => e.country))];
+        const country = countriesList.join(", ");
 
         const cleanOrg = (safeOrgName || "XXX").replace(/[^a-zA-Z]/g, "").slice(0, 3).padEnd(3, "X").toUpperCase();
         const nowTime = new Date();
@@ -616,9 +630,10 @@ export async function POST(req: NextRequest) {
           onboardingStatus: "active",
           tempPassword,
           skipCandidateLogin: !!skipCandidateLogin,
-          employments: validEmployments,
+          employments: employmentsWithCountry,
           itemCount,
           serviceCharge,
+          country,
           attempts: [initialAttempt],
           setupUrl,
           createdAt: new Date().toISOString()
@@ -648,8 +663,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: true, id: finalId, setupUrl, skipCandidateLogin: !!skipCandidateLogin });
       }
       case "addEducationVerification": {
-        const { name, mobile, email, orgName, requestingOrgName: eduReqOrgName, skipCandidateLogin, educationList, country } = payload;
-        const selectedCountry = country || "India";
+        const { name, mobile, email, orgName, requestingOrgName: eduReqOrgName, skipCandidateLogin, educationList } = payload;
 
         if (!name?.trim()) {
           return NextResponse.json({ error: "Candidate name is required" }, { status: 400 });
@@ -668,8 +682,23 @@ export async function POST(req: NextRequest) {
         const orgDoc = await db.collection("organisations").findOne({
           name: { $regex: new RegExp("^" + (safeOrgName || "").replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + "$", "i") }
         });
-        const perCheckRate = orgDoc?.educationRates?.[selectedCountry] ?? (defaultCountryRates[selectedCountry] || 5);
-        const serviceCharge = itemCount * perCheckRate;
+
+        // Calculate per-item country-specific pricing
+        const educationWithCountry = validEducation.map(e => ({
+          ...e,
+          country: e.country || "India"
+        }));
+        const serviceCharge = educationWithCountry.length > 0
+          ? educationWithCountry.reduce((sum: number, e: any) => {
+              const itemCountry = e.country || "India";
+              const rate = orgDoc?.educationRates?.[itemCountry] ?? (defaultCountryRates[itemCountry] || 5);
+              return sum + rate;
+            }, 0)
+          : (orgDoc?.educationRates?.["India"] ?? (defaultCountryRates["India"] || 5));
+
+        // Derive countries list for the verification document
+        const countriesList = [...new Set(educationWithCountry.map(e => e.country))];
+        const country = countriesList.join(", ");
 
         const cleanOrg = (safeOrgName || "XXX").replace(/[^a-zA-Z]/g, "").slice(0, 3).padEnd(3, "X").toUpperCase();
         const nowTime = new Date();
@@ -745,9 +774,10 @@ export async function POST(req: NextRequest) {
           onboardingStatus: "active",
           tempPassword,
           skipCandidateLogin: !!skipCandidateLogin,
-          educationList: validEducation,
+          educationList: educationWithCountry,
           itemCount,
           serviceCharge,
+          country,
           attempts: [initialAttempt],
           setupUrl,
           createdAt: new Date().toISOString()
