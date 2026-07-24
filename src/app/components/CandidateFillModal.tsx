@@ -510,7 +510,7 @@ export default function CandidateFillModal({
                   {/* Reporting Manager & Compensation */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t border-[#eaf0e4]/80">
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-bold text-slate-500 uppercase">Reporting Manager Name</label>
+                      <label className="text-[10px] font-bold text-slate-500 uppercase">Reporting Manager Name (Optional)</label>
                       <input
                         type="text"
                         value={emp.reportingManagerName}
@@ -521,7 +521,7 @@ export default function CandidateFillModal({
                     </div>
 
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-bold text-slate-500 uppercase">Manager Email</label>
+                      <label className="text-[10px] font-bold text-slate-500 uppercase">Manager Email (Optional)</label>
                       <input
                         type="email"
                         value={emp.reportingManagerEmail}
