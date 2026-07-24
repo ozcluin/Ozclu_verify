@@ -11,6 +11,14 @@ const ALLOWED_COUNTRIES = [
   "Saudi Arabia", "Qatar", "Kuwait", "Oman", "Bahrain", "India"
 ];
 
+const SUPPORTED_COUNTRIES = [
+  { code: "India", label: "India", iso: "IN", defaultRate: 5 },
+  { code: "Singapore", label: "Singapore", iso: "SG", defaultRate: 15 },
+  { code: "Malaysia", label: "Malaysia", iso: "MY", defaultRate: 12 },
+  { code: "Philippines", label: "Philippines", iso: "PH", defaultRate: 10 },
+  { code: "UAE", label: "UAE", iso: "AE", defaultRate: 15 }
+];
+
 const getStatesForCountry = (countryName: string) => {
   if (!countryName) return [];
   if (countryName === "India") {
@@ -359,26 +367,40 @@ export default function CandidateFillModal({
                     </div>
                   </div>
 
-                  {/* Company Location & Contact */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t border-[#eaf0e4]/80">
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-bold text-slate-500 uppercase">Country *</label>
-                      <select
-                        value={emp.country}
-                        onChange={(e) => {
-                          updateEmploymentItem(emp.id, "country", e.target.value);
-                          updateEmploymentItem(emp.id, "state", "");
-                          updateEmploymentItem(emp.id, "city", "");
-                        }}
-                        className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none"
-                      >
-                        <option value="">Select Country</option>
-                        {ALLOWED_COUNTRIES.map((c) => (
-                          <option key={c} value={c}>{c}</option>
-                        ))}
-                      </select>
+                  {/* Country Pill Selector */}
+                  <div className="flex flex-col gap-2 pt-2 border-t border-[#eaf0e4]/80">
+                    <label className="text-[10px] font-bold text-[#475569] uppercase tracking-wider">Verification Country</label>
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                      {SUPPORTED_COUNTRIES.map((c) => {
+                        const isSelected = (emp.country || "India") === c.code;
+                        return (
+                          <button
+                            key={c.code}
+                            type="button"
+                            onClick={() => {
+                              updateEmploymentItem(emp.id, "country", c.code);
+                              updateEmploymentItem(emp.id, "state", "");
+                              updateEmploymentItem(emp.id, "city", "");
+                            }}
+                            className={`p-2.5 rounded-xl border text-xs font-bold transition-all flex items-center justify-between gap-1.5 cursor-pointer ${
+                              isSelected
+                                ? "border-emerald-600 bg-emerald-50/80 text-emerald-900 shadow-2xs ring-2 ring-emerald-600/20"
+                                : "border-[#eaf0e4] bg-white text-slate-700 hover:border-[#d0dbc6]"
+                            }`}
+                          >
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-extrabold text-[11px] text-slate-800 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">{c.iso}</span>
+                              <span className="truncate">{c.label}</span>
+                            </div>
+                            <span className="text-[10px] text-slate-500 font-semibold">${c.defaultRate}</span>
+                          </button>
+                        );
+                      })}
                     </div>
+                  </div>
 
+                  {/* State & City Location */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {(() => {
                       const stateList = getStatesForCountry(emp.country);
                       return (
@@ -597,19 +619,32 @@ export default function CandidateFillModal({
                   <span className="font-bold text-xs uppercase text-[#181d16] tracking-wider">Academic Credentials</span>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-1.5 md:col-span-2">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">Country of Institution *</label>
-                    <select
-                      value={eduForm.country}
-                      onChange={(e) => updateEdu("country", e.target.value)}
-                      className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none"
-                    >
-                      <option value="Singapore">Singapore</option>
-                      <option value="Malaysia">Malaysia</option>
-                      <option value="Philippines">Philippines</option>
-                      <option value="UAE">UAE</option>
-                      <option value="India">India</option>
-                    </select>
+                  {/* Country Pill Selector */}
+                  <div className="flex flex-col gap-2 md:col-span-2">
+                    <label className="text-[10px] font-bold text-[#475569] uppercase tracking-wider">Verification Country</label>
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                      {SUPPORTED_COUNTRIES.map((c) => {
+                        const isSelected = (eduForm.country || "India") === c.code;
+                        return (
+                          <button
+                            key={c.code}
+                            type="button"
+                            onClick={() => updateEdu("country", c.code)}
+                            className={`p-2.5 rounded-xl border text-xs font-bold transition-all flex items-center justify-between gap-1.5 cursor-pointer ${
+                              isSelected
+                                ? "border-purple-600 bg-purple-50/80 text-purple-900 shadow-2xs ring-2 ring-purple-600/20"
+                                : "border-[#eaf0e4] bg-white text-slate-700 hover:border-[#d0dbc6]"
+                            }`}
+                          >
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-extrabold text-[11px] text-slate-800 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">{c.iso}</span>
+                              <span className="truncate">{c.label}</span>
+                            </div>
+                            <span className="text-[10px] text-slate-500 font-semibold">${c.defaultRate}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
 
                   <div className="flex flex-col gap-1.5 md:col-span-2">

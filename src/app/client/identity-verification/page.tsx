@@ -3003,118 +3003,33 @@ export default function IdentityVerification() {
                 </div>
               </div>
 
-              {/* Dynamic Employment Items */}
-              <div className="flex flex-col gap-4 border-t border-[#eaf0e4] pt-5">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="font-semibold text-xs text-[#181d16] uppercase tracking-wider font-label-caps">
-                      Employment History Checks
-                    </h4>
-                    <p className="text-[11px] text-[#64748B]">Add company records to be verified. Select a country for each employer.</p>
-                  </div>
-                  <span className="text-xs font-bold text-[#00450e] bg-[#eaf0e4]/60 px-3 py-1 rounded-full border border-[#d0dbc6]">
-                    Total: ${empTotalPrice.toFixed(2)} ({empItems.length} {empItems.length === 1 ? 'Check' : 'Checks'})
-                  </span>
+              {/* Target Country Selector for Request Creation */}
+              <div className="flex flex-col gap-2 border-t border-[#eaf0e4] pt-5">
+                <label className="font-label-caps text-[#475569] text-xs font-semibold uppercase tracking-wider">
+                  Verification Country Rate
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                  {SUPPORTED_COUNTRIES.map((c) => {
+                    const isSelected = (empItems[0]?.country || "India") === c.code;
+                    const rate = getEmpCountryRate(c.code);
+                    return (
+                      <button
+                        key={c.code}
+                        type="button"
+                        onClick={() => updateEmpItem(empItems[0]?.id || "emp-1", "country", c.code)}
+                        className={`p-2.5 rounded-xl border text-xs font-bold transition-all flex flex-col items-center justify-center gap-1 cursor-pointer ${
+                          isSelected
+                            ? "border-[#00450e] bg-[#f0f5ea] text-[#00450e] shadow-2xs ring-2 ring-[#00450e]/20"
+                            : "border-[#eaf0e4] bg-white text-slate-700 hover:border-[#d0dbc6]"
+                        }`}
+                      >
+                        <span className="text-base">{c.flag}</span>
+                        <span>{c.label}</span>
+                        <span className="text-[10px] text-slate-500 font-semibold">${rate.toFixed(2)}/check</span>
+                      </button>
+                    );
+                  })}
                 </div>
-
-                {empItems.map((item, idx) => (
-                  <div key={item.id} className="p-4 bg-[#f8faf6] border border-[#eaf0e4] rounded-2xl flex flex-col gap-3 relative transition-all hover:border-[#d0dbc6]">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-[#181d16] flex items-center gap-1.5">
-                        <Briefcase className="w-3.5 h-3.5 text-[#00450e]" />
-                        <span>Employer #{idx + 1}</span>
-                        <span className="text-[10px] font-semibold text-slate-500 ml-1">— {item.country} (${getEmpCountryRate(item.country).toFixed(2)})</span>
-                      </span>
-                      {empItems.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => removeEmpItem(item.id)}
-                          className="p-1 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                          title="Remove employment check"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Per-item Country Selector */}
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-semibold text-[#475569] uppercase tracking-wider">Verification Country</label>
-                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
-                        {SUPPORTED_COUNTRIES.map((c) => {
-                          const isSelected = item.country === c.code;
-                          const rate = getEmpCountryRate(c.code);
-                          return (
-                            <button
-                              key={c.code}
-                              type="button"
-                              onClick={() => updateEmpItem(item.id, "country", c.code)}
-                              className={`p-2 rounded-lg border text-[10px] font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
-                                isSelected
-                                  ? "border-[#00450e] bg-[#f0f5ea] text-[#00450e] shadow-2xs ring-1 ring-[#00450e]/20"
-                                  : "border-[#eaf0e4] bg-white text-slate-600 hover:border-[#d0dbc6]"
-                              }`}
-                            >
-                              <span className="text-sm">{c.flag}</span>
-                              <span>{c.label}</span>
-                              <span className="text-[9px] text-slate-400 font-semibold">${rate.toFixed(0)}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <input
-                        type="text"
-                        value={item.companyName}
-                        onChange={(e) => updateEmpItem(item.id, "companyName", e.target.value)}
-                        placeholder="Employer / Company Name"
-                        className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] bg-white font-semibold"
-                      />
-                      <input
-                        type="text"
-                        value={item.position}
-                        onChange={(e) => updateEmpItem(item.id, "position", e.target.value)}
-                        placeholder="Designation / Job Title"
-                        className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] bg-white font-semibold"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      <input
-                        type="text"
-                        value={item.joiningYear}
-                        onChange={(e) => updateEmpItem(item.id, "joiningYear", e.target.value)}
-                        placeholder="Joining Year / From"
-                        className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] bg-white font-semibold"
-                      />
-                      <input
-                        type="text"
-                        value={item.leavingYear}
-                        onChange={(e) => updateEmpItem(item.id, "leavingYear", e.target.value)}
-                        placeholder="Leaving Year / To"
-                        className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] bg-white font-semibold"
-                      />
-                      <input
-                        type="text"
-                        value={item.employeeCode}
-                        onChange={(e) => updateEmpItem(item.id, "employeeCode", e.target.value)}
-                        placeholder="Employee Code (Optional)"
-                        className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] bg-white font-semibold"
-                      />
-                    </div>
-                  </div>
-                ))}
-
-                <button
-                  type="button"
-                  onClick={addEmpItem}
-                  className="w-full py-2.5 border-2 border-dashed border-[#d0dbc6] rounded-xl text-xs font-bold text-[#00450e] hover:bg-[#f0f5ea]/50 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Add Another Employment Check (+${getEmpCountryRate("India").toFixed(2)})</span>
-                </button>
               </div>
 
               {/* Skip Candidate Login Toggle */}
@@ -3487,111 +3402,33 @@ export default function IdentityVerification() {
                 </div>
               </div>
 
-              {/* Dynamic Education Items */}
-              <div className="flex flex-col gap-4 border-t border-[#eaf0e4] pt-5">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="font-semibold text-xs text-[#181d16] uppercase tracking-wider font-label-caps">
-                      Education Credential Checks
-                    </h4>
-                    <p className="text-[11px] text-[#64748B]">Add degree/board records to be verified. Select a country for each credential.</p>
-                  </div>
-                  <span className="text-xs font-bold text-purple-700 bg-purple-50 px-3 py-1 rounded-full border border-purple-200">
-                    Total: ${eduTotalPrice.toFixed(2)} ({eduItems.length} {eduItems.length === 1 ? 'Check' : 'Checks'})
-                  </span>
+              {/* Target Country Selector for Request Creation */}
+              <div className="flex flex-col gap-2 border-t border-[#eaf0e4] pt-5">
+                <label className="font-label-caps text-[#475569] text-xs font-semibold uppercase tracking-wider">
+                  Verification Country Rate
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                  {SUPPORTED_COUNTRIES.map((c) => {
+                    const isSelected = (eduItems[0]?.country || "India") === c.code;
+                    const rate = getEduCountryRate(c.code);
+                    return (
+                      <button
+                        key={c.code}
+                        type="button"
+                        onClick={() => updateEduItem(eduItems[0]?.id || "edu-1", "country", c.code)}
+                        className={`p-2.5 rounded-xl border text-xs font-bold transition-all flex flex-col items-center justify-center gap-1 cursor-pointer ${
+                          isSelected
+                            ? "border-purple-600 bg-purple-50 text-purple-900 shadow-2xs ring-2 ring-purple-500/20"
+                            : "border-[#eaf0e4] bg-white text-slate-700 hover:border-[#d0dbc6]"
+                        }`}
+                      >
+                        <span className="text-base">{c.flag}</span>
+                        <span>{c.label}</span>
+                        <span className="text-[10px] text-slate-500 font-semibold">${rate.toFixed(2)}/check</span>
+                      </button>
+                    );
+                  })}
                 </div>
-
-                {eduItems.map((item, idx) => (
-                  <div key={item.id} className="p-4 bg-[#f8faf6] border border-[#eaf0e4] rounded-2xl flex flex-col gap-3 relative transition-all hover:border-[#d0dbc6]">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-[#181d16] flex items-center gap-1.5">
-                        <GraduationCap className="w-3.5 h-3.5 text-purple-700" />
-                        <span>Credential #{idx + 1}</span>
-                        <span className="text-[10px] font-semibold text-slate-500 ml-1">— {item.country} (${getEduCountryRate(item.country).toFixed(2)})</span>
-                      </span>
-                      {eduItems.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => removeEduItem(item.id)}
-                          className="p-1 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                          title="Remove education check"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Per-item Country Selector */}
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-semibold text-[#475569] uppercase tracking-wider">Verification Country</label>
-                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
-                        {SUPPORTED_COUNTRIES.map((c) => {
-                          const isSelected = item.country === c.code;
-                          const rate = getEduCountryRate(c.code);
-                          return (
-                            <button
-                              key={c.code}
-                              type="button"
-                              onClick={() => updateEduItem(item.id, "country", c.code)}
-                              className={`p-2 rounded-lg border text-[10px] font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
-                                isSelected
-                                  ? "border-purple-600 bg-purple-50 text-purple-900 shadow-2xs ring-1 ring-purple-500/20"
-                                  : "border-[#eaf0e4] bg-white text-slate-600 hover:border-[#d0dbc6]"
-                              }`}
-                            >
-                              <span className="text-sm">{c.flag}</span>
-                              <span>{c.label}</span>
-                              <span className="text-[9px] text-slate-400 font-semibold">${rate.toFixed(0)}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <input
-                        type="text"
-                        value={item.boardUniversity}
-                        onChange={(e) => updateEduItem(item.id, "boardUniversity", e.target.value)}
-                        placeholder="Board / University / School Name"
-                        className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] bg-white font-semibold"
-                      />
-                      <input
-                        type="text"
-                        value={item.courseName}
-                        onChange={(e) => updateEduItem(item.id, "courseName", e.target.value)}
-                        placeholder="Degree / Course Name (e.g. B.Sc, MBA)"
-                        className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] bg-white font-semibold"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <input
-                        type="text"
-                        value={item.passingYear}
-                        onChange={(e) => updateEduItem(item.id, "passingYear", e.target.value)}
-                        placeholder="Passing Year (e.g. 2022)"
-                        className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] bg-white font-semibold"
-                      />
-                      <input
-                        type="text"
-                        value={item.rollNumber}
-                        onChange={(e) => updateEduItem(item.id, "rollNumber", e.target.value)}
-                        placeholder="Roll / Registration No (Optional)"
-                        className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs text-primary focus:outline-none focus:ring-2 focus:ring-[#eaf0e4] bg-white font-semibold"
-                      />
-                    </div>
-                  </div>
-                ))}
-
-                <button
-                  type="button"
-                  onClick={addEduItem}
-                  className="w-full py-2.5 border-2 border-dashed border-purple-200 rounded-xl text-xs font-bold text-purple-700 hover:bg-purple-50/50 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Add Another Education Check (+${getEduCountryRate("India").toFixed(2)})</span>
-                </button>
               </div>
 
               {/* Skip Candidate Login Toggle */}
