@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, Briefcase, GraduationCap, Send, CheckCircle, AlertCircle, Building2, Award } from "lucide-react";
+import { X, Briefcase, GraduationCap, Send, CheckCircle, AlertCircle, Building2, Award, FileText, UploadCloud } from "lucide-react";
 import { usePortal } from "src/context/PortalContext";
 import { INDIAN_STATES } from "src/lib/courts-mapping";
 import { Country, State, City } from "country-state-city";
@@ -507,8 +507,8 @@ export default function CandidateFillModal({
                     </div>
                   </div>
 
-                  {/* Reporting Manager & Compensation */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t border-[#eaf0e4]/80">
+                  {/* Reporting Manager (Optional) */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-[#eaf0e4]/80">
                     <div className="flex flex-col gap-1.5">
                       <label className="text-[10px] font-bold text-slate-500 uppercase">Reporting Manager Name (Optional)</label>
                       <input
@@ -530,21 +530,10 @@ export default function CandidateFillModal({
                         className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none"
                       />
                     </div>
-
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-bold text-slate-500 uppercase">Annual CTC</label>
-                      <input
-                        type="text"
-                        value={emp.annualCTC}
-                        onChange={(e) => updateEmploymentItem(emp.id, "annualCTC", e.target.value)}
-                        placeholder="e.g. ₹12,00,000"
-                        className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none"
-                      />
-                    </div>
                   </div>
 
-                  {/* Type, Agency & Remarks */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-[#eaf0e4]/80">
+                  {/* Type, Agency & Annual CTC */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t border-[#eaf0e4]/80">
                     <div className="flex flex-col gap-1.5">
                       <label className="text-[10px] font-bold text-slate-500 uppercase">Employment Type</label>
                       <select
@@ -572,6 +561,20 @@ export default function CandidateFillModal({
                       />
                     </div>
 
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase">Annual CTC</label>
+                      <input
+                        type="text"
+                        value={emp.annualCTC}
+                        onChange={(e) => updateEmploymentItem(emp.id, "annualCTC", e.target.value)}
+                        placeholder="e.g. ₹12,00,000"
+                        className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Reason for Leaving & Relieving Letter Attachment */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-[#eaf0e4]/80">
                     <div className="flex flex-col gap-1.5 md:col-span-2">
                       <label className="text-[10px] font-bold text-slate-500 uppercase">Reason for Leaving &amp; Remarks</label>
                       <textarea
@@ -747,6 +750,58 @@ export default function CandidateFillModal({
                       placeholder="e.g. 2023"
                       className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none focus:border-[#181d16]"
                     />
+                  </div>
+
+                  {/* Degree / Marksheet / Certificate Copy Attachment (Optional) */}
+                  <div className="flex flex-col gap-1.5 md:col-span-2 pt-2 border-t border-[#eaf0e4]/80">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+                      <span>Degree / Marksheet / Certificate Copy (Optional)</span>
+                      <span className="text-slate-400 font-semibold">(Max 1MB)</span>
+                    </label>
+                    {eduForm.certificateFile ? (
+                      <div className="border border-emerald-200 rounded-xl p-3 bg-emerald-50/50 flex items-center justify-between">
+                        <div className="flex items-center gap-2 overflow-hidden">
+                          <FileText className="w-4 h-4 text-emerald-700 shrink-0" />
+                          <span className="text-xs font-bold text-slate-800 truncate">
+                            {(eduForm as any).certificateFileName || "Degree_Certificate.pdf"}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            updateEdu("certificateFile", "");
+                            updateEdu("certificateFileName", "");
+                          }}
+                          className="text-slate-400 hover:text-red-500 transition-colors p-1 rounded-lg hover:bg-red-50 cursor-pointer"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="border border-dashed border-[#eaf0e4] hover:border-purple-500 rounded-xl p-3 bg-[#f6fbf0]/50 hover:bg-white transition-all flex items-center justify-center gap-2 cursor-pointer">
+                        <UploadCloud className="w-4 h-4 text-slate-400" />
+                        <span className="text-xs font-bold text-slate-700">Upload Degree / Marksheet / Certificate (Optional, Max 1MB)</span>
+                        <input
+                          type="file"
+                          accept=".pdf,.jpg,.jpeg,.png"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            if (file.size > 2 * 1024 * 1024) {
+                              setErrorMsg("File size exceeds 1MB limit.");
+                              return;
+                            }
+                            updateEdu("certificateFileName", file.name);
+                            const reader = new FileReader();
+                            reader.onloadend = () => {
+                              updateEdu("certificateFile", reader.result as string);
+                            };
+                            reader.readAsDataURL(file);
+                          }}
+                        />
+                      </label>
+                    )}
                   </div>
                 </div>
               </div>
