@@ -811,6 +811,36 @@ export async function POST(req: NextRequest) {
         if (!verificationId || !employmentData) {
           return NextResponse.json({ error: "Verification ID and employment data are required" }, { status: 400 });
         }
+
+        const existingVer = await db.collection("verifications").findOne({ id: verificationId });
+        if (!existingVer) {
+          return NextResponse.json({ error: "Verification request not found" }, { status: 404 });
+        }
+
+        const submittedEmployments = Array.isArray(employmentData.employments) && employmentData.employments.length > 0
+          ? employmentData.employments
+          : (Array.isArray(employmentData.pastOrganisations) && employmentData.pastOrganisations.length > 0
+              ? employmentData.pastOrganisations
+              : [employmentData]);
+
+        const validEmps = submittedEmployments.filter((e: any) => e?.companyName?.trim() || e?.position?.trim());
+        const itemCount = validEmps.length > 0 ? validEmps.length : 1;
+
+        const defaultCountryRates: Record<string, number> = { Singapore: 15, Malaysia: 12, Philippines: 10, UAE: 20, India: 5 };
+        const safeOrgName = existingVer.orgName;
+        const orgDoc = await db.collection("organisations").findOne({
+          name: { $regex: new RegExp("^" + (safeOrgName || "").replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + "$", "i") }
+        });
+
+        const serviceCharge = (validEmps.length > 0 ? validEmps : [employmentData]).reduce((sum: number, e: any) => {
+          const itemCountry = e.country || "India";
+          const rate = orgDoc?.employmentRates?.[itemCountry] ?? (defaultCountryRates[itemCountry] || 5);
+          return sum + rate;
+        }, 0);
+
+        const countriesList = [...new Set((validEmps.length > 0 ? validEmps : [employmentData]).map((e: any) => e.country || "India"))];
+        const country = countriesList.join(", ");
+
         const result = await db.collection("verifications").updateOne(
           { id: verificationId },
           {
@@ -842,15 +872,15 @@ export async function POST(req: NextRequest) {
               },
               ...(Array.isArray(employmentData.pastOrganisations) ? { pastOrganisations: employmentData.pastOrganisations } : {}),
               ...(Array.isArray(employmentData.employments) ? { employments: employmentData.employments } : {}),
+              itemCount,
+              serviceCharge,
+              country,
               employmentDataSubmitted: true,
               employmentDataSubmittedAt: new Date().toISOString(),
               updatedAt: new Date()
             }
           }
         );
-        if (result.matchedCount === 0) {
-          return NextResponse.json({ error: "Verification request not found" }, { status: 404 });
-        }
         return NextResponse.json({ success: true });
       }
       case "submitEducationData": {
@@ -858,6 +888,22 @@ export async function POST(req: NextRequest) {
         if (!verificationId || !educationData) {
           return NextResponse.json({ error: "Verification ID and education data are required" }, { status: 400 });
         }
+
+        const existingVer = await db.collection("verifications").findOne({ id: verificationId });
+        if (!existingVer) {
+          return NextResponse.json({ error: "Verification request not found" }, { status: 404 });
+        }
+
+        const defaultCountryRates: Record<string, number> = { Singapore: 15, Malaysia: 12, Philippines: 10, UAE: 20, India: 5 };
+        const safeOrgName = existingVer.orgName;
+        const orgDoc = await db.collection("organisations").findOne({
+          name: { $regex: new RegExp("^" + (safeOrgName || "").replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + "$", "i") }
+        });
+
+        const itemCountry = educationData.country || "India";
+        const serviceCharge = orgDoc?.educationRates?.[itemCountry] ?? (defaultCountryRates[itemCountry] || 5);
+        const country = itemCountry;
+
         const result = await db.collection("verifications").updateOne(
           { id: verificationId },
           {
@@ -873,15 +919,14 @@ export async function POST(req: NextRequest) {
                 certificateFile: educationData.certificateFile || "",
                 certificateFileName: educationData.certificateFileName || "",
               },
+              serviceCharge,
+              country,
               educationDataSubmitted: true,
               educationDataSubmittedAt: new Date().toISOString(),
               updatedAt: new Date()
             }
           }
         );
-        if (result.matchedCount === 0) {
-          return NextResponse.json({ error: "Verification request not found" }, { status: 404 });
-        }
         return NextResponse.json({ success: true });
       }
       case "addCourtRecordVerification": {

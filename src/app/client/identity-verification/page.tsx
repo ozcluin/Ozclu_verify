@@ -3003,34 +3003,7 @@ export default function IdentityVerification() {
                 </div>
               </div>
 
-              {/* Target Country Selector for Request Creation */}
-              <div className="flex flex-col gap-2 border-t border-[#eaf0e4] pt-5">
-                <label className="font-label-caps text-[#475569] text-xs font-semibold uppercase tracking-wider">
-                  Verification Country Rate
-                </label>
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                  {SUPPORTED_COUNTRIES.map((c) => {
-                    const isSelected = (empItems[0]?.country || "India") === c.code;
-                    const rate = getEmpCountryRate(c.code);
-                    return (
-                      <button
-                        key={c.code}
-                        type="button"
-                        onClick={() => updateEmpItem(empItems[0]?.id || "emp-1", "country", c.code)}
-                        className={`p-2.5 rounded-xl border text-xs font-bold transition-all flex flex-col items-center justify-center gap-1 cursor-pointer ${
-                          isSelected
-                            ? "border-[#00450e] bg-[#f0f5ea] text-[#00450e] shadow-2xs ring-2 ring-[#00450e]/20"
-                            : "border-[#eaf0e4] bg-white text-slate-700 hover:border-[#d0dbc6]"
-                        }`}
-                      >
-                        <span className="text-base">{c.flag}</span>
-                        <span>{c.label}</span>
-                        <span className="text-[10px] text-slate-500 font-semibold">${rate.toFixed(2)}/check</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+
 
               {/* Skip Candidate Login Toggle */}
               <div className="flex items-center justify-between p-4 bg-[#f8faf6] border border-[#eaf0e4] rounded-2xl transition-all hover:border-[#d0dbc6] shadow-2xs">
@@ -3402,34 +3375,7 @@ export default function IdentityVerification() {
                 </div>
               </div>
 
-              {/* Target Country Selector for Request Creation */}
-              <div className="flex flex-col gap-2 border-t border-[#eaf0e4] pt-5">
-                <label className="font-label-caps text-[#475569] text-xs font-semibold uppercase tracking-wider">
-                  Verification Country Rate
-                </label>
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                  {SUPPORTED_COUNTRIES.map((c) => {
-                    const isSelected = (eduItems[0]?.country || "India") === c.code;
-                    const rate = getEduCountryRate(c.code);
-                    return (
-                      <button
-                        key={c.code}
-                        type="button"
-                        onClick={() => updateEduItem(eduItems[0]?.id || "edu-1", "country", c.code)}
-                        className={`p-2.5 rounded-xl border text-xs font-bold transition-all flex flex-col items-center justify-center gap-1 cursor-pointer ${
-                          isSelected
-                            ? "border-purple-600 bg-purple-50 text-purple-900 shadow-2xs ring-2 ring-purple-500/20"
-                            : "border-[#eaf0e4] bg-white text-slate-700 hover:border-[#d0dbc6]"
-                        }`}
-                      >
-                        <span className="text-base">{c.flag}</span>
-                        <span>{c.label}</span>
-                        <span className="text-[10px] text-slate-500 font-semibold">${rate.toFixed(2)}/check</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+
 
               {/* Skip Candidate Login Toggle */}
               <div className="flex items-center justify-between p-4 bg-[#f8faf6] border border-[#eaf0e4] rounded-2xl transition-all hover:border-[#d0dbc6] shadow-2xs">
