@@ -125,6 +125,8 @@ export default function CandidateFillModal({
     agencyDetails: "",
     reasonForLeaving: "",
     remarks: "",
+    experienceLetterFile: "",
+    experienceLetterFileName: "",
   });
 
   const [employments, setEmployments] = useState([createEmptyEmployment(1)]);
@@ -579,6 +581,60 @@ export default function CandidateFillModal({
                         placeholder="Reason for leaving or additional remarks"
                         className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none resize-none"
                       />
+                    </div>
+
+                    {/* Relieving / Experience Letter Attachment (Max 2MB) */}
+                    <div className="flex flex-col gap-1.5 md:col-span-2 pt-2 border-t border-[#eaf0e4]/80">
+                      <label className="text-[10px] font-bold text-[#00450e] uppercase tracking-wider">
+                        Relieving / Experience Letter Attachment (PDF / Image, Max 2MB)
+                      </label>
+                      {emp.experienceLetterFile ? (
+                        <div className="border border-emerald-200 rounded-xl p-3 bg-emerald-50/50 flex items-center justify-between">
+                          <div className="flex items-center gap-2 overflow-hidden">
+                            <div className="w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shrink-0">
+                              📄
+                            </div>
+                            <div className="flex flex-col truncate">
+                              <span className="text-xs font-bold text-slate-800 truncate">{emp.experienceLetterFileName || "Relieving_Letter.pdf"}</span>
+                              <span className="text-[10px] text-emerald-700 font-semibold">Attachment Ready (Will be shown in Report Appendix)</span>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              updateEmploymentItem(emp.id, "experienceLetterFile", "");
+                              updateEmploymentItem(emp.id, "experienceLetterFileName", "");
+                            }}
+                            className="px-2.5 py-1 rounded-lg border border-red-200 bg-white hover:bg-red-50 text-red-700 font-bold text-[10px] transition-colors cursor-pointer"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ) : (
+                        <label className="border-2 border-dashed border-[#d0dbc6] hover:border-[#00450e] rounded-xl p-3 bg-white hover:bg-[#f6fbf0]/50 transition-all flex items-center justify-center gap-2 cursor-pointer">
+                          <span className="text-xs font-bold text-[#00450e]">📎 Upload Relieving / Experience Letter (Max 2MB)</span>
+                          <input
+                            type="file"
+                            accept=".pdf,.jpg,.jpeg,.png"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              if (file.size > 2 * 1024 * 1024) {
+                                setErrorMsg(`File "${file.name}" exceeds 2MB limit. Please upload a file smaller than 2MB.`);
+                                return;
+                              }
+                              const fileName = file.name;
+                              const reader = new FileReader();
+                              reader.onloadend = () => {
+                                updateEmploymentItem(emp.id, "experienceLetterFile", reader.result as string);
+                                updateEmploymentItem(emp.id, "experienceLetterFileName", fileName);
+                              };
+                              reader.readAsDataURL(file);
+                            }}
+                          />
+                        </label>
+                      )}
                     </div>
                   </div>
                 </div>
