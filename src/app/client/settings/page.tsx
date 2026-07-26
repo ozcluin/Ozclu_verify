@@ -15,11 +15,21 @@ import {
   RotateCcw,
   FileText,
   UploadCloud,
-  Trash2
+  Trash2,
+  MessageSquare,
+  Send,
+  Clock,
+  ShieldCheck,
+  Tag,
+  Layers,
+  PlusCircle,
+  DollarSign,
+  HelpCircle,
+  ChevronRight
 } from "lucide-react";
 
 export default function SettingsPage() {
-  const { settings, updateSettings } = usePortal();
+  const { settings, updateSettings, organisation, suggestions, submitSuggestion } = usePortal();
 
   // Company states
   const [companyName, setCompanyName] = useState("");
@@ -49,6 +59,15 @@ export default function SettingsPage() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+
+  // Suggestion / Grievance form states
+  const [reqType, setReqType] = useState<"enable_service" | "rate_query" | "suggestion" | "grievance">("enable_service");
+  const [targetService, setTargetService] = useState("General");
+  const [reqTitle, setReqTitle] = useState("");
+  const [reqMessage, setReqMessage] = useState("");
+  const [submittingReq, setSubmittingReq] = useState(false);
+  const [reqSuccess, setReqSuccess] = useState("");
+  const [reqError, setReqError] = useState("");
 
   // UI state
   const [saveAlert, setSaveAlert] = useState("");
@@ -82,10 +101,9 @@ export default function SettingsPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Check size limit: 200KB = 204800 bytes
     if (file.size > 204800) {
       setSaveError("Logo image size must be under 200KB.");
-      e.target.value = ""; // Reset file input
+      e.target.value = "";
       return;
     }
 
@@ -136,7 +154,6 @@ export default function SettingsPage() {
   };
 
   const handleDiscard = () => {
-    // Reload state from settings context
     if (settings) {
       setCompanyName(settings.companyName || "");
       setAddress(settings.address || "");
@@ -202,36 +219,239 @@ export default function SettingsPage() {
     }
   };
 
+  const handleSubmitSuggestion = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setReqSuccess("");
+    setReqError("");
 
+    if (!reqTitle.trim() || !reqMessage.trim()) {
+      setReqError("Please provide a subject title and detailed message.");
+      return;
+    }
+
+    setSubmittingReq(true);
+    try {
+      await submitSuggestion({
+        type: reqType,
+        title: reqTitle.trim(),
+        message: reqMessage.trim(),
+        targetService
+      });
+      setReqSuccess("Your request has been submitted to Admin! We will review and respond promptly.");
+      setReqTitle("");
+      setReqMessage("");
+      setTimeout(() => setReqSuccess(""), 5000);
+    } catch (err: any) {
+      setReqError(err.message || "Failed to submit request to admin.");
+    } finally {
+      setSubmittingReq(false);
+    }
+  };
+
+  const handleQuickRequestService = (serviceKey: string, serviceTitle: string) => {
+    setReqType("enable_service");
+    setTargetService(serviceKey);
+    setReqTitle(`Request enablement / rate review for ${serviceTitle}`);
+    const el = document.getElementById("suggestion-box-section");
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
+  // Service list with pricing & enablement status
+  const serviceList = [
+    {
+      key: "identity",
+      title: "Identity Verification",
+      desc: "Aadhaar, PAN, Driving Licence & Passport check",
+      rate: organisation?.identityRate ?? organisation?.monthlyRate ?? 10,
+      enabled: organisation?.identityEnabled !== false,
+      icon: "badge"
+    },
+    {
+      key: "court_record",
+      title: "Court Record Search",
+      desc: "Civil & Criminal court searches across eCourts network",
+      rate: organisation?.courtRecordRate ?? organisation?.monthlyRate ?? 15,
+      enabled: organisation?.courtRecordEnabled !== false,
+      icon: "gavel"
+    },
+    {
+      key: "employment",
+      title: "Employment Verification",
+      desc: "Work history, designation, CTC & manager reference validation",
+      rate: organisation?.employmentRate ?? 5,
+      enabled: organisation?.employmentEnabled !== false,
+      icon: "work"
+    },
+    {
+      key: "education",
+      title: "Education Verification",
+      desc: "University degree, roll number & institutional verification",
+      rate: organisation?.educationRate ?? 5,
+      enabled: organisation?.educationEnabled !== false,
+      icon: "school"
+    },
+    {
+      key: "interpol",
+      title: "Interpol & Global Watchlist",
+      desc: "Screening against Interpol red notices & global crime watchlists",
+      rate: organisation?.interpolRate ?? 10,
+      enabled: organisation?.interpolEnabled !== false,
+      icon: "travel_explore"
+    },
+    {
+      key: "passport",
+      title: "Passport Verification",
+      desc: "Government database passport verification check",
+      rate: organisation?.passportRate ?? 8,
+      enabled: organisation?.passportEnabled !== false,
+      icon: "assignment_ind"
+    },
+    {
+      key: "digital_address",
+      title: "Digital Address Verification",
+      desc: "Geo-tagged selfie & precise GPS location verification",
+      rate: organisation?.digitalAddressRate ?? 5,
+      enabled: organisation?.digitalAddressEnabled !== false,
+      icon: "location_on"
+    }
+  ];
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "Service Enabled":
+      case "Resolved":
+        return <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold px-2.5 py-0.5 rounded-full"><CheckCircle className="w-3 h-3" /> {status}</span>;
+      case "Under Review":
+        return <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-bold px-2.5 py-0.5 rounded-full"><Clock className="w-3 h-3 animate-spin" /> Under Review</span>;
+      case "Closed":
+        return <span className="inline-flex items-center gap-1 bg-slate-100 text-slate-600 border border-slate-200 text-[10px] font-bold px-2.5 py-0.5 rounded-full">Closed</span>;
+      default:
+        return <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-bold px-2.5 py-0.5 rounded-full"><Clock className="w-3 h-3" /> Pending</span>;
+    }
+  };
 
   return (
     <div className="flex flex-col gap-6 pt-4 animate-fade-in pb-12">
+      {/* Page Header */}
       <div className="flex flex-col gap-1 border-b border-[#f0f5ea] pb-5 mb-2">
         <div className="flex items-center gap-2 text-[10px] font-bold text-[#00450e] bg-[#f0f5ea]/60 px-2.5 py-1 rounded-full w-fit uppercase tracking-wider font-label-caps border border-[#eaf0e4]/60">
           <Sparkles className="w-3.5 h-3.5 text-[#181d16]" />
-          <span>PORTAL CONFIGURATION</span>
+          <span>PORTAL CONFIGURATION &amp; OFFERINGS</span>
         </div>
         <h2 className="font-display-lg text-[#181d16] font-bold tracking-tight text-3xl mt-2">Settings &amp; Profile</h2>
-        <p className="text-secondary mt-1 text-sm text-slate-500">Manage your company details and portal preferences.</p>
+        <p className="text-secondary mt-1 text-sm text-slate-500">Manage company details, review decided service rates, and communicate directly with Admin.</p>
       </div>
 
       {saveAlert && (
-        <div className="bg-[#E6F8F3] text-[#00684A] border border-[#A3EAD6] rounded-xl p-4 font-body-sm flex items-center gap-3 max-w-5xl animate-fade-in shadow-2xs">
+        <div className="bg-[#E6F8F3] text-[#00684A] border border-[#A3EAD6] rounded-xl p-4 font-body-sm flex items-center gap-3 max-w-6xl animate-fade-in shadow-2xs">
           <CheckCircle className="w-5 h-5 text-[#00a877] shrink-0" />
           <span className="font-semibold">{saveAlert}</span>
         </div>
       )}
 
       {saveError && (
-        <div className="bg-red-50 text-red-800 border border-red-200 rounded-xl p-4 font-body-sm flex items-center gap-3 max-w-5xl animate-fade-in shadow-2xs">
+        <div className="bg-red-50 text-red-800 border border-red-200 rounded-xl p-4 font-body-sm flex items-center gap-3 max-w-6xl animate-fade-in shadow-2xs">
           <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
           <span className="font-semibold">{saveError}</span>
         </div>
       )}
 
+      {/* ── SECTION 1: Decided Service Rates & Active Offerings ── */}
+      <div className="bg-white border border-[#eaf0e4] rounded-3xl p-6 sm:p-8 shadow-sm relative overflow-hidden max-w-6xl transition-all duration-300">
+        <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#00450e] via-[#016e1c] to-[#eaf0e4]"></div>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 border-b border-slate-100 pb-5">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-[#f0f5ea] border border-[#eaf0e4] rounded-2xl text-[#00450e]">
+              <Tag className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="font-bold text-xl text-[#181d16]">Decided Service Rates &amp; Offerings</h3>
+              <p className="text-xs text-slate-500 font-medium mt-0.5">Custom per-check pricing agreed for your organisation ({companyName || "Your Organisation"}).</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 bg-[#f6fbf0] px-3.5 py-2 rounded-xl border border-[#eaf0e4] text-xs font-bold text-[#00450e]">
+            <ShieldCheck className="w-4 h-4 text-[#016e1c]" />
+            <span>Organisation Plan: {organisation?.paymentPlan || "Standard Enterprise"}</span>
+          </div>
+        </div>
+
+        {/* Compact Table View for Decided Service Rates & Offerings */}
+        <div className="overflow-hidden border border-slate-200/80 rounded-2xl bg-white shadow-2xs">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="bg-[#f6fbf0]/80 border-b border-slate-200/80 text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+                  <th className="py-3 px-4 font-extrabold">Service Offerings</th>
+                  <th className="py-3 px-4 font-extrabold">Decided Rate</th>
+                  <th className="py-3 px-4 font-extrabold">Status</th>
+                  <th className="py-3 px-4 font-extrabold text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 font-semibold text-slate-700">
+                {serviceList.map((svc) => (
+                  <tr key={svc.key} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="py-3 px-4">
+                      <div className="flex items-center gap-2.5">
+                        <span className="material-symbols-outlined text-lg text-[#00450e] p-1.5 bg-[#f0f5ea] rounded-lg shrink-0">
+                          {svc.icon}
+                        </span>
+                        <div>
+                          <span className="font-bold text-slate-900 block text-xs">{svc.title}</span>
+                          <span className="text-[11px] text-slate-400 font-medium block truncate max-w-xs">{svc.desc}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4 whitespace-nowrap">
+                      <span className="text-sm font-extrabold text-[#00450e]">
+                        ${svc.rate.toFixed(2)}
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-normal"> / check</span>
+                    </td>
+                    <td className="py-3 px-4 whitespace-nowrap">
+                      {svc.enabled ? (
+                        <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200/80 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                          Active
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-bold px-2.5 py-0.5 rounded-full">
+                          Optional
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4 text-right whitespace-nowrap">
+                      {!svc.enabled ? (
+                        <button
+                          type="button"
+                          onClick={() => handleQuickRequestService(svc.key, svc.title)}
+                          className="text-[11px] font-bold text-[#00450e] bg-[#f0f5ea] hover:bg-[#00450e] hover:text-white px-3 py-1.5 rounded-xl border border-[#eaf0e4] transition-all cursor-pointer inline-flex items-center gap-1"
+                        >
+                          <span>Request Enablement</span>
+                          <ChevronRight className="w-3 h-3" />
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleQuickRequestService(svc.key, svc.title)}
+                          className="text-[11px] font-bold text-slate-500 hover:text-[#00450e] bg-slate-50 hover:bg-[#f0f5ea] px-3 py-1.5 rounded-xl border border-slate-200 transition-all cursor-pointer inline-flex items-center gap-1"
+                        >
+                          <span>Review Rate</span>
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
       {/* Bento Grid Layout for Forms */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 max-w-6xl">
-        {/* Left Column (Wider - Spans 2 columns on xl screens) */}
+        {/* Left Column (Spans 2 columns on xl screens) */}
         <div className="xl:col-span-2 flex flex-col gap-6">
           
           {/* Company Profile Card */}
@@ -249,7 +469,6 @@ export default function SettingsPage() {
               <div className="flex flex-col gap-2 md:col-span-2 border-b border-dashed border-[#eaf0e4]/60 pb-6 mb-2">
                 <label className="font-label-caps text-[#475569] text-[10px] font-bold uppercase tracking-wider">Company Logo</label>
                 <div className="flex flex-col sm:flex-row items-center gap-6 mt-1">
-                  {/* Logo Preview box */}
                   <div className="w-28 h-28 border border-[#eaf0e4] rounded-2xl bg-[#F8FAFC] flex items-center justify-center overflow-hidden shrink-0 relative group">
                     {logo ? (
                       <img src={logo} alt="Company Logo Preview" className="object-contain w-full h-full p-2" />
@@ -261,7 +480,6 @@ export default function SettingsPage() {
                     )}
                   </div>
 
-                  {/* Actions / Info */}
                   <div className="flex-1 flex flex-col gap-2 text-left w-full">
                     <div className="flex flex-wrap gap-2">
                       <label className="cursor-pointer bg-[#f0f5ea]/60 hover:bg-[#f0f5ea] border border-[#eaf0e4]/80 text-[#00450e] font-bold text-xs px-4 py-2.5 rounded-xl transition-all inline-flex items-center gap-1.5 shadow-2xs">
@@ -557,8 +775,163 @@ export default function SettingsPage() {
             </form>
           </div>
 
+        </div>
+      </div>
 
+      {/* ── SECTION 2: Suggestion, Service Request & Grievance Box ── */}
+      <div id="suggestion-box-section" className="bg-white border border-[#eaf0e4] rounded-3xl p-6 sm:p-8 shadow-sm relative overflow-hidden max-w-6xl mt-4">
+        <div className="absolute top-0 left-0 right-0 h-1.5 bg-[#00450e]"></div>
+        
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-3 bg-[#f0f5ea] border border-[#eaf0e4] rounded-2xl text-[#00450e]">
+            <MessageSquare className="w-6 h-6" />
+          </div>
+          <div>
+            <h3 className="font-bold text-xl text-[#181d16]">Service Requests, Suggestions &amp; Grievance Box</h3>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">Need a new service enabled, custom rate revision, or have a grievance? Submit directly to Admin below.</p>
+          </div>
+        </div>
 
+        {reqSuccess && (
+          <div className="bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xl p-4 text-xs font-semibold mb-6 flex items-center gap-3 animate-fade-in shadow-2xs">
+            <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0" />
+            <span>{reqSuccess}</span>
+          </div>
+        )}
+
+        {reqError && (
+          <div className="bg-rose-50 text-rose-800 border border-rose-200 rounded-xl p-4 text-xs font-semibold mb-6 flex items-center gap-3 animate-fade-in shadow-2xs">
+            <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
+            <span>{reqError}</span>
+          </div>
+        )}
+
+        {/* Submit Form */}
+        <form onSubmit={handleSubmitSuggestion} className="bg-[#f6fbf0]/60 border border-[#eaf0e4] rounded-2xl p-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+            <div>
+              <label className="font-label-caps text-[#475569] text-[10px] font-bold uppercase tracking-wider block mb-1.5">Request Type</label>
+              <select
+                value={reqType}
+                onChange={(e: any) => setReqType(e.target.value)}
+                className="w-full bg-white border border-[#eaf0e4] rounded-xl px-4 py-2.5 font-body-sm text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-[#00450e]/20"
+              >
+                <option value="enable_service">🚀 Enable New Service / Feature</option>
+                <option value="rate_query">💲 Custom Service Rates / Pricing Inquiry</option>
+                <option value="suggestion">💡 General Suggestion</option>
+                <option value="grievance">⚠️ Grievance / Issue Ticket</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="font-label-caps text-[#475569] text-[10px] font-bold uppercase tracking-wider block mb-1.5">Target Service (Optional)</label>
+              <select
+                value={targetService}
+                onChange={(e) => setTargetService(e.target.value)}
+                className="w-full bg-white border border-[#eaf0e4] rounded-xl px-4 py-2.5 font-body-sm text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-[#00450e]/20"
+              >
+                <option value="General">General / Organization-Wide</option>
+                <option value="identity">Identity Verification</option>
+                <option value="court_record">Court Record Search</option>
+                <option value="employment">Employment Verification</option>
+                <option value="education">Education Verification</option>
+                <option value="interpol">Interpol &amp; Watchlist</option>
+                <option value="passport">Passport Verification</option>
+                <option value="digital_address">Digital Address Verification</option>
+              </select>
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="font-label-caps text-[#475569] text-[10px] font-bold uppercase tracking-wider block mb-1.5">Subject / Request Title <span className="text-red-500">*</span></label>
+              <input
+                type="text"
+                placeholder="Briefly state your request or grievance (e.g. Request to enable Interpol check for our team)"
+                value={reqTitle}
+                onChange={(e) => setReqTitle(e.target.value)}
+                className="w-full bg-white border border-[#eaf0e4] rounded-xl px-4 py-2.5 font-body-sm text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-[#00450e]/20"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="font-label-caps text-[#475569] text-[10px] font-bold uppercase tracking-wider block mb-1.5">Detailed Message <span className="text-red-500">*</span></label>
+              <textarea
+                rows={3}
+                placeholder="Provide complete details, requirements, or any feedback for the Ozclu Admin team..."
+                value={reqMessage}
+                onChange={(e) => setReqMessage(e.target.value)}
+                className="w-full bg-white border border-[#eaf0e4] rounded-xl px-4 py-2.5 font-body-sm text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-[#00450e]/20 font-sans resize-none"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              disabled={submittingReq}
+              className="bg-[#00450e] hover:bg-[#016e1c] text-white font-bold text-xs py-3 px-6 rounded-xl transition-all cursor-pointer shadow-sm flex items-center gap-2 disabled:opacity-50"
+            >
+              {submittingReq ? (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              ) : (
+                <Send className="w-4 h-4" />
+              )}
+              <span>Submit Request to Admin</span>
+            </button>
+          </div>
+        </form>
+
+        {/* History of Submitted Requests */}
+        <div>
+          <h4 className="font-bold text-sm text-slate-900 mb-4 flex items-center gap-2">
+            <Clock className="w-4 h-4 text-[#00450e]" />
+            <span>Your Submitted Requests &amp; Admin Responses ({suggestions?.length || 0})</span>
+          </h4>
+
+          {(!suggestions || suggestions.length === 0) ? (
+            <div className="text-center py-8 px-4 bg-slate-50 border border-slate-200/60 rounded-2xl">
+              <HelpCircle className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+              <p className="text-xs font-semibold text-slate-500">No requests submitted yet.</p>
+              <p className="text-[11px] text-slate-400 mt-1">Use the form above if you need new services enabled or rate adjustments.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {suggestions.map((sug) => (
+                <div key={sug.id} className="p-4 bg-white border border-slate-200 rounded-2xl transition-all hover:border-slate-300">
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs font-bold text-[#00450e]">{sug.id}</span>
+                      <span className="text-xs font-extrabold text-slate-800">{sug.title}</span>
+                      <span className="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-md uppercase">
+                        {sug.type.replace("_", " ")}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-[11px] text-slate-400 font-medium">
+                        {new Date(sug.createdAt).toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" })}
+                      </span>
+                      {getStatusBadge(sug.status)}
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-slate-600 font-medium bg-slate-50 p-3 rounded-xl border border-slate-100 mb-2">
+                    {sug.message}
+                  </p>
+
+                  {sug.adminReply && (
+                    <div className="mt-3 p-3 bg-[#f0f5ea]/70 border border-[#eaf0e4] rounded-xl flex items-start gap-2.5">
+                      <div className="p-1 bg-[#00450e] text-white rounded-lg shrink-0 mt-0.5">
+                        <MessageSquare className="w-3.5 h-3.5" />
+                      </div>
+                      <div>
+                        <span className="text-[11px] font-bold text-[#00450e] block">Admin Response:</span>
+                        <p className="text-xs text-slate-800 font-medium mt-0.5">{sug.adminReply}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

@@ -285,6 +285,21 @@ export interface Organisation {
   educationRates?: Record<string, number>;
 }
 
+export interface ClientSuggestion {
+  _id?: string;
+  id: string;
+  orgName: string;
+  clientEmail: string;
+  type: "enable_service" | "rate_query" | "suggestion" | "grievance";
+  title: string;
+  message: string;
+  targetService?: string;
+  status: "Pending" | "Under Review" | "Resolved" | "Service Enabled" | "Closed";
+  adminReply?: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
 interface PortalContextType {
   verifications: Verification[];
   invoices: Invoice[];
@@ -292,6 +307,8 @@ interface PortalContextType {
   settings: CompanySettings;
   organisation: Organisation | null;
   ozcluSettings: CompanySettings | null;
+  suggestions: ClientSuggestion[];
+  submitSuggestion: (params: { type: string; title: string; message: string; targetService?: string }) => Promise<any>;
   addInterpolVerification: (params: {
     candidateName: string;
     candidateDob: string;
@@ -380,6 +397,7 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [settings, setSettings] = useState<CompanySettings>(defaultSettings);
   const [organisation, setOrganisation] = useState<Organisation | null>(null);
   const [ozcluSettings, setOzcluSettings] = useState<CompanySettings | null>(null);
+  const [suggestions, setSuggestions] = useState<ClientSuggestion[]>([]);
   const [loaded, setLoaded] = useState(false);
 
   // Sync / Fetch function from MongoDB API route
@@ -444,6 +462,10 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       if (data.verifiers) {
         setVerifiers(data.verifiers);
+      }
+
+      if (data.suggestions) {
+        setSuggestions(data.suggestions);
       }
     } catch (err) {
       console.error("Error reading tables from API:", err);
@@ -996,6 +1018,23 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   };
 
+  const submitSuggestion = async (params: { type: string; title: string; message: string; targetService?: string }) => {
+    try {
+      const res = await fetch("/api/portal-data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "submitSuggestion", payload: params })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to submit suggestion");
+      await fetchAllData();
+      return data;
+    } catch (err: any) {
+      console.error("Failed submitting suggestion:", err);
+      throw err;
+    }
+  };
+
   return (
     <PortalContext.Provider
       value={{
@@ -1005,6 +1044,8 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         settings,
         organisation,
         ozcluSettings,
+        suggestions,
+        submitSuggestion,
         addInterpolVerification,
         addPassportVerification,
         addDigitalAddressVerification,

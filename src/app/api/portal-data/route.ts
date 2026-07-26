@@ -64,6 +64,11 @@ export async function GET(req: NextRequest) {
       { projection: { password: 0 } }
     );
 
+    // Suggestions / Grievances: for this client's organisation
+    const suggestions = await db.collection("suggestions").find(
+      { orgName, isDeleted: { $ne: true } }
+    ).sort({ createdAt: -1 }).toArray();
+
     // ── Sanitize responses ──
     const ozcluSettings = await db.collection("settings").findOne(
       { id: "acme" },
@@ -96,6 +101,7 @@ export async function GET(req: NextRequest) {
         ratePerVerification: organisation ? (organisation.monthlyRate || 0) : (clean.ratePerVerification || 0) // Display rate (identity); billing uses per-service org rates
       };
     });
+    const cleanSuggestions = suggestions.map(s => ({ ...s, _id: s._id.toString() }));
 
     return NextResponse.json({
       settings: cleanSettings,
@@ -103,7 +109,8 @@ export async function GET(req: NextRequest) {
       verifications: cleanVerifications,
       invoices: cleanInvoices,
       verifiers: cleanVerifiers,
-      organisation: organisation ? { ...organisation, _id: organisation._id.toString() } : null
+      organisation: organisation ? { ...organisation, _id: organisation._id.toString() } : null,
+      suggestions: cleanSuggestions
     });
   } catch (error: any) {
     console.error("[DATA] Client portal GET error:", error.message);
@@ -135,6 +142,41 @@ export async function POST(req: NextRequest) {
     const userAgent = getUserAgent(req);
 
     switch (action) {
+      case "submitSuggestion": {
+        const { type, title, message, targetService } = payload || {};
+        if (!title || !message) {
+          return NextResponse.json({ error: "Title and message are required" }, { status: 400 });
+        }
+        const count = await db.collection("suggestions").countDocuments({});
+        const id = `REQ-${1000 + count + 1}`;
+        const newSuggestion = {
+          id,
+          orgName: sessionOrgName,
+          clientEmail: user.email,
+          type: type || "suggestion",
+          title,
+          message,
+          targetService: targetService || "General",
+          status: "Pending",
+          createdAt: new Date().toISOString(),
+          isDeleted: false
+        };
+        await db.collection("suggestions").insertOne(newSuggestion);
+        await logAuditEvent(db, {
+          actorUserId: user.id,
+          actorEmail: user.email,
+          actorRole: user.role,
+          portal: "client",
+          action: "create_suggestion",
+          targetType: "suggestion",
+          targetId: id,
+          metadata: { targetOrg: sessionOrgName },
+          ip,
+          userAgent,
+          outcome: "success"
+        });
+        return NextResponse.json({ success: true, suggestion: newSuggestion });
+      }
       case "addVerification": {
         const { name, email, orgName, requestingOrgName, date, status, verifier, notes } = payload;
 
