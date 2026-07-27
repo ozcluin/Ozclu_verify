@@ -40,6 +40,15 @@ import CandidateFillModal from "src/app/components/CandidateFillModal";
 
 type ServiceType = "identity" | "court_record" | "employment" | "education" | "interpol" | "passport" | "digital_address";
 
+const formatSetupUrl = (url?: string) => {
+  if (!url) return "";
+  if (typeof window !== "undefined" && window.location.hostname !== "localhost" && (url.includes("localhost") || url.includes("127.0.0.1"))) {
+    const candidateDomain = process.env.NEXT_PUBLIC_CANDIDATE_PORTAL_URL || "https://candidate.verify.ozclu.com";
+    return url.replace(/^https?:\/\/[^\/]+/, candidateDomain);
+  }
+  return url;
+};
+
 /** Portaled success modal — always renders at document.body so fixed positioning is correct */
 function SuccessModal({ crCreatedId, crCandidateName, onCreateAnother, onGoToSummary }: {
   crCreatedId: string;
@@ -1953,25 +1962,32 @@ export default function IdentityVerification() {
                         <p className="text-[11px] text-[#475569] leading-relaxed mb-2">
                           Share this direct login link with the candidate. Credentials are embedded and will pre-fill automatically.
                         </p>
-                        <div className="flex items-center justify-between bg-white px-3 py-2.5 rounded-xl border border-[#eaf0e4]/60 gap-3 mt-1 shadow-2xs">
-                          <span className="font-mono text-xs text-[#181d16] truncate max-w-[65%]" title={createdCredentials.setupUrl}>
-                            {createdCredentials.setupUrl}
-                          </span>
-                          <div className="flex items-center gap-2 shrink-0">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                navigator.clipboard.writeText(createdCredentials.setupUrl || "");
-                                setCopiedUrl(true);
-                                setTimeout(() => setCopiedUrl(false), 2000);
-                              }}
-                              className="text-xs px-3 py-1.5 bg-[#181d16] text-white rounded-lg font-semibold hover:bg-[#1E293B] transition-all flex items-center gap-1.5 cursor-pointer"
-                            >
-                              {copiedUrl ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                              <span>{copiedUrl ? "Copied" : "Copy"}</span>
-                            </button>
-                          </div>
-                        </div>
+                            <div className="flex items-center justify-between bg-white px-3 py-2.5 rounded-xl border border-[#eaf0e4]/60 gap-3 mt-1 shadow-2xs">
+                              {(() => {
+                                const formattedUrl = formatSetupUrl(createdCredentials.setupUrl);
+                                return (
+                                  <>
+                                    <span className="font-mono text-xs text-[#181d16] truncate max-w-[65%]" title={formattedUrl}>
+                                      {formattedUrl}
+                                    </span>
+                                    <div className="flex items-center gap-2 shrink-0">
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          navigator.clipboard.writeText(formattedUrl || "");
+                                          setCopiedUrl(true);
+                                          setTimeout(() => setCopiedUrl(false), 2000);
+                                        }}
+                                        className="text-xs px-3 py-1.5 bg-[#181d16] text-white rounded-lg font-semibold hover:bg-[#1E293B] transition-all flex items-center gap-1.5 cursor-pointer"
+                                      >
+                                        {copiedUrl ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                                        <span>{copiedUrl ? "Copied" : "Copy"}</span>
+                                      </button>
+                                    </div>
+                                  </>
+                                );
+                              })()}
+                            </div>
 
                         {/* Pre-filled credentials detail */}
                         {(() => {
@@ -3128,23 +3144,30 @@ export default function IdentityVerification() {
                               Share this link with the candidate. They will be able to log in and fill their employment details.
                             </p>
                             <div className="flex items-center justify-between bg-white px-3 py-2.5 rounded-xl border border-[#eaf0e4]/60 gap-3 mt-1 shadow-2xs">
-                              <span className="font-mono text-xs text-[#181d16] truncate max-w-[65%]" title={empCreatedCredentials.setupUrl}>
-                                {empCreatedCredentials.setupUrl}
-                              </span>
-                              <div className="flex items-center gap-2 shrink-0">
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    navigator.clipboard.writeText(empCreatedCredentials.setupUrl || "");
-                                    setEmpCopiedUrl(true);
-                                    setTimeout(() => setEmpCopiedUrl(false), 2000);
-                                  }}
-                                  className="text-xs px-3 py-1.5 bg-[#181d16] text-white rounded-lg font-semibold hover:bg-[#1E293B] transition-all flex items-center gap-1.5 cursor-pointer"
-                                >
-                                  {empCopiedUrl ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                                  <span>{empCopiedUrl ? "Copied" : "Copy"}</span>
-                                </button>
-                              </div>
+                              {(() => {
+                                const formattedUrl = formatSetupUrl(empCreatedCredentials.setupUrl);
+                                return (
+                                  <>
+                                    <span className="font-mono text-xs text-[#181d16] truncate max-w-[65%]" title={formattedUrl}>
+                                      {formattedUrl}
+                                    </span>
+                                    <div className="flex items-center gap-2 shrink-0">
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          navigator.clipboard.writeText(formattedUrl || "");
+                                          setEmpCopiedUrl(true);
+                                          setTimeout(() => setEmpCopiedUrl(false), 2000);
+                                        }}
+                                        className="text-xs px-3 py-1.5 bg-[#181d16] text-white rounded-lg font-semibold hover:bg-[#1E293B] transition-all flex items-center gap-1.5 cursor-pointer"
+                                      >
+                                        {empCopiedUrl ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                                        <span>{empCopiedUrl ? "Copied" : "Copy"}</span>
+                                      </button>
+                                    </div>
+                                  </>
+                                );
+                              })()}
                             </div>
 
                             {/* Pre-filled credentials detail */}
@@ -3500,23 +3523,30 @@ export default function IdentityVerification() {
                               Share this link with the candidate. They will be able to log in and fill their education details.
                             </p>
                             <div className="flex items-center justify-between bg-white px-3 py-2.5 rounded-xl border border-[#eaf0e4]/60 gap-3 mt-1 shadow-2xs">
-                              <span className="font-mono text-xs text-[#181d16] truncate max-w-[65%]" title={eduCreatedCredentials.setupUrl}>
-                                {eduCreatedCredentials.setupUrl}
-                              </span>
-                              <div className="flex items-center gap-2 shrink-0">
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    navigator.clipboard.writeText(eduCreatedCredentials.setupUrl || "");
-                                    setEduCopiedUrl(true);
-                                    setTimeout(() => setEduCopiedUrl(false), 2000);
-                                  }}
-                                  className="text-xs px-3 py-1.5 bg-[#181d16] text-white rounded-lg font-semibold hover:bg-[#1E293B] transition-all flex items-center gap-1.5 cursor-pointer"
-                                >
-                                  {eduCopiedUrl ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                                  <span>{eduCopiedUrl ? "Copied" : "Copy"}</span>
-                                </button>
-                              </div>
+                              {(() => {
+                                const formattedUrl = formatSetupUrl(eduCreatedCredentials.setupUrl);
+                                return (
+                                  <>
+                                    <span className="font-mono text-xs text-[#181d16] truncate max-w-[65%]" title={formattedUrl}>
+                                      {formattedUrl}
+                                    </span>
+                                    <div className="flex items-center gap-2 shrink-0">
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          navigator.clipboard.writeText(formattedUrl || "");
+                                          setEduCopiedUrl(true);
+                                          setTimeout(() => setEduCopiedUrl(false), 2000);
+                                        }}
+                                        className="text-xs px-3 py-1.5 bg-[#181d16] text-white rounded-lg font-semibold hover:bg-[#1E293B] transition-all flex items-center gap-1.5 cursor-pointer"
+                                      >
+                                        {eduCopiedUrl ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                                        <span>{eduCopiedUrl ? "Copied" : "Copy"}</span>
+                                      </button>
+                                    </div>
+                                  </>
+                                );
+                              })()}
                             </div>
 
                             {/* Pre-filled credentials detail */}

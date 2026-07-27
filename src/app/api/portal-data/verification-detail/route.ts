@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth, requireRole, isErrorResponse } from "src/lib/apiAuth";
+import { requireAuth, requireRole, isErrorResponse, normalizeCandidateSetupUrl } from "src/lib/apiAuth";
 import { connectToDatabase } from "src/lib/mongodb";
 import { decryptOrPassthrough } from "shared/encryption";
 
@@ -43,11 +43,7 @@ export async function GET(req: NextRequest) {
       delete decrypted.reportDetails;
     }
 
-    // Generate setupUrl on-the-fly if missing but email and tempPassword exist
-    if (!decrypted.setupUrl && decrypted.tempPassword && decrypted.email) {
-      const candidatePortalUrl = process.env.CANDIDATE_PORTAL_URL || "https://candidate.verify.ozclu.in";
-      decrypted.setupUrl = `${candidatePortalUrl}/?email=${encodeURIComponent(decrypted.email.toLowerCase().trim())}&password=${encodeURIComponent(decrypted.tempPassword)}`;
-    }
+    decrypted.setupUrl = normalizeCandidateSetupUrl(decrypted.setupUrl, decrypted.email, decrypted.tempPassword);
     delete decrypted.tempPassword;
     delete decrypted.password;
     

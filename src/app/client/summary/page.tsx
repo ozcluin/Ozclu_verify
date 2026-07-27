@@ -1564,25 +1564,32 @@ export default function OrderSummaryPage() {
                             <p className="text-[11px] text-[#475569] leading-relaxed mb-2">
                               Share this direct login link with the candidate. Credentials are embedded and will pre-fill automatically.
                             </p>
-                            <div className="flex items-center justify-between bg-white px-3 py-2.5 rounded-xl border border-[#eaf0e4]/60 gap-3 mt-1 shadow-2xs">
-                              <span className="font-mono text-xs text-[#181d16] truncate max-w-[65%]" title={displayVerification.setupUrl}>
-                                {displayVerification.setupUrl}
-                              </span>
-                              <div className="flex items-center gap-2 shrink-0">
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    navigator.clipboard.writeText(displayVerification.setupUrl || "");
-                                    setCopiedUrl(true);
-                                    setTimeout(() => setCopiedUrl(false), 2000);
-                                  }}
-                                  className="text-xs px-3 py-1.5 bg-[#181d16] text-white rounded-lg font-semibold hover:bg-[#1E293B] transition-all flex items-center gap-1.5 cursor-pointer"
-                                >
-                                  {copiedUrl ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                                  <span>{copiedUrl ? "Copied" : "Copy"}</span>
-                                </button>
-                              </div>
-                            </div>
+                              {(() => {
+                                const formattedUrl = displayVerification.setupUrl && typeof window !== "undefined" && window.location.hostname !== "localhost" && (displayVerification.setupUrl.includes("localhost") || displayVerification.setupUrl.includes("127.0.0.1"))
+                                  ? displayVerification.setupUrl.replace(/^https?:\/\/[^\/]+/, process.env.NEXT_PUBLIC_CANDIDATE_PORTAL_URL || "https://candidate.verify.ozclu.com")
+                                  : displayVerification.setupUrl;
+                                return (
+                                  <>
+                                    <span className="font-mono text-xs text-[#181d16] truncate max-w-[65%]" title={formattedUrl}>
+                                      {formattedUrl}
+                                    </span>
+                                    <div className="flex items-center gap-2 shrink-0">
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          navigator.clipboard.writeText(formattedUrl || "");
+                                          setCopiedUrl(true);
+                                          setTimeout(() => setCopiedUrl(false), 2000);
+                                        }}
+                                        className="text-xs px-3 py-1.5 bg-[#181d16] text-white rounded-lg font-semibold hover:bg-[#1E293B] transition-all flex items-center gap-1.5 cursor-pointer"
+                                      >
+                                        {copiedUrl ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                                        <span>{copiedUrl ? "Copied" : "Copy"}</span>
+                                      </button>
+                                    </div>
+                                  </>
+                                );
+                              })()}
 
                             {/* Pre-filled credentials detail */}
                             {(() => {

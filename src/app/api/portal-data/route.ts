@@ -7,6 +7,7 @@ import {
   sanitizeVerification,
   sanitizeInvoice,
   sanitizeVerifier,
+  getCandidatePortalUrl,
 } from "src/lib/apiAuth";
 import { connectToDatabase } from "src/lib/mongodb";
 import { ObjectId } from "mongodb";
@@ -237,7 +238,7 @@ export async function POST(req: NextRequest) {
         };
  
         // Build the direct login URL (with email and password query parameters)
-        const candidatePortalUrl = process.env.CANDIDATE_PORTAL_URL || "https://candidate.verify.ozclu.in";
+        const candidatePortalUrl = getCandidatePortalUrl();
         const setupUrl = `${candidatePortalUrl}/?email=${encodeURIComponent(email.toLowerCase().trim())}&password=${encodeURIComponent(tempPassword)}`;
  
         await db.collection("verifications").insertOne({
@@ -644,7 +645,7 @@ export async function POST(req: NextRequest) {
             );
           }
 
-          const candidatePortalUrl = process.env.CANDIDATE_PORTAL_URL || "https://candidate.verify.ozclu.in";
+          const candidatePortalUrl = getCandidatePortalUrl();
           setupUrl = `${candidatePortalUrl}/?email=${encodeURIComponent(email.toLowerCase().trim())}&password=${encodeURIComponent(tempPassword)}`;
         }
 
@@ -788,7 +789,7 @@ export async function POST(req: NextRequest) {
             );
           }
 
-          const candidatePortalUrl = process.env.CANDIDATE_PORTAL_URL || "https://candidate.verify.ozclu.in";
+          const candidatePortalUrl = getCandidatePortalUrl();
           setupUrl = `${candidatePortalUrl}/?email=${encodeURIComponent(email.toLowerCase().trim())}&password=${encodeURIComponent(tempPassword)}`;
         }
 
@@ -1475,7 +1476,7 @@ export async function POST(req: NextRequest) {
           );
         }
 
-        const candidatePortalUrl = process.env.CANDIDATE_PORTAL_URL || "https://candidate.verify.ozclu.in";
+        const candidatePortalUrl = getCandidatePortalUrl();
         const setupUrl = `${candidatePortalUrl}/?email=${encodeURIComponent(emailLower)}&password=${encodeURIComponent(tempPassword)}`;
 
         const initialAttempt = {
