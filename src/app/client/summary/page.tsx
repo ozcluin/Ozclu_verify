@@ -1127,7 +1127,7 @@ export default function OrderSummaryPage() {
                               : "bg-[#FFF4CC]/40 text-[#805b00] border-[#FFF4CC]"
                           }`}
                         >
-                          {((v.type === "court_record" && (v.courtRecordStatus === "admin_review" || v.courtRecordStatus === "needs_admin_retry")) || (!v.sendToCustomer && (v.type as string) !== "passport" && v.type !== "interpol" && v.type !== "court_record" && (v.type as string) !== "digital_address")) ? "Under Review" : v.status}
+                          {((v.type === "court_record" && (v.courtRecordStatus === "admin_review" || v.courtRecordStatus === "needs_admin_retry")) || (!v.sendToCustomer && (v.type as string) !== "passport" && v.type !== "interpol" && v.type !== "court_record" && (v.type as string) !== "digital_address")) ? "In Progress" : v.status}
                         </span>
                       </td>
                       <td className="py-3.5 px-2.5 text-right">
@@ -1225,7 +1225,7 @@ export default function OrderSummaryPage() {
                                 onClick={() => handleViewReport(v)}
                                 className="font-bold text-[11px] px-2.5 py-1.5 rounded-lg bg-[#FFF4CC]/60 text-[#805b00] hover:bg-[#FFF4CC]/80 transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs"
                               >
-                                <span>Under Review</span>
+                                <span>In Progress</span>
                                 <Clock className="w-3.5 h-3.5 text-[#805b00]" />
                               </button>
                             </div>
@@ -1631,18 +1631,6 @@ export default function OrderSummaryPage() {
                                 : "Candidate verification details not yet submitted."}
                             </span>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const v = displayVerification;
-                              setSelectedVerification(null);
-                              openCandidateFillModal(v);
-                            }}
-                            className="px-4 py-2 bg-[#00450e] text-white font-bold text-xs rounded-xl hover:bg-[#00330a] transition-all flex items-center gap-1.5 cursor-pointer shrink-0 shadow-2xs"
-                          >
-                            <FileEdit className="w-3.5 h-3.5" />
-                            <span>{(displayVerification.type === "employment" ? displayVerification.employmentDataSubmitted : displayVerification.educationDataSubmitted) ? "Edit Details" : "Fill Details Now"}</span>
-                          </button>
                         </div>
                       )}
 
@@ -1671,7 +1659,7 @@ export default function OrderSummaryPage() {
                     <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 mt-2 flex flex-col gap-2 shadow-2xs">
                       <span className="font-bold flex items-center gap-1.5">
                         <ShieldAlert className="w-4 h-4 text-amber-600" />
-                        <span>Under Review</span>
+                        <span>In Progress</span>
                       </span>
                       <p className="leading-relaxed font-semibold">
                         This verification is being reviewed by our internal team. No action is required from your end. It will be completed within 12 hours.
