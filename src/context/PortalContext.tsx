@@ -163,6 +163,8 @@ export interface Verification {
     markAsPaid?: boolean;
     askCustomerApproval?: boolean;
     screenshot?: string;
+    screenshotCaption?: string;
+    caption?: string;
     sendEmail?: boolean;
     loggedBy?: string;
   }>;
