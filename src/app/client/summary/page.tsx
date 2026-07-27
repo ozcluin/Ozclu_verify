@@ -191,7 +191,10 @@ export default function OrderSummaryPage() {
   } | null>(null);
 
   const openCandidateFillModal = (v: Verification) => {
-    const data = v.type === "employment" ? v.employmentData : v.educationData;
+    const empList = (v as any).employments || (v as any).pastOrganisations || (v as any).employmentData?.employments || (v as any).employmentData?.pastOrganisations;
+    const data = v.type === "employment"
+      ? { ...v.employmentData, ...(empList ? { employments: empList, pastOrganisations: empList } : {}) }
+      : v.educationData;
     setActiveFillModal({
       isOpen: true,
       id: v.id,

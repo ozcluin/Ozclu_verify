@@ -283,6 +283,7 @@ export interface Organisation {
   digitalAddressRate?: number;
   employmentRates?: Record<string, number>;
   educationRates?: Record<string, number>;
+  serviceTats?: Record<string, string>;
 }
 
 export interface ClientSuggestion {

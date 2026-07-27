@@ -75,6 +75,10 @@ export default function SettingsPage() {
   const [passwordAlert, setPasswordAlert] = useState("");
   const [passwordError, setPasswordError] = useState("");
 
+  // Country Rates collapse / expand states
+  const [expandedEmpRates, setExpandedEmpRates] = useState(false);
+  const [expandedEduRates, setExpandedEduRates] = useState(false);
+
   // Load context settings into local state
   useEffect(() => {
     if (settings) {
@@ -258,7 +262,7 @@ export default function SettingsPage() {
     }
   };
 
-  // Service list with pricing & enablement status
+  // Service list with pricing, TAT & enablement status
   const serviceList = [
     {
       key: "identity",
@@ -266,6 +270,7 @@ export default function SettingsPage() {
       desc: "Aadhaar, PAN, Driving Licence & Passport check",
       rate: organisation?.identityRate ?? organisation?.monthlyRate ?? 10,
       enabled: organisation?.identityEnabled !== false,
+      tat: organisation?.serviceTats?.identity || "24 Hours",
       icon: "badge"
     },
     {
@@ -274,6 +279,7 @@ export default function SettingsPage() {
       desc: "Civil & Criminal court searches across eCourts network",
       rate: organisation?.courtRecordRate ?? organisation?.monthlyRate ?? 15,
       enabled: organisation?.courtRecordEnabled !== false,
+      tat: organisation?.serviceTats?.court_record || "24 - 48 Hours",
       icon: "gavel"
     },
     {
@@ -282,6 +288,7 @@ export default function SettingsPage() {
       desc: "Work history, designation, CTC & manager reference validation",
       rate: organisation?.employmentRate ?? 5,
       enabled: organisation?.employmentEnabled !== false,
+      tat: organisation?.serviceTats?.employment || "2 - 4 Business Days",
       icon: "work"
     },
     {
@@ -290,6 +297,7 @@ export default function SettingsPage() {
       desc: "University degree, roll number & institutional verification",
       rate: organisation?.educationRate ?? 5,
       enabled: organisation?.educationEnabled !== false,
+      tat: organisation?.serviceTats?.education || "3 - 5 Business Days",
       icon: "school"
     },
     {
@@ -298,6 +306,7 @@ export default function SettingsPage() {
       desc: "Screening against Interpol red notices & global crime watchlists",
       rate: organisation?.interpolRate ?? 10,
       enabled: organisation?.interpolEnabled !== false,
+      tat: organisation?.serviceTats?.interpol || "24 Hours",
       icon: "travel_explore"
     },
     {
@@ -306,6 +315,7 @@ export default function SettingsPage() {
       desc: "Government database passport verification check",
       rate: organisation?.passportRate ?? 8,
       enabled: organisation?.passportEnabled !== false,
+      tat: organisation?.serviceTats?.passport || "24 Hours",
       icon: "assignment_ind"
     },
     {
@@ -314,6 +324,7 @@ export default function SettingsPage() {
       desc: "Geo-tagged selfie & precise GPS location verification",
       rate: organisation?.digitalAddressRate ?? 5,
       enabled: organisation?.digitalAddressEnabled !== false,
+      tat: organisation?.serviceTats?.digital_address || "24 - 48 Hours",
       icon: "location_on"
     }
   ];
@@ -368,10 +379,10 @@ export default function SettingsPage() {
             </div>
             <div>
               <h3 className="font-bold text-xl text-[#181d16]">Decided Service Rates &amp; Offerings</h3>
-              <p className="text-xs text-slate-500 font-medium mt-0.5">Custom per-check pricing agreed for your organisation ({companyName || "Your Organisation"}).</p>
+              <p className="text-xs text-slate-500 font-medium mt-0.5">Custom rates and SLA Turn Around Times (TAT) agreed with Ozclu Verify.</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 bg-[#f6fbf0] px-3.5 py-2 rounded-xl border border-[#eaf0e4] text-xs font-bold text-[#00450e]">
+          <div className="flex items-center gap-2 bg-[#f6fbf0] border border-[#eaf0e4] px-3.5 py-1.5 rounded-full text-xs font-bold text-[#00450e]">
             <ShieldCheck className="w-4 h-4 text-[#016e1c]" />
             <span>Organisation Plan: {organisation?.paymentPlan || "Standard Enterprise"}</span>
           </div>
@@ -386,62 +397,127 @@ export default function SettingsPage() {
                   <th className="py-3 px-4 font-extrabold">Service Offerings</th>
                   <th className="py-3 px-4 font-extrabold">Decided Rate</th>
                   <th className="py-3 px-4 font-extrabold">Status</th>
-                  <th className="py-3 px-4 font-extrabold text-right">Action</th>
+                  <th className="py-3 px-4 font-extrabold text-right">TAT (Turn Around Time)</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-semibold text-slate-700">
                 {serviceList.map((svc) => (
-                  <tr key={svc.key} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-2.5">
-                        <span className="material-symbols-outlined text-lg text-[#00450e] p-1.5 bg-[#f0f5ea] rounded-lg shrink-0">
-                          {svc.icon}
-                        </span>
-                        <div>
-                          <span className="font-bold text-slate-900 block text-xs">{svc.title}</span>
-                          <span className="text-[11px] text-slate-400 font-medium block truncate max-w-xs">{svc.desc}</span>
+                  <React.Fragment key={svc.key}>
+                    <tr className="hover:bg-slate-50/80 transition-colors">
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2.5">
+                          <span className="material-symbols-outlined text-lg text-[#00450e] p-1.5 bg-[#f0f5ea] rounded-lg shrink-0">
+                            {svc.icon}
+                          </span>
+                          <div>
+                            <span className="font-bold text-slate-900 block text-xs">{svc.title}</span>
+                            <span className="text-[11px] text-slate-400 font-medium block truncate max-w-xs">{svc.desc}</span>
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 whitespace-nowrap">
-                      <span className="text-sm font-extrabold text-[#00450e]">
-                        ${svc.rate.toFixed(2)}
-                      </span>
-                      <span className="text-[10px] text-slate-400 font-normal"> / check</span>
-                    </td>
-                    <td className="py-3 px-4 whitespace-nowrap">
-                      {svc.enabled ? (
-                        <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200/80 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                          Active
+                      </td>
+                      <td className="py-3 px-4 whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          <div>
+                            <span className="text-sm font-extrabold text-[#00450e]">
+                              ${svc.rate.toFixed(2)}
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-normal"> / check</span>
+                          </div>
+                          {(svc.key === "employment" || svc.key === "education") && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (svc.key === "employment") setExpandedEmpRates(!expandedEmpRates);
+                                if (svc.key === "education") setExpandedEduRates(!expandedEduRates);
+                              }}
+                              className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold text-[#00450e] bg-[#f0f5ea] hover:bg-[#00450e] hover:text-white rounded-lg border border-[#eaf0e4] transition-all cursor-pointer shadow-2xs"
+                            >
+                              <span>Country Rates</span>
+                              <span className="material-symbols-outlined text-[12px]">
+                                {(svc.key === "employment" ? expandedEmpRates : expandedEduRates) ? "expand_less" : "expand_more"}
+                              </span>
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 whitespace-nowrap">
+                        {svc.enabled ? (
+                          <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200/80 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            Active
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-bold px-2.5 py-0.5 rounded-full">
+                            Optional
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4 text-right whitespace-nowrap">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#f6fbf0] text-[#00450e] font-bold text-xs rounded-xl border border-[#eaf0e4]">
+                          <Clock className="w-3.5 h-3.5 text-[#016e1c]" />
+                          <span>{svc.tat}</span>
                         </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-bold px-2.5 py-0.5 rounded-full">
-                          Optional
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-3 px-4 text-right whitespace-nowrap">
-                      {!svc.enabled ? (
-                        <button
-                          type="button"
-                          onClick={() => handleQuickRequestService(svc.key, svc.title)}
-                          className="text-[11px] font-bold text-[#00450e] bg-[#f0f5ea] hover:bg-[#00450e] hover:text-white px-3 py-1.5 rounded-xl border border-[#eaf0e4] transition-all cursor-pointer inline-flex items-center gap-1"
-                        >
-                          <span>Request Enablement</span>
-                          <ChevronRight className="w-3 h-3" />
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => handleQuickRequestService(svc.key, svc.title)}
-                          className="text-[11px] font-bold text-slate-500 hover:text-[#00450e] bg-slate-50 hover:bg-[#f0f5ea] px-3 py-1.5 rounded-xl border border-slate-200 transition-all cursor-pointer inline-flex items-center gap-1"
-                        >
-                          <span>Review Rate</span>
-                        </button>
-                      )}
-                    </td>
-                  </tr>
+                      </td>
+                    </tr>
+
+                    {/* Collapsible Country Rates for Employment Verification */}
+                    {svc.key === "employment" && expandedEmpRates && (
+                      <tr className="bg-[#f0f5ea]/30 animate-fade-in">
+                        <td colSpan={4} className="p-3 sm:p-4">
+                          <div className="bg-white border border-[#eaf0e4] rounded-2xl p-3.5 shadow-2xs">
+                            <div className="flex items-center justify-between mb-2.5 border-b border-slate-100 pb-2">
+                              <div className="flex items-center gap-2">
+                                <span className="material-symbols-outlined text-base text-[#00450e]">public</span>
+                                <span className="text-xs font-extrabold text-[#00450e] uppercase tracking-wider">Employment Verification — Country Specific Rates</span>
+                              </div>
+                              <span className="text-[10px] text-slate-400 font-medium">Custom agreed rates per country</span>
+                            </div>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2.5">
+                              {["India", "Singapore", "Malaysia", "Philippines", "UAE", "Default"].map((country) => {
+                                const defaultMap: Record<string, number> = { Singapore: 15, Malaysia: 12, Philippines: 10, UAE: 20, India: organisation?.employmentRate ?? 5, Default: organisation?.employmentRate ?? 5 };
+                                const rateVal = organisation?.employmentRates?.[country] ?? defaultMap[country] ?? 5;
+                                return (
+                                  <div key={country} className="bg-[#f6fbf0] border border-[#eaf0e4] rounded-xl p-2 text-center flex flex-col items-center">
+                                    <span className="text-[10px] font-bold text-slate-600 block">{country}</span>
+                                    <span className="text-xs font-extrabold text-[#00450e] mt-0.5">${Number(rateVal).toFixed(2)}</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+
+                    {/* Collapsible Country Rates for Education Verification */}
+                    {svc.key === "education" && expandedEduRates && (
+                      <tr className="bg-[#f0f5ea]/30 animate-fade-in">
+                        <td colSpan={4} className="p-3 sm:p-4">
+                          <div className="bg-white border border-[#eaf0e4] rounded-2xl p-3.5 shadow-2xs">
+                            <div className="flex items-center justify-between mb-2.5 border-b border-slate-100 pb-2">
+                              <div className="flex items-center gap-2">
+                                <span className="material-symbols-outlined text-base text-[#00450e]">public</span>
+                                <span className="text-xs font-extrabold text-[#00450e] uppercase tracking-wider">Education Verification — Country Specific Rates</span>
+                              </div>
+                              <span className="text-[10px] text-slate-400 font-medium">Custom agreed rates per country</span>
+                            </div>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2.5">
+                              {["India", "Singapore", "Malaysia", "Philippines", "UAE", "Default"].map((country) => {
+                                const defaultMap: Record<string, number> = { Singapore: 15, Malaysia: 12, Philippines: 10, UAE: 20, India: organisation?.educationRate ?? 5, Default: organisation?.educationRate ?? 5 };
+                                const rateVal = organisation?.educationRates?.[country] ?? defaultMap[country] ?? 5;
+                                return (
+                                  <div key={country} className="bg-[#f6fbf0] border border-[#eaf0e4] rounded-xl p-2 text-center flex flex-col items-center">
+                                    <span className="text-[10px] font-bold text-slate-600 block">{country}</span>
+                                    <span className="text-xs font-extrabold text-[#00450e] mt-0.5">${Number(rateVal).toFixed(2)}</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
                 ))}
               </tbody>
             </table>

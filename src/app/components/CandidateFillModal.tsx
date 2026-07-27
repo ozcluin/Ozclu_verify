@@ -158,12 +158,18 @@ export default function CandidateFillModal({
   useEffect(() => {
     if (initialData) {
       if (verificationType === "employment") {
-        if (Array.isArray(initialData.employments) && initialData.employments.length > 0) {
-          setEmployments(initialData.employments);
-        } else if (Array.isArray(initialData.pastOrganisations) && initialData.pastOrganisations.length > 0) {
-          setEmployments(initialData.pastOrganisations);
-        } else if (initialData.companyName) {
-          setEmployments([{ ...createEmptyEmployment(1), ...initialData }]);
+        const empList = Array.isArray(initialData.employments) && initialData.employments.length > 0
+          ? initialData.employments
+          : (Array.isArray(initialData.pastOrganisations) && initialData.pastOrganisations.length > 0
+              ? initialData.pastOrganisations
+              : (initialData.companyName ? [initialData] : null));
+
+        if (empList && empList.length > 0) {
+          setEmployments(empList.map((item: any, idx: number) => ({
+            ...createEmptyEmployment(idx + 1),
+            ...item,
+            id: item.id || `emp-${Date.now()}-${idx + 1}`
+          })));
         }
       } else if (verificationType === "education") {
         setEduForm((prev) => ({ ...prev, ...initialData }));
