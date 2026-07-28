@@ -684,6 +684,7 @@ export default function IdentityVerification() {
     id: string;
     type: "employment" | "education";
     name?: string;
+    initialData?: any;
   } | null>(null);
 
   // ─── Interpol Check States ───
@@ -827,7 +828,7 @@ export default function IdentityVerification() {
   const [eduCandidateMobile, setEduCandidateMobile] = useState("");
   const [eduCandidateEmail, setEduCandidateEmail] = useState("");
   const [eduRequestingOrgName, setEduRequestingOrgName] = useState("");
-  const [eduSkipCandidateLogin, setEduSkipCandidateLogin] = useState(false);
+  const [eduSkipCandidateLogin, setEduSkipCandidateLogin] = useState(true);
   const [eduShowOrgDropdown, setEduShowOrgDropdown] = useState(false);
   const [eduSuccessMsg, setEduSuccessMsg] = useState("");
   const [eduErrorMsg, setEduErrorMsg] = useState("");
@@ -1191,7 +1192,7 @@ export default function IdentityVerification() {
         setEduCandidateMobile("");
         setEduCandidateEmail("");
         setEduRequestingOrgName("");
-        setEduSkipCandidateLogin(false);
+        setEduSkipCandidateLogin(true);
         setEduItems([{ id: "edu-1", boardUniversity: "", courseName: "", passingYear: "", rollNumber: "", country: "India" }]);
       } else {
         setEduErrorMsg("Failed to initiate education verification request");
@@ -1208,7 +1209,7 @@ export default function IdentityVerification() {
     setEduCandidateMobile("");
     setEduCandidateEmail("");
     setEduRequestingOrgName("");
-    setEduSkipCandidateLogin(false);
+    setEduSkipCandidateLogin(true);
     setEduItems([{ id: "edu-1", boardUniversity: "", courseName: "", passingYear: "", rollNumber: "", country: "India" }]);
     setEduErrorMsg("");
     setEduSuccessMsg("");
@@ -3212,7 +3213,8 @@ export default function IdentityVerification() {
                             isOpen: true,
                             id: cred.id,
                             type: "employment",
-                            name: cred.name
+                            name: cred.name,
+                            initialData: { employments: empItems, pastOrganisations: empItems }
                           });
                         } else {
                           router.push("/client/summary");
@@ -3591,7 +3593,8 @@ export default function IdentityVerification() {
                             isOpen: true,
                             id: cred.id,
                             type: "education",
-                            name: cred.name
+                            name: cred.name,
+                            initialData: { educations: eduItems, educationList: eduItems }
                           });
                         } else {
                           router.push("/client/summary");
@@ -3895,19 +3898,7 @@ export default function IdentityVerification() {
             document.body
           )}
 
-          {activeFillModal && (
-            <CandidateFillModal
-              isOpen={activeFillModal.isOpen}
-              onClose={() => setActiveFillModal(null)}
-              verificationId={activeFillModal.id}
-              verificationType={activeFillModal.type}
-              candidateName={activeFillModal.name}
-              onSuccess={() => {
-                // Return to summary after filling details
-                router.push("/client/summary");
-              }}
-            />
-          )}
+
         </div>
       )}
 
@@ -4404,6 +4395,20 @@ export default function IdentityVerification() {
           </div>
         </div>
       )}
+      {activeFillModal && (
+        <CandidateFillModal
+          isOpen={activeFillModal.isOpen}
+          onClose={() => setActiveFillModal(null)}
+          verificationId={activeFillModal.id}
+          verificationType={activeFillModal.type}
+          candidateName={activeFillModal.name}
+          initialData={activeFillModal.initialData}
+          onSuccess={() => {
+            router.push("/client/summary");
+          }}
+        />
+      )}
     </div>
   );
 }
+

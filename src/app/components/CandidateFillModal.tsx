@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { X, Briefcase, GraduationCap, Send, CheckCircle, AlertCircle, Building2, Award, FileText, UploadCloud } from "lucide-react";
 import { usePortal } from "src/context/PortalContext";
 import { INDIAN_STATES } from "src/lib/courts-mapping";
@@ -143,8 +144,9 @@ export default function CandidateFillModal({
     setEmployments((prev) => prev.map((item) => (item.id === id ? { ...item, [field]: val } : item)));
   };
 
-  // Education Form State
-  const [eduForm, setEduForm] = useState({
+  // Education Form Multi-Entry State (like employment)
+  const createEmptyEducation = (idSuffix: number) => ({
+    id: `edu-${Date.now()}-${idSuffix}`,
     country: "India",
     degreeType: "",
     courseName: "",
@@ -153,7 +155,23 @@ export default function CandidateFillModal({
     rollNumber: "",
     passingYear: "",
     certificateFile: "",
+    certificateFileName: "",
   });
+
+  const [educations, setEducations] = useState([createEmptyEducation(1)]);
+
+  const addEducationItem = () => {
+    setEducations(prev => [...prev, createEmptyEducation(prev.length + 1)]);
+  };
+
+  const removeEducationItem = (id: string) => {
+    setEducations(prev => (prev.length > 1 ? prev.filter(item => item.id !== id) : prev));
+  };
+
+  const updateEducationItem = (id: string, field: string, val: string) => {
+    setEducations(prev => prev.map(item => (item.id === id ? { ...item, [field]: val } : item)));
+  };
+
 
   useEffect(() => {
     if (initialData) {
@@ -172,16 +190,24 @@ export default function CandidateFillModal({
           })));
         }
       } else if (verificationType === "education") {
-        setEduForm((prev) => ({ ...prev, ...initialData }));
+        const eduList = Array.isArray(initialData.educations) && initialData.educations.length > 0
+          ? initialData.educations
+          : (Array.isArray(initialData.educationList) && initialData.educationList.length > 0
+              ? initialData.educationList
+              : (initialData.degreeType || initialData.courseName ? [initialData] : null));
+
+        if (eduList && eduList.length > 0) {
+          setEducations(eduList.map((item: any, idx: number) => ({
+            ...createEmptyEducation(idx + 1),
+            ...item,
+            id: item.id || `edu-${Date.now()}-${idx + 1}`
+          })));
+        }
       }
     }
   }, [initialData, verificationType]);
 
   if (!isOpen) return null;
-
-  const updateEdu = (field: string, val: string) => {
-    setEduForm((prev) => ({ ...prev, [field]: val }));
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -201,29 +227,32 @@ export default function CandidateFillModal({
         }
       }
     } else if (verificationType === "education") {
-      if (!eduForm.degreeType) {
-        setErrorMsg("Degree Category is required");
-        return;
-      }
-      if (!eduForm.courseName.trim()) {
-        setErrorMsg("Course / Degree Name is required");
-        return;
-      }
-      if (!eduForm.boardUniversity.trim()) {
-        setErrorMsg("Board / University Name is required");
-        return;
-      }
-      if (!eduForm.institutionName.trim()) {
-        setErrorMsg("Institution Name is required");
-        return;
-      }
-      if (!eduForm.rollNumber.trim()) {
-        setErrorMsg("Roll / Registration Number is required");
-        return;
-      }
-      if (!eduForm.passingYear.trim()) {
-        setErrorMsg("Passing Year is required");
-        return;
+      for (let i = 0; i < educations.length; i++) {
+        const edu = educations[i];
+        if (!edu.degreeType) {
+          setErrorMsg(`Degree Category is required for Credential #${i + 1}`);
+          return;
+        }
+        if (!edu.courseName.trim()) {
+          setErrorMsg(`Course / Degree Name is required for Credential #${i + 1}`);
+          return;
+        }
+        if (!edu.boardUniversity.trim()) {
+          setErrorMsg(`Board / University Name is required for Credential #${i + 1}`);
+          return;
+        }
+        if (!edu.institutionName.trim()) {
+          setErrorMsg(`Institution Name is required for Credential #${i + 1}`);
+          return;
+        }
+        if (!edu.rollNumber.trim()) {
+          setErrorMsg(`Roll / Registration Number is required for Credential #${i + 1}`);
+          return;
+        }
+        if (!edu.passingYear.trim()) {
+          setErrorMsg(`Passing Year is required for Credential #${i + 1}`);
+          return;
+        }
       }
     }
 
@@ -239,8 +268,15 @@ export default function CandidateFillModal({
         };
         res = await submitEmploymentData(verificationId, payloadData);
       } else {
-        res = await submitEducationData(verificationId, eduForm);
+        const primaryEdu = educations[0] || {};
+        const payloadData = {
+          ...primaryEdu,
+          educations,
+          educationList: educations,
+        };
+        res = await submitEducationData(verificationId, payloadData);
       }
+
 
       if (res && res.success) {
         setSuccessMsg("Candidate verification details submitted successfully!");
@@ -258,9 +294,12 @@ export default function CandidateFillModal({
     }
   };
 
-  return (
-    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-[99999] animate-fade-in overflow-y-auto">
+  if (!isOpen || typeof document === "undefined") return null;
+
+  return createPortal(
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[999999] animate-fade-in overflow-y-auto">
       <div className="bg-white border border-[#eaf0e4] rounded-3xl max-w-3xl w-full shadow-2xl relative my-8 overflow-hidden animate-scale-up flex flex-col max-h-[90vh]">
+
         {/* Header */}
         <div className="p-6 bg-gradient-to-r from-[#181d16] via-[#1E293B] to-[#181d16] text-white flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
@@ -664,154 +703,190 @@ export default function CandidateFillModal({
             /* EDUCATION DETAILS FORM                              */
             /* ═══════════════════════════════════════════════════ */
             <div className="flex flex-col gap-6">
-              <div className="bg-[#f6fbf0]/60 border border-[#eaf0e4] rounded-2xl p-5 flex flex-col gap-4">
-                <div className="flex items-center gap-2 border-b border-[#eaf0e4] pb-2">
-                  <Award className="w-4 h-4 text-purple-700" />
-                  <span className="font-bold text-xs uppercase text-[#181d16] tracking-wider">Academic Credentials</span>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Verification Country Dropdown */}
-                  <div className="flex flex-col gap-1.5 md:col-span-2">
-                    <label className="text-[10px] font-bold text-[#475569] uppercase tracking-wider">Country *</label>
-                    <select
-                      value={eduForm.country || "India"}
-                      onChange={(e) => updateEdu("country", e.target.value)}
-                      className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20"
-                    >
-                      {ALLOWED_COUNTRIES.map((c) => (
-                        <option key={c} value={c}>{c}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="flex flex-col gap-1.5 md:col-span-2">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">Degree Category *</label>
-                    <select
-                      value={eduForm.degreeType}
-                      onChange={(e) => updateEdu("degreeType", e.target.value)}
-                      className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none"
-                    >
-                      <option value="">Select Degree Category</option>
-                      <option value="10th / Matriculation">10th / Matriculation</option>
-                      <option value="12th / Intermediate">12th / Intermediate</option>
-                      <option value="Bachelor's Degree">Bachelor's Degree</option>
-                      <option value="Master's Degree">Master's Degree</option>
-                      <option value="Doctorate (PhD)">Doctorate (PhD)</option>
-                      <option value="Diploma">Diploma / Certification</option>
-                    </select>
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">Course / Degree Name *</label>
-                    <input
-                      type="text"
-                      value={eduForm.courseName}
-                      onChange={(e) => updateEdu("courseName", e.target.value)}
-                      placeholder="e.g. B.Tech Computer Science"
-                      className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none focus:border-[#181d16]"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">Board / University Name *</label>
-                    <input
-                      type="text"
-                      value={eduForm.boardUniversity}
-                      onChange={(e) => updateEdu("boardUniversity", e.target.value)}
-                      placeholder="e.g. Delhi University, CBSE"
-                      className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none focus:border-[#181d16]"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1.5 md:col-span-2">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">Institution / School / College Name *</label>
-                    <input
-                      type="text"
-                      value={eduForm.institutionName}
-                      onChange={(e) => updateEdu("institutionName", e.target.value)}
-                      placeholder="e.g. Hansraj College"
-                      className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none focus:border-[#181d16]"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">Roll / Registration / Enrollment Number *</label>
-                    <input
-                      type="text"
-                      value={eduForm.rollNumber}
-                      onChange={(e) => updateEdu("rollNumber", e.target.value)}
-                      placeholder="Roll or Registration number"
-                      className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none focus:border-[#181d16]"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">Passing Year *</label>
-                    <input
-                      type="number"
-                      min="1950"
-                      max="2026"
-                      value={eduForm.passingYear}
-                      onChange={(e) => updateEdu("passingYear", e.target.value)}
-                      placeholder="e.g. 2023"
-                      className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none focus:border-[#181d16]"
-                    />
-                  </div>
-
-                  {/* Degree / Marksheet / Certificate Copy Attachment (Optional) */}
-                  <div className="flex flex-col gap-1.5 md:col-span-2 pt-2 border-t border-[#eaf0e4]/80">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center justify-between">
-                      <span>Degree / Marksheet / Certificate Copy (Optional)</span>
-                      <span className="text-slate-400 font-semibold">(Max 1MB)</span>
-                    </label>
-                    {eduForm.certificateFile ? (
-                      <div className="border border-emerald-200 rounded-xl p-3 bg-emerald-50/50 flex items-center justify-between">
-                        <div className="flex items-center gap-2 overflow-hidden">
-                          <FileText className="w-4 h-4 text-emerald-700 shrink-0" />
-                          <span className="text-xs font-bold text-slate-800 truncate">
-                            {(eduForm as any).certificateFileName || "Degree_Certificate.pdf"}
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            updateEdu("certificateFile", "");
-                            updateEdu("certificateFileName", "");
-                          }}
-                          className="text-slate-400 hover:text-red-500 transition-colors p-1 rounded-lg hover:bg-red-50 cursor-pointer"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
+              {educations.map((edu, idx) => (
+                <div key={edu.id} className="bg-[#f6fbf0]/60 border border-[#eaf0e4] rounded-2xl p-5 flex flex-col gap-4 relative transition-all hover:border-[#d0dbc6]">
+                  {/* Credential Header */}
+                  <div className="flex items-center justify-between border-b border-[#eaf0e4] pb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-lg bg-[#00450e] text-white flex items-center justify-center font-bold text-xs">
+                        {idx + 1}
                       </div>
-                    ) : (
-                      <label className="border border-dashed border-[#eaf0e4] hover:border-purple-500 rounded-xl p-3 bg-[#f6fbf0]/50 hover:bg-white transition-all flex items-center justify-center gap-2 cursor-pointer">
-                        <UploadCloud className="w-4 h-4 text-slate-400" />
-                        <span className="text-xs font-bold text-slate-700">Upload Degree / Marksheet / Certificate (Optional, Max 1MB)</span>
-                        <input
-                          type="file"
-                          accept=".pdf,.jpg,.jpeg,.png"
-                          className="hidden"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (!file) return;
-                            if (file.size > 2 * 1024 * 1024) {
-                              setErrorMsg("File size exceeds 1MB limit.");
-                              return;
-                            }
-                            updateEdu("certificateFileName", file.name);
-                            const reader = new FileReader();
-                            reader.onloadend = () => {
-                              updateEdu("certificateFile", reader.result as string);
-                            };
-                            reader.readAsDataURL(file);
-                          }}
-                        />
-                      </label>
+                      <div>
+                        <h4 className="font-bold text-xs uppercase text-[#181d16] tracking-wider">
+                          {idx === 0 ? "Primary Academic Credential *" : `Additional Credential #${idx + 1}`}
+                        </h4>
+                        <p className="text-[11px] text-[#64748B]">Provide degree, institution, and verification details.</p>
+                      </div>
+                    </div>
+
+                    {educations.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeEducationItem(edu.id)}
+                        className="px-2.5 py-1 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 font-bold text-[11px] transition-colors cursor-pointer flex items-center gap-1"
+                        title="Remove this credential entry"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                        <span>Remove</span>
+                      </button>
                     )}
                   </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Country Dropdown */}
+                    <div className="flex flex-col gap-1.5 md:col-span-2">
+                      <label className="text-[10px] font-bold text-[#475569] uppercase tracking-wider">Country *</label>
+                      <select
+                        value={edu.country || "India"}
+                        onChange={(e) => updateEducationItem(edu.id, "country", e.target.value)}
+                        className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                      >
+                        {ALLOWED_COUNTRIES.map((c) => (
+                          <option key={c} value={c}>{c}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="flex flex-col gap-1.5 md:col-span-2">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase">Degree Category *</label>
+                      <select
+                        value={edu.degreeType}
+                        onChange={(e) => updateEducationItem(edu.id, "degreeType", e.target.value)}
+                        className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none"
+                      >
+                        <option value="">Select Degree Category</option>
+                        <option value="10th / Matriculation">10th / Matriculation</option>
+                        <option value="12th / Intermediate">12th / Intermediate</option>
+                        <option value="Bachelor's Degree">Bachelor&apos;s Degree</option>
+                        <option value="Master's Degree">Master&apos;s Degree</option>
+                        <option value="Doctorate (PhD)">Doctorate (PhD)</option>
+                        <option value="Diploma">Diploma / Certification</option>
+                      </select>
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase">Course / Degree Name *</label>
+                      <input
+                        type="text"
+                        value={edu.courseName}
+                        onChange={(e) => updateEducationItem(edu.id, "courseName", e.target.value)}
+                        placeholder="e.g. B.Tech Computer Science"
+                        className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none focus:border-[#181d16]"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase">Board / University Name *</label>
+                      <input
+                        type="text"
+                        value={edu.boardUniversity}
+                        onChange={(e) => updateEducationItem(edu.id, "boardUniversity", e.target.value)}
+                        placeholder="e.g. Delhi University, CBSE"
+                        className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none focus:border-[#181d16]"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1.5 md:col-span-2">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase">Institution / School / College Name *</label>
+                      <input
+                        type="text"
+                        value={edu.institutionName}
+                        onChange={(e) => updateEducationItem(edu.id, "institutionName", e.target.value)}
+                        placeholder="e.g. Hansraj College"
+                        className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none focus:border-[#181d16]"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase">Roll / Registration / Enrollment Number *</label>
+                      <input
+                        type="text"
+                        value={edu.rollNumber}
+                        onChange={(e) => updateEducationItem(edu.id, "rollNumber", e.target.value)}
+                        placeholder="Roll or Registration number"
+                        className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none focus:border-[#181d16]"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase">Passing Year *</label>
+                      <input
+                        type="number"
+                        min="1950"
+                        max="2026"
+                        value={edu.passingYear}
+                        onChange={(e) => updateEducationItem(edu.id, "passingYear", e.target.value)}
+                        placeholder="e.g. 2023"
+                        className="border border-[#eaf0e4] rounded-xl p-2.5 text-xs font-semibold text-[#181d16] bg-white focus:outline-none focus:border-[#181d16]"
+                      />
+                    </div>
+
+                    {/* Certificate Attachment */}
+                    <div className="flex flex-col gap-1.5 md:col-span-2 pt-2 border-t border-[#eaf0e4]/80">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+                        <span>Degree / Marksheet / Certificate Copy (Optional)</span>
+                        <span className="text-slate-400 font-semibold">(Max 1MB)</span>
+                      </label>
+                      {edu.certificateFile ? (
+                        <div className="border border-emerald-200 rounded-xl p-3 bg-emerald-50/50 flex items-center justify-between">
+                          <div className="flex items-center gap-2 overflow-hidden">
+                            <FileText className="w-4 h-4 text-emerald-700 shrink-0" />
+                            <span className="text-xs font-bold text-slate-800 truncate">
+                              {edu.certificateFileName || "Degree_Certificate.pdf"}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              updateEducationItem(edu.id, "certificateFile", "");
+                              updateEducationItem(edu.id, "certificateFileName", "");
+                            }}
+                            className="text-slate-400 hover:text-red-500 transition-colors p-1 rounded-lg hover:bg-red-50 cursor-pointer"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <label className="border border-dashed border-[#eaf0e4] hover:border-purple-500 rounded-xl p-3 bg-[#f6fbf0]/50 hover:bg-white transition-all flex items-center justify-center gap-2 cursor-pointer">
+                          <UploadCloud className="w-4 h-4 text-slate-400" />
+                          <span className="text-xs font-bold text-slate-700">Upload Degree / Marksheet / Certificate (Optional, Max 1MB)</span>
+                          <input
+                            type="file"
+                            accept=".pdf,.jpg,.jpeg,.png"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              if (file.size > 2 * 1024 * 1024) {
+                                setErrorMsg("File size exceeds 1MB limit.");
+                                return;
+                              }
+                              updateEducationItem(edu.id, "certificateFileName", file.name);
+                              const reader = new FileReader();
+                              reader.onloadend = () => {
+                                updateEducationItem(edu.id, "certificateFile", reader.result as string);
+                              };
+                              reader.readAsDataURL(file);
+                            }}
+                          />
+                        </label>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
+              ))}
+
+              {/* Add Another Education Button */}
+              <button
+                type="button"
+                onClick={addEducationItem}
+                className="w-full py-3 border-2 border-dashed border-[#00450e]/30 hover:border-[#00450e] rounded-2xl text-xs font-bold text-[#00450e] bg-[#f6fbf0]/40 hover:bg-[#f6fbf0] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+              >
+                <Award className="w-4 h-4 text-[#00450e]" />
+                <span>+ Add Another Education / Academic Credential</span>
+              </button>
             </div>
+
           )}
 
           {/* Buttons Footer */}
@@ -844,6 +919,8 @@ export default function CandidateFillModal({
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
+
