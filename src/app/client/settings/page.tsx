@@ -310,6 +310,15 @@ export default function SettingsPage() {
       icon: "travel_explore"
     },
     {
+      key: "rednotice_worldwide",
+      title: "Red Notice Worldwide",
+      desc: "Worldwide screening across all Interpol member countries for active Red Notices",
+      rate: organisation?.rednoticeWorldwideRate ?? 15,
+      enabled: organisation?.rednoticeWorldwideEnabled !== false,
+      tat: organisation?.serviceTats?.rednotice_worldwide || "24 Hours",
+      icon: "public"
+    },
+    {
       key: "passport",
       title: "Passport Verification",
       desc: "Government database passport verification check",
@@ -326,6 +335,15 @@ export default function SettingsPage() {
       enabled: organisation?.digitalAddressEnabled !== false,
       tat: organisation?.serviceTats?.digital_address || "24 - 48 Hours",
       icon: "location_on"
+    },
+    {
+      key: "saflii_court",
+      title: "South African Court Check",
+      desc: "Search SAFLII database for court cases across Southern African jurisdictions",
+      rate: organisation?.safliiCourtRate ?? 15,
+      enabled: organisation?.safliiCourtEnabled !== false,
+      tat: organisation?.serviceTats?.saflii_court || "24 Hours",
+      icon: "gavel"
     }
   ];
 
@@ -912,8 +930,10 @@ export default function SettingsPage() {
                 <option value="employment">Employment Verification</option>
                 <option value="education">Education Verification</option>
                 <option value="interpol">Interpol &amp; Watchlist</option>
+                <option value="rednotice_worldwide">Red Notice Worldwide</option>
                 <option value="passport">Passport Verification</option>
                 <option value="digital_address">Digital Address Verification</option>
+                <option value="saflii_court">South African Court Check</option>
               </select>
             </div>
 

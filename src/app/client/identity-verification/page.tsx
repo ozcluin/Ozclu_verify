@@ -38,7 +38,7 @@ import { INDIAN_STATES } from "src/lib/courts-mapping";
 import { Country, State, City } from "country-state-city";
 import CandidateFillModal from "src/app/components/CandidateFillModal";
 
-type ServiceType = "identity" | "court_record" | "employment" | "education" | "interpol" | "passport" | "digital_address";
+type ServiceType = "identity" | "court_record" | "employment" | "education" | "interpol" | "passport" | "digital_address" | "rednotice_worldwide" | "saflii_court";
 
 const formatSetupUrl = (url?: string) => {
   if (!url) return "";
@@ -340,6 +340,165 @@ function InterpolSuccessModal({ interpolCreatedId, candidateName, hasRecords, on
   );
 }
 
+function RednoticeWorldwideSuccessModal({ rnwCreatedId, candidateName, hasRecords, onCreateAnother, onGoToSummary }: {
+  rnwCreatedId: string;
+  candidateName: string;
+  hasRecords: boolean;
+  onCreateAnother: () => void;
+  onGoToSummary: () => void;
+}) {
+  const [reportTimer, setReportTimer] = useState(6);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    document.body.style.overflow = "hidden";
+    const timer = setInterval(() => {
+      setReportTimer((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => {
+      document.body.style.overflow = "";
+      clearInterval(timer);
+    };
+  }, []);
+
+  return (
+    <div className="fixed inset-0 bg-slate-400/10 backdrop-blur-md flex items-center justify-center px-4 z-[99999] animate-fade-in">
+      <div className="bg-white border border-[#eaf0e4] rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl relative animate-scale-up flex flex-col items-center text-center gap-4">
+        <div className="w-16 h-16 bg-rose-50 border border-rose-200 rounded-full flex items-center justify-center text-rose-600 mb-1 animate-bounce-subtle">
+          <Globe className="w-8 h-8 text-rose-600" />
+        </div>
+        
+        <div>
+          <h3 className="font-bold text-slate-800 text-lg sm:text-xl">Red Notice Worldwide Check Initiated!</h3>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+            Global search across all 196 member countries completed for <strong className="text-slate-800 font-bold">{candidateName}</strong>.
+          </p>
+          <div className={`mt-2 py-2 px-4 rounded-xl text-xs font-bold border ${
+            hasRecords 
+              ? "bg-rose-50 text-rose-700 border-rose-200" 
+              : "bg-emerald-50 text-emerald-700 border-emerald-200"
+          }`}>
+            {hasRecords ? "Potential similarity matches found in global Red Notice database." : "0 active notices found. Clean worldwide record verified."}
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2.5 w-full">
+          <button
+            disabled={reportTimer > 0}
+            onClick={() => {
+              if (reportTimer === 0) {
+                window.open(`/client/rednotice-worldwide-report?id=${rnwCreatedId}`, "_blank");
+              }
+            }}
+            className={`w-full py-3 font-bold rounded-xl transition-all text-xs inline-flex items-center justify-center gap-1.5 ${
+              reportTimer > 0
+                ? "bg-slate-100 text-slate-500 cursor-not-allowed border border-slate-200"
+                : "bg-[#181d16] hover:bg-[#1E293B] text-white cursor-pointer shadow-xs"
+            }`}
+          >
+            {reportTimer > 0 ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-rose-600" />
+                <span>
+                  {reportTimer >= 4
+                    ? "Step 1/2: Querying Global Red Notices..."
+                    : "Step 2/2: Generating Verification Certificate..."} ({reportTimer}s)
+                </span>
+              </>
+            ) : (
+              <>
+                <span>View Worldwide Verification Report</span>
+                <ExternalLink className="w-4 h-4" />
+              </>
+            )}
+          </button>
+          
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={onCreateAnother}
+              className="py-3 border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-xl transition-all cursor-pointer text-xs bg-white"
+            >
+              Check Another
+            </button>
+            <button
+              onClick={onGoToSummary}
+              className="py-3 border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-xl transition-all cursor-pointer text-xs bg-white"
+            >
+              Summary Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SafliiCourtSuccessModal({ sacCreatedId, sacCandidateName, onCreateAnother, onGoToSummary }: {
+  sacCreatedId: string;
+  sacCandidateName: string;
+  onCreateAnother: () => void;
+  onGoToSummary: () => void;
+}) {
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+
+  return (
+    <div className="fixed inset-0 bg-slate-400/10 backdrop-blur-md flex items-center justify-center px-3 sm:px-4 z-[99999] animate-fade-in overflow-y-auto">
+      <div className="bg-white border border-[#eaf0e4] rounded-2xl sm:rounded-3xl p-5 sm:p-8 max-w-lg w-full shadow-2xl relative animate-scale-up">
+        <div className="flex flex-col items-center text-center gap-3 sm:gap-4">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[#E6F8F3] border border-[#A3EAD6] rounded-full flex items-center justify-center text-[#00684A] mb-1 sm:mb-2 animate-bounce-subtle">
+            <Scale className="w-6 h-6 sm:w-8 sm:h-8 text-[#00a877]" />
+          </div>
+          <h3 className="font-headline-md text-[#181d16] font-bold text-lg sm:text-xl">Search Initiated!</h3>
+          <p className="font-body-sm text-[#475569] leading-relaxed text-xs sm:text-sm">
+            South African court record search has been started for <strong className="text-[#181d16] font-bold">{sacCandidateName || "the candidate"}</strong>.
+            The search is running in the background and will complete shortly.
+          </p>
+
+          <div className="w-full mt-1 sm:mt-2 p-3 sm:p-4 bg-[#f0f5ea]/25 border border-[#eaf0e4] rounded-xl sm:rounded-2xl text-left flex flex-col gap-2 shadow-2xs">
+            <div className="flex justify-between items-center text-[11px] sm:text-xs">
+              <span className="text-[#475569] font-semibold">Verification ID</span>
+              <span className="font-mono text-[#181d16] font-bold">{sacCreatedId}</span>
+            </div>
+            <div className="flex justify-between items-center text-[11px] sm:text-xs">
+              <span className="text-[#475569] font-semibold">Status</span>
+              <span className="text-amber-600 font-bold flex items-center gap-1">
+                <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></div>
+                Processing
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5 text-[9px] sm:text-[10px] text-[#64748B]">
+            <Sparkles className="w-3 h-3 text-[#00450e] shrink-0" />
+            <span>You can check the results in Order Summary once the search completes.</span>
+          </div>
+
+          <div className="flex gap-2 sm:gap-3 mt-3 sm:mt-4 w-full">
+            <button
+              type="button"
+              onClick={onCreateAnother}
+              className="flex-1 py-2.5 sm:py-3 border border-[#eaf0e4] rounded-xl font-semibold text-[11px] sm:text-xs text-[#334155] hover:bg-[#f6fbf0] transition-colors cursor-pointer bg-white"
+            >
+              Create Another
+            </button>
+            <button
+              type="button"
+              onClick={onGoToSummary}
+              className="flex-1 py-2.5 sm:py-3 bg-[#181d16] text-white rounded-xl font-semibold text-[11px] sm:text-xs hover:bg-[#1E293B] transition-all cursor-pointer shadow-sm"
+            >
+              Go to Summary
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function PassportSuccessModal({ passportCreatedId, candidateName, statusMessage, onCreateAnother, onGoToSummary }: {
   passportCreatedId: string;
   candidateName: string;
@@ -483,6 +642,12 @@ function FlowIllustration({ activeService }: { activeService: ServiceType }) {
     dbLabel = "Red & Yellow DB";
     clientLabel = "Initiate Search";
     candidateLabel = "Notice Match Check";
+  } else if (activeService === "rednotice_worldwide") {
+    primaryColor = "#e11d48";
+    secondaryColor = "#be123c";
+    dbLabel = "Global Red Notices";
+    clientLabel = "Initiate Search";
+    candidateLabel = "Global Match Check";
   } else if (activeService === "passport") {
     primaryColor = "#dc2626";
     secondaryColor = "#ef4444";
@@ -677,7 +842,7 @@ function FlowDiagram({ title, activeService }: { title: string; activeService: S
 export default function IdentityVerification() {
   const router = useRouter();
   const { user, profile } = useAuth();
-  const { addVerification, addEmploymentVerification, addEducationVerification, addCourtRecordVerification, addInterpolVerification, addPassportVerification, addDigitalAddressVerification, settings, removeRecentRequestingOrg, organisation } = usePortal();
+  const { addVerification, addEmploymentVerification, addEducationVerification, addCourtRecordVerification, addInterpolVerification, addRednoticeWorldwideVerification, addSafliiCourtVerification, addPassportVerification, addDigitalAddressVerification, settings, removeRecentRequestingOrg, organisation } = usePortal();
 
   const [activeFillModal, setActiveFillModal] = useState<{
     isOpen: boolean;
@@ -699,6 +864,32 @@ export default function IdentityVerification() {
   const [interpolCreatedId, setInterpolCreatedId] = useState<string | null>(null);
   const [interpolIdProofFile, setInterpolIdProofFile] = useState<string | null>(null);
   const [interpolIdProofFileName, setInterpolIdProofFileName] = useState("");
+
+  // ─── Red Notice Worldwide Check States ───
+  const [rnwCandidateName, setRnwCandidateName] = useState("");
+  const [rnwCandidateDob, setRnwCandidateDob] = useState("");
+  const [rnwBirthCity, setRnwBirthCity] = useState("");
+  const [rnwRequestingOrgName, setRnwRequestingOrgName] = useState("");
+  const [rnwShowOrgDropdown, setRnwShowOrgDropdown] = useState(false);
+  const [rnwSuccessMsg, setRnwSuccessMsg] = useState("");
+  const [rnwErrorMsg, setRnwErrorMsg] = useState("");
+  const [rnwSubmitting, setRnwSubmitting] = useState(false);
+  const [rnwCreatedId, setRnwCreatedId] = useState<string | null>(null);
+  const [rnwIdProofFile, setRnwIdProofFile] = useState<string | null>(null);
+  const [rnwIdProofFileName, setRnwIdProofFileName] = useState("");
+
+  // ─── South African Court Check States ───
+  const [sacCandidateName, setSacCandidateName] = useState("");
+  const [sacCandidateDob, setSacCandidateDob] = useState("");
+  const [sacBirthCity, setSacBirthCity] = useState("");
+  const [sacRequestingOrgName, setSacRequestingOrgName] = useState("");
+  const [sacShowOrgDropdown, setSacShowOrgDropdown] = useState(false);
+  const [sacSuccessMsg, setSacSuccessMsg] = useState("");
+  const [sacErrorMsg, setSacErrorMsg] = useState("");
+  const [sacSubmitting, setSacSubmitting] = useState(false);
+  const [sacCreatedId, setSacCreatedId] = useState<string | null>(null);
+  const [sacIdProofFile, setSacIdProofFile] = useState<string | null>(null);
+  const [sacIdProofFileName, setSacIdProofFileName] = useState("");
 
   // ─── Interpol 59-Second Loading Screen States ───
   const [interpolLoadingProgress, setInterpolLoadingProgress] = useState(0);
@@ -757,6 +948,8 @@ export default function IdentityVerification() {
       setActiveService("passport");
     } else if (serviceParam === "digital_address") {
       setActiveService("digital_address");
+    } else if (serviceParam === "rednotice_worldwide") {
+      setActiveService("rednotice_worldwide");
     }
   }, [searchParams]);
 
@@ -877,12 +1070,20 @@ export default function IdentityVerification() {
     org.toLowerCase().includes(interpolRequestingOrgName.toLowerCase())
   );
 
+  const rnwFilteredOrgs = recentOrgs.filter(org =>
+    org.toLowerCase().includes(rnwRequestingOrgName.toLowerCase())
+  );
+
   const passportFilteredOrgs = recentOrgs.filter(org =>
     org.toLowerCase().includes(passportRequestingOrgName.toLowerCase())
   );
 
   const davFilteredOrgs = recentOrgs.filter(org =>
     org.toLowerCase().includes(davRequestingOrgName.toLowerCase())
+  );
+
+  const sacFilteredOrgs = recentOrgs.filter(org =>
+    org.toLowerCase().includes(sacRequestingOrgName.toLowerCase())
   );
 
   // ─── Identity Check States (existing) ───
@@ -1435,6 +1636,148 @@ export default function IdentityVerification() {
     setInterpolIdProofFileName("");
   };
 
+  // ─── Red Notice Worldwide Check Handlers ───
+  const handleRednoticeWorldwideSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setRnwErrorMsg("");
+    setRnwSuccessMsg("");
+
+    const isSettingsIncomplete = !settings ||
+      !settings.contactFirstName?.trim() ||
+      !settings.contactLastName?.trim() ||
+      !settings.address?.trim() ||
+      !settings.city?.trim() ||
+      !settings.postalCode?.trim();
+
+    if (isSettingsIncomplete) {
+      setRnwErrorMsg("Please complete your profile settings before creating requests.");
+      return;
+    }
+
+    if (!rnwCandidateName.trim()) {
+      setRnwErrorMsg("Candidate Full Name is required");
+      return;
+    }
+    if (!rnwCandidateDob.trim()) {
+      setRnwErrorMsg("Candidate Date of Birth is required");
+      return;
+    }
+    if (!rnwRequestingOrgName.trim()) {
+      setRnwErrorMsg("Requesting ORG Name is required");
+      return;
+    }
+
+    setRnwSubmitting(true);
+    try {
+      const effectiveOrgName = isAdmin ? (orgName || profile?.org_name || "Ozclu") : (profile?.org_name || orgName);
+      const res = await addRednoticeWorldwideVerification({
+        candidateName: rnwCandidateName.trim(),
+        candidateDob: rnwCandidateDob.trim(),
+        birthCity: rnwBirthCity.trim(),
+        orgName: effectiveOrgName,
+        requestingOrgName: rnwRequestingOrgName.trim(),
+        idProofFile: rnwIdProofFile,
+        idProofFileName: rnwIdProofFileName,
+      });
+
+      if (res && res.success) {
+        setRnwSuccessMsg(res.rednoticeWorldwideHasRecords ? "Potential similarity match(es) found." : "Worldwide Red Notice check completed successfully!");
+        setRnwCreatedId(res.id);
+        setRnwIdProofFile(null);
+        setRnwIdProofFileName("");
+      } else {
+        setRnwErrorMsg(res?.error || "Failed to run Worldwide Red Notice database check");
+      }
+    } catch (err: any) {
+      setRnwErrorMsg(err?.message || "Failed to run Worldwide Red Notice database check");
+    } finally {
+      setRnwSubmitting(false);
+    }
+  };
+
+  const handleRednoticeWorldwideCancel = () => {
+    setRnwCandidateName("");
+    setRnwCandidateDob("");
+    setRnwBirthCity("");
+    setRnwRequestingOrgName("");
+    setRnwErrorMsg("");
+    setRnwSuccessMsg("");
+    setRnwCreatedId(null);
+    setRnwIdProofFile(null);
+    setRnwIdProofFileName("");
+  };
+
+  // ─── South African Court Check Handlers ───
+  const handleSafliiCourtSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSacErrorMsg("");
+    setSacSuccessMsg("");
+
+    const isSettingsIncomplete = !settings ||
+      !settings.contactFirstName?.trim() ||
+      !settings.contactLastName?.trim() ||
+      !settings.address?.trim() ||
+      !settings.city?.trim() ||
+      !settings.postalCode?.trim();
+
+    if (isSettingsIncomplete) {
+      setSacErrorMsg("Please complete your profile settings before creating requests.");
+      return;
+    }
+
+    if (!sacCandidateName.trim()) {
+      setSacErrorMsg("Candidate Full Name is required");
+      return;
+    }
+    if (!sacRequestingOrgName.trim()) {
+      setSacErrorMsg("Requesting ORG Name is required");
+      return;
+    }
+
+    setSacSubmitting(true);
+    try {
+      const effectiveOrgName = isAdmin ? (orgName || profile?.org_name || "Ozclu") : (profile?.org_name || orgName);
+      const res = await addSafliiCourtVerification({
+        candidateName: sacCandidateName.trim(),
+        candidateDob: sacCandidateDob.trim(),
+        birthCity: sacBirthCity.trim(),
+        orgName: effectiveOrgName,
+        requestingOrgName: sacRequestingOrgName.trim(),
+        idProofFile: sacIdProofFile,
+        idProofFileName: sacIdProofFileName,
+      });
+
+      if (res && res.success) {
+        setSacSuccessMsg("SA court record search initiated! Search is running in the background.");
+        setSacCreatedId(res.id);
+        setSacCandidateName("");
+        setSacCandidateDob("");
+        setSacBirthCity("");
+        setSacRequestingOrgName("");
+        setSacIdProofFile(null);
+        setSacIdProofFileName("");
+      } else {
+        setSacErrorMsg(res?.error || "Failed to run South African Court database check");
+      }
+    } catch (err: any) {
+      setSacErrorMsg(err?.message || "Failed to run South African Court database check");
+    } finally {
+      setSacSubmitting(false);
+    }
+  };
+
+  const handleSafliiCourtCancel = () => {
+    setSacCandidateName("");
+    setSacCandidateDob("");
+    setSacBirthCity("");
+    setSacRequestingOrgName("");
+    setSacErrorMsg("");
+    setSacSuccessMsg("");
+    setSacCreatedId(null);
+    setSacIdProofFile(null);
+    setSacIdProofFileName("");
+  };
+
   // ─── Passport Check Handlers ───
   const handlePassportSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1720,6 +2063,30 @@ export default function IdentityVerification() {
 
         <button
           type="button"
+          onClick={() => setActiveService("rednotice_worldwide")}
+          className={`flex-1 flex items-center gap-3 p-4 rounded-2xl border-2 transition-all duration-300 cursor-pointer group ${
+            activeService === "rednotice_worldwide"
+              ? "border-[#181d16] bg-white shadow-md"
+              : "border-[#eaf0e4] bg-[#f6fbf0]/50 hover:border-[#d0dbc6] hover:bg-white/80"
+          }`}
+        >
+          <div className={`p-2.5 rounded-xl transition-all ${
+            activeService === "rednotice_worldwide"
+              ? "bg-[#181d16] text-white"
+              : "bg-rose-50 text-rose-700 group-hover:bg-rose-100"
+          }`}>
+            <ShieldAlert className="w-5 h-5 text-rose-600" />
+          </div>
+          <div className="text-left">
+            <div className={`font-semibold text-sm ${activeService === "rednotice_worldwide" ? "text-[#181d16]" : "text-[#475569]"}`}>
+              Red Notice Worldwide
+            </div>
+            <div className="text-[11px] text-[#64748B] mt-0.5">Global Red Notices DB</div>
+          </div>
+        </button>
+
+        <button
+          type="button"
           onClick={() => setActiveService("passport")}
           className={`flex-1 flex items-center gap-3 p-4 rounded-2xl border-2 transition-all duration-300 cursor-pointer group ${
             activeService === "passport"
@@ -1763,6 +2130,30 @@ export default function IdentityVerification() {
               Digital Address
             </div>
             <div className="text-[11px] text-[#64748B] mt-0.5">Geo-tagged photo verify</div>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveService("saflii_court")}
+          className={`flex-1 flex items-center gap-3 p-4 rounded-2xl border-2 transition-all duration-300 cursor-pointer group ${
+            activeService === "saflii_court"
+              ? "border-[#181d16] bg-white shadow-md"
+              : "border-[#eaf0e4] bg-[#f6fbf0]/50 hover:border-[#d0dbc6] hover:bg-white/80"
+          }`}
+        >
+          <div className={`p-2.5 rounded-xl transition-all ${
+            activeService === "saflii_court"
+              ? "bg-[#181d16] text-white"
+              : "bg-emerald-50 text-emerald-700 group-hover:bg-emerald-100"
+          }`}>
+            <Scale className="w-5 h-5" />
+          </div>
+          <div className="text-left">
+            <div className={`font-semibold text-sm ${activeService === "saflii_court" ? "text-[#181d16]" : "text-[#475569]"}`}>
+              SA Court Check
+            </div>
+            <div className="text-[11px] text-[#64748B] mt-0.5">Southern Africa Courts</div>
           </div>
         </button>
 
@@ -3899,6 +4290,498 @@ export default function IdentityVerification() {
           )}
 
 
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════════ */}
+      {/* RED NOTICE WORLDWIDE CHECK FORM */}
+      {/* ═══════════════════════════════════════════════════ */}
+      {activeService === "rednotice_worldwide" && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start max-w-6xl w-full">
+          <div className="lg:col-span-6 flex flex-col gap-6 w-full">
+            {/* Form Alerts */}
+            {rnwSuccessMsg && !rnwCreatedId && (
+              <div className="bg-[#E6F8F3] text-[#00684A] border border-[#A3EAD6] rounded-xl p-4 font-body-sm flex items-center gap-3 max-w-2xl animate-fade-in shadow-2xs">
+                <CheckCircle className="w-5 h-5 text-[#00a877] shrink-0" />
+                <span className="font-semibold">{rnwSuccessMsg}</span>
+              </div>
+            )}
+
+            {rnwErrorMsg && (
+              <div className="bg-red-50 text-red-800 border border-red-200 rounded-xl p-4 font-body-sm flex items-center gap-3 max-w-2xl animate-fade-in shadow-2xs">
+                <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
+                <span className="font-semibold">{rnwErrorMsg}</span>
+              </div>
+            )}
+
+            {/* Red Notice Worldwide Form Card */}
+            <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-lg relative overflow-hidden transition-all duration-300 hover:shadow-xl w-full">
+              {/* Top gradient line */}
+              <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-rose-700 via-red-600 to-amber-500"></div>
+
+              {/* Subtle decorative background shapes */}
+              <div className="absolute -right-12 -bottom-12 w-32 h-32 bg-rose-50/30 rounded-full blur-2xl pointer-events-none"></div>
+              <div className="absolute -left-12 -top-12 w-32 h-32 bg-red-500/5 rounded-full blur-2xl pointer-events-none"></div>
+
+              <form onSubmit={handleRednoticeWorldwideSubmit} className="flex flex-col gap-6 mt-2 relative z-10">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2.5 bg-gradient-to-br from-rose-700 to-red-800 rounded-xl shadow-md text-white">
+                    <ShieldAlert className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-slate-800 text-lg leading-tight">Red Notice Worldwide Check</h3>
+                    <p className="text-xs text-slate-500 font-medium mt-0.5">
+                      Screen against active Interpol Red Notices across 196 member countries
+                    </p>
+                  </div>
+                </div>
+
+                {/* Candidate Full Name */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
+                    <span>Candidate Full Name</span>
+                    <span className="text-rose-500 font-bold">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={rnwCandidateName}
+                      onChange={(e) => setRnwCandidateName(e.target.value)}
+                      placeholder="Enter candidate's full name"
+                      disabled={rnwSubmitting}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-rose-500 focus:ring-1 focus:ring-rose-500 transition-all outline-hidden disabled:opacity-60"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Date of Birth */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
+                    <span>Date of Birth</span>
+                    <span className="text-rose-500 font-bold">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="date"
+                      value={rnwCandidateDob}
+                      onChange={(e) => setRnwCandidateDob(e.target.value)}
+                      disabled={rnwSubmitting}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-rose-500 focus:ring-1 focus:ring-rose-500 transition-all outline-hidden disabled:opacity-60"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Place of Birth City/Country (Optional) */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
+                    <span>Place / Country of Birth</span>
+                    <span className="text-slate-400 font-bold">(Optional)</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={rnwBirthCity}
+                      onChange={(e) => setRnwBirthCity(e.target.value)}
+                      placeholder="e.g. Warsaw, Paris, New York, Tokyo"
+                      disabled={rnwSubmitting}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-rose-500 focus:ring-1 focus:ring-rose-500 transition-all outline-hidden disabled:opacity-60"
+                    />
+                  </div>
+                </div>
+
+                {/* Requesting ORG Name */}
+                <div className="flex flex-col gap-1.5 relative">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
+                    <span>Requesting ORG Name</span>
+                    <span className="text-rose-500 font-bold">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={rnwRequestingOrgName}
+                    onChange={(e) => {
+                      setRnwRequestingOrgName(e.target.value);
+                      setRnwShowOrgDropdown(true);
+                    }}
+                    onFocus={() => setRnwShowOrgDropdown(true)}
+                    onBlur={() => setTimeout(() => setRnwShowOrgDropdown(false), 200)}
+                    placeholder="Type or select organization name"
+                    disabled={rnwSubmitting}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-rose-500 focus:ring-1 focus:ring-rose-500 transition-all outline-hidden disabled:opacity-60"
+                    required
+                  />
+                  {rnwShowOrgDropdown && rnwFilteredOrgs.length > 0 && (
+                    <div className="absolute top-[calc(100%+4px)] left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-lg z-50 max-h-40 overflow-y-auto">
+                      {rnwFilteredOrgs.map((org, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => {
+                            setRnwRequestingOrgName(org);
+                            setRnwShowOrgDropdown(false);
+                          }}
+                          className="w-full px-4 py-2.5 text-left text-xs font-semibold text-slate-700 hover:bg-[#f6fbf0] transition-colors flex items-center justify-between group"
+                        >
+                          <span>{org}</span>
+                          <Trash2
+                            className="w-3.5 h-3.5 text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              await removeRecentRequestingOrg(org);
+                            }}
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* ID Attachment (Optional, Max 1MB) */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center justify-between">
+                    <span>ID Attachment (Optional)</span>
+                    <span className="text-slate-400 font-semibold">(Max 1MB)</span>
+                  </label>
+                  {rnwIdProofFile ? (
+                    <div className="border border-emerald-200 rounded-xl p-3 bg-emerald-50/50 flex items-center justify-between">
+                      <div className="flex items-center gap-2 overflow-hidden">
+                        <FileText className="w-4 h-4 text-emerald-700 shrink-0" />
+                        <span className="text-xs font-bold text-slate-800 truncate">{rnwIdProofFileName || "ID_Proof.pdf"}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setRnwIdProofFile(null);
+                          setRnwIdProofFileName("");
+                        }}
+                        className="text-slate-400 hover:text-red-500 transition-colors p-1 rounded-lg hover:bg-red-50 cursor-pointer"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="border border-dashed border-slate-300 hover:border-rose-500 rounded-xl p-3 bg-slate-50/50 hover:bg-white transition-all flex items-center justify-center gap-2 cursor-pointer">
+                      <UploadCloud className="w-4 h-4 text-slate-400" />
+                      <span className="text-xs font-bold text-slate-700">Upload ID Attachment (Optional, Max 1MB)</span>
+                      <input
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          if (file.size > 2 * 1024 * 1024) {
+                            setRnwErrorMsg("File size exceeds 1MB limit.");
+                            return;
+                          }
+                          setRnwIdProofFileName(file.name);
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            setRnwIdProofFile(reader.result as string);
+                          };
+                          reader.readAsDataURL(file);
+                        }}
+                      />
+                    </label>
+                  )}
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-4 mt-4">
+                  <button
+                    type="button"
+                    onClick={handleRednoticeWorldwideCancel}
+                    disabled={rnwSubmitting}
+                    className="flex-1 py-3 border border-slate-200 hover:bg-slate-50 rounded-xl font-bold text-xs text-slate-700 transition-colors cursor-pointer bg-white disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={rnwSubmitting}
+                    className="flex-1 py-3 bg-[#181d16] hover:bg-[#1E293B] text-white font-bold rounded-xl transition-all cursor-pointer text-xs flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-60"
+                  >
+                    {rnwSubmitting ? (
+                      <>
+                        <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        <span>Querying Global DB...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Check Worldwide DB</span>
+                        <Send className="w-4 h-4" />
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+          
+          <div className="lg:col-span-6 w-full lg:sticky lg:top-24">
+            <FlowDiagram 
+              title="Red Notice Worldwide Check Flow" 
+              activeService="rednotice_worldwide" 
+            />
+          </div>
+
+          {/* Success Modal for Red Notice Worldwide Check — rendered via Portal */}
+          {rnwCreatedId && typeof document !== "undefined" && createPortal(
+            <RednoticeWorldwideSuccessModal
+              rnwCreatedId={rnwCreatedId}
+              candidateName={rnwCandidateName || "Candidate"}
+              hasRecords={rnwSuccessMsg.includes("match")}
+              onCreateAnother={() => { setRnwCreatedId(null); setRnwSuccessMsg(""); }}
+              onGoToSummary={() => { setRnwCreatedId(null); router.push("/client/summary"); }}
+            />,
+            document.body
+          )}
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════════ */}
+      {/* SOUTH AFRICAN COURT CHECK FORM */}
+      {/* ═══════════════════════════════════════════════════ */}
+      {activeService === "saflii_court" && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start max-w-6xl w-full">
+          <div className="lg:col-span-6 flex flex-col gap-6 w-full">
+            {/* Form Alerts */}
+            {sacSuccessMsg && !sacCreatedId && (
+              <div className="bg-[#E6F8F3] text-[#00684A] border border-[#A3EAD6] rounded-xl p-4 font-body-sm flex items-center gap-3 max-w-2xl animate-fade-in shadow-2xs">
+                <CheckCircle className="w-5 h-5 text-[#00a877] shrink-0" />
+                <span className="font-semibold">{sacSuccessMsg}</span>
+              </div>
+            )}
+
+            {sacErrorMsg && (
+              <div className="bg-red-50 text-red-800 border border-red-200 rounded-xl p-4 font-body-sm flex items-center gap-3 max-w-2xl animate-fade-in shadow-2xs">
+                <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
+                <span className="font-semibold">{sacErrorMsg}</span>
+              </div>
+            )}
+
+            {/* SA Court Check Form Card */}
+            <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-lg relative overflow-hidden transition-all duration-300 hover:shadow-xl w-full">
+              {/* Top gradient line */}
+              <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-emerald-700 via-green-600 to-teal-500"></div>
+
+              {/* Subtle decorative background shapes */}
+              <div className="absolute -right-12 -bottom-12 w-32 h-32 bg-emerald-50/30 rounded-full blur-2xl pointer-events-none"></div>
+              <div className="absolute -left-12 -top-12 w-32 h-32 bg-green-500/5 rounded-full blur-2xl pointer-events-none"></div>
+
+              <form onSubmit={handleSafliiCourtSubmit} className="flex flex-col gap-6 mt-2 relative z-10">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2.5 bg-gradient-to-br from-emerald-700 to-green-800 rounded-xl shadow-md text-white">
+                    <Scale className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-slate-800 text-lg leading-tight">South African Court Check</h3>
+                    <p className="text-xs text-slate-500 font-medium mt-0.5">
+                      Search court judgments across all South African jurisdictions
+                    </p>
+                  </div>
+                </div>
+
+                {/* Candidate Full Name */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
+                    <span>Candidate Full Name</span>
+                    <span className="text-rose-500 font-bold">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={sacCandidateName}
+                      onChange={(e) => setSacCandidateName(e.target.value)}
+                      placeholder="Enter candidate's full name"
+                      disabled={sacSubmitting}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all outline-hidden disabled:opacity-60"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Date of Birth */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
+                    <span>Date of Birth</span>
+                    <span className="text-slate-400 font-bold">(Optional)</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="date"
+                      value={sacCandidateDob}
+                      onChange={(e) => setSacCandidateDob(e.target.value)}
+                      disabled={sacSubmitting}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all outline-hidden disabled:opacity-60"
+                    />
+                  </div>
+                </div>
+
+                {/* Place of Birth City/Country (Optional) */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
+                    <span>Place / Country of Birth</span>
+                    <span className="text-slate-400 font-bold">(Optional)</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={sacBirthCity}
+                      onChange={(e) => setSacBirthCity(e.target.value)}
+                      placeholder="e.g. Johannesburg, Cape Town, Durban"
+                      disabled={sacSubmitting}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all outline-hidden disabled:opacity-60"
+                    />
+                  </div>
+                </div>
+
+                {/* Requesting ORG Name */}
+                <div className="flex flex-col gap-1.5 relative">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
+                    <span>Requesting ORG Name</span>
+                    <span className="text-rose-500 font-bold">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={sacRequestingOrgName}
+                    onChange={(e) => {
+                      setSacRequestingOrgName(e.target.value);
+                      setSacShowOrgDropdown(true);
+                    }}
+                    onFocus={() => setSacShowOrgDropdown(true)}
+                    onBlur={() => setTimeout(() => setSacShowOrgDropdown(false), 200)}
+                    placeholder="Type or select organization name"
+                    disabled={sacSubmitting}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all outline-hidden disabled:opacity-60"
+                    required
+                  />
+                  {sacShowOrgDropdown && sacFilteredOrgs.length > 0 && (
+                    <div className="absolute top-[calc(100%+4px)] left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-lg z-50 max-h-40 overflow-y-auto">
+                      {sacFilteredOrgs.map((org, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => {
+                            setSacRequestingOrgName(org);
+                            setSacShowOrgDropdown(false);
+                          }}
+                          className="w-full px-4 py-2.5 text-left text-xs font-semibold text-slate-700 hover:bg-[#f6fbf0] transition-colors flex items-center justify-between group"
+                        >
+                          <span>{org}</span>
+                          <Trash2
+                            className="w-3.5 h-3.5 text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              await removeRecentRequestingOrg(org);
+                            }}
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* ID Attachment (Optional, Max 1MB) */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center justify-between">
+                    <span>ID Attachment (Optional)</span>
+                    <span className="text-slate-400 font-semibold">(Max 1MB)</span>
+                  </label>
+                  {sacIdProofFile ? (
+                    <div className="border border-emerald-200 rounded-xl p-3 bg-emerald-50/50 flex items-center justify-between">
+                      <div className="flex items-center gap-2 overflow-hidden">
+                        <FileText className="w-4 h-4 text-emerald-700 shrink-0" />
+                        <span className="text-xs font-bold text-slate-800 truncate">{sacIdProofFileName || "ID_Proof.pdf"}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSacIdProofFile(null);
+                          setSacIdProofFileName("");
+                        }}
+                        className="text-slate-400 hover:text-red-500 transition-colors p-1 rounded-lg hover:bg-red-50 cursor-pointer"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="border border-dashed border-slate-300 hover:border-emerald-500 rounded-xl p-3 bg-slate-50/50 hover:bg-white transition-all flex items-center justify-center gap-2 cursor-pointer">
+                      <UploadCloud className="w-4 h-4 text-slate-400" />
+                      <span className="text-xs font-bold text-slate-700">Upload ID Attachment (Optional, Max 1MB)</span>
+                      <input
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          if (file.size > 2 * 1024 * 1024) {
+                            setSacErrorMsg("File size exceeds 1MB limit.");
+                            return;
+                          }
+                          setSacIdProofFileName(file.name);
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            setSacIdProofFile(reader.result as string);
+                          };
+                          reader.readAsDataURL(file);
+                        }}
+                      />
+                    </label>
+                  )}
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-4 mt-4">
+                  <button
+                    type="button"
+                    onClick={handleSafliiCourtCancel}
+                    disabled={sacSubmitting}
+                    className="flex-1 py-3 border border-slate-200 hover:bg-slate-50 rounded-xl font-bold text-xs text-slate-700 transition-colors cursor-pointer bg-white disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={sacSubmitting}
+                    className="flex-1 py-3 bg-[#181d16] hover:bg-[#1E293B] text-white font-bold rounded-xl transition-all cursor-pointer text-xs flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-60"
+                  >
+                    {sacSubmitting ? (
+                      <>
+                        <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        <span>Searching SA Courts...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Check SA Court Records</span>
+                        <Send className="w-4 h-4" />
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+          
+          <div className="lg:col-span-6 w-full lg:sticky lg:top-24">
+            <FlowDiagram 
+              title="South African Court Check Flow" 
+              activeService="saflii_court" 
+            />
+          </div>
+
+          {/* Success Modal for SA Court Check — rendered via Portal */}
+          {sacCreatedId && typeof document !== "undefined" && createPortal(
+            <SafliiCourtSuccessModal
+              sacCreatedId={sacCreatedId}
+              sacCandidateName={sacCandidateName || "Candidate"}
+              onCreateAnother={() => { setSacCreatedId(null); setSacSuccessMsg(""); }}
+              onGoToSummary={() => { setSacCreatedId(null); router.push("/client/summary"); }}
+            />,
+            document.body
+          )}
         </div>
       )}
 

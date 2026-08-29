@@ -156,11 +156,13 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     pathname.includes("/client/report") ||
     pathname.includes("/client/passport-report") ||
     pathname.includes("/client/interpol-report") ||
+    pathname.includes("/client/rednotice-worldwide-report") ||
     pathname.includes("/client/billable-summary") ||
     pathname.includes("/client/court-record-report") ||
     pathname.includes("/client/digital-address-report") ||
     pathname.includes("/client/employment-report") ||
-    pathname.includes("/client/education-report")
+    pathname.includes("/client/education-report") ||
+    pathname.includes("/client/saflii-court-report")
   ) {
     return <>{children}</>;
   }

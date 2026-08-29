@@ -41,13 +41,29 @@ export interface Verification {
   serviceCharge?: number;
   employments?: Array<{ companyName: string; position: string; joiningYear?: string; leavingYear?: string; employeeCode?: string }>;
   educationList?: Array<{ boardUniversity: string; courseName: string; passingYear?: string; rollNumber?: string }>;
-  // Court Record Verification fields
-  type?: "identity" | "court_record" | "employment" | "education" | "interpol" | "passport" | "digital_address";
+  // Court Record Verification & Watchlist fields
+  type?: "identity" | "court_record" | "employment" | "education" | "interpol" | "passport" | "digital_address" | "rednotice_worldwide" | "saflii_court";
   candidateDob?: string;
   birthCity?: string;
   interpolHasRecords?: boolean;
   interpolMatches?: any[];
   interpolCompletedAt?: string;
+  rednoticeWorldwideHasRecords?: boolean;
+  rednoticeWorldwideMatches?: any[];
+  rednoticeWorldwideCompletedAt?: string;
+  safliiCourtHasRecords?: boolean;
+  safliiCourtResults?: Array<{
+    caseTitle: string;
+    court: string;
+    date: string;
+    url: string;
+    snippet: string;
+    citation: string;
+  }>;
+  safliiCourtCompletedAt?: string;
+  safliiCourtSummary?: string;
+  safliiCourtStatus?: string;
+  safliiCourtTotalResults?: number;
   candidateFatherName?: string;
   candidateMotherName?: string;
   candidateIsMarried?: boolean;
@@ -275,14 +291,18 @@ export interface Organisation {
   educationEnabled?: boolean;
   interpolEnabled?: boolean;
   passportEnabled?: boolean;
+  rednoticeWorldwideEnabled?: boolean;
   identityRate?: number;
   courtRecordRate?: number;
   employmentRate?: number;
   educationRate?: number;
   interpolRate?: number;
   passportRate?: number;
+  rednoticeWorldwideRate?: number;
   digitalAddressEnabled?: boolean;
   digitalAddressRate?: number;
+  safliiCourtEnabled?: boolean;
+  safliiCourtRate?: number;
   employmentRates?: Record<string, number>;
   educationRates?: Record<string, number>;
   serviceTats?: Record<string, string>;
@@ -313,6 +333,24 @@ interface PortalContextType {
   suggestions: ClientSuggestion[];
   submitSuggestion: (params: { type: string; title: string; message: string; targetService?: string }) => Promise<any>;
   addInterpolVerification: (params: {
+    candidateName: string;
+    candidateDob: string;
+    birthCity?: string;
+    orgName: string;
+    requestingOrgName: string;
+    idProofFile?: string | null;
+    idProofFileName?: string;
+  }) => Promise<any>;
+  addRednoticeWorldwideVerification: (params: {
+    candidateName: string;
+    candidateDob: string;
+    birthCity?: string;
+    orgName: string;
+    requestingOrgName: string;
+    idProofFile?: string | null;
+    idProofFileName?: string;
+  }) => Promise<any>;
+  addSafliiCourtVerification: (params: {
     candidateName: string;
     candidateDob: string;
     birthCity?: string;
@@ -840,6 +878,66 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return null;
   };
 
+  const addRednoticeWorldwideVerification = async (params: {
+    candidateName: string;
+    candidateDob: string;
+    birthCity?: string;
+    orgName: string;
+    requestingOrgName: string;
+    idProofFile?: string | null;
+    idProofFileName?: string;
+  }) => {
+    try {
+      const res = await fetch("/api/portal-data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "addRednoticeWorldwideVerification",
+          payload: params,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        fetchAllData();
+        return data;
+      }
+    } catch (err) {
+      console.error("Failed creating Red Notice Worldwide verification:", err);
+    }
+    fetchAllData();
+    return null;
+  };
+
+  const addSafliiCourtVerification = async (params: {
+    candidateName: string;
+    candidateDob: string;
+    birthCity?: string;
+    orgName: string;
+    requestingOrgName: string;
+    idProofFile?: string | null;
+    idProofFileName?: string;
+  }) => {
+    try {
+      const res = await fetch("/api/portal-data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "addSafliiCourtVerification",
+          payload: params,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        fetchAllData();
+        return data;
+      }
+    } catch (err) {
+      console.error("Failed creating SAFLII court verification:", err);
+    }
+    fetchAllData();
+    return null;
+  };
+
   const addPassportVerification = async (params: {
     fileNumber: string;
     dateOfBirth: string;
@@ -1050,6 +1148,8 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         suggestions,
         submitSuggestion,
         addInterpolVerification,
+        addRednoticeWorldwideVerification,
+        addSafliiCourtVerification,
         addPassportVerification,
         addDigitalAddressVerification,
         addVerification,
