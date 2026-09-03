@@ -1397,6 +1397,200 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({ success: true, id: finalId, rednoticeWorldwideHasRecords: hasRecords });
       }
+      case "addSapsWantedVerification": {
+        const {
+          candidateName,
+          candidateForename: passedForename,
+          candidateSurname: passedSurname,
+          candidateDob,
+          candidateIdNumber,
+          provinceCity,
+          orgName,
+          requestingOrgName: reqOrgName,
+          idProofFile,
+          idProofFileName,
+        } = payload;
+
+        if (!candidateName?.trim() && (!passedForename?.trim() || !passedSurname?.trim())) {
+          return NextResponse.json({ error: "Candidate name or forename and surname are required" }, { status: 400 });
+        }
+
+        const isAdminSession = sessionOrgName?.toLowerCase() === "ozclu" || sessionOrgName?.toLowerCase() === "admin";
+        const safeOrgName = isAdminSession ? (orgName || sessionOrgName) : (sessionOrgName || orgName);
+
+        const nowTime = new Date();
+        const dd = String(nowTime.getDate()).padStart(2, "0");
+        const mm = String(nowTime.getMonth() + 1).padStart(2, "0");
+        const yy = String(nowTime.getFullYear()).slice(-2);
+        const dateStr = `${dd}${mm}${yy}`;
+        const prefix = `SAPS${dateStr}-`;
+
+        const count = await db.collection("verifications").countDocuments({
+          id: { $regex: `^${prefix}` }
+        });
+        const finalId = `${prefix}${String(count + 1).padStart(4, "0")}`;
+
+        const normalizeText = (str: string) => {
+          if (!str) return "";
+          return str
+            .toLowerCase()
+            .replace(/[^a-z0-9\s]/g, " ")
+            .replace(/\s+/g, " ")
+            .trim();
+        };
+
+        // Resolve Forename and Surname
+        let forename = (passedForename || "").trim();
+        let surname = (passedSurname || "").trim();
+        const rawFullName = (candidateName || `${forename} ${surname}`).trim();
+
+        if (!forename || !surname) {
+          const nameParts = rawFullName.split(/\s+/).filter(Boolean);
+          if (nameParts.length === 1) {
+            surname = nameParts[0];
+            forename = nameParts[0];
+          } else {
+            surname = nameParts[nameParts.length - 1];
+            forename = nameParts.slice(0, nameParts.length - 1).join(" ");
+          }
+        }
+
+        const normForename = normalizeText(forename);
+        const normSurname = normalizeText(surname);
+        const normFullName = normalizeText(rawFullName);
+
+        // Fetch potential candidates from saps_wanted collection
+        const candidateMatches = await db.collection("saps_wanted").find({
+          $or: [
+            { normalizedSurname: normSurname },
+            { normalizedName: normFullName },
+            { normalizedSurname: { $regex: `^${normSurname}$`, $options: "i" } }
+          ]
+        }).toArray();
+
+        // Exact match verification for BOTH forename and surname
+        const matchedSuspects = candidateMatches.filter((suspect: any) => {
+          const sSurname = suspect.normalizedSurname || normalizeText(suspect.surname);
+          const sForename = suspect.normalizedForename || normalizeText(suspect.forename);
+          const sFullName = suspect.normalizedName || normalizeText(suspect.name);
+
+          // 1. Full name exact match
+          if (normFullName === sFullName) return true;
+
+          // 2. Exact Surname match AND Forename match / overlap
+          const surnameMatches = sSurname === normSurname || 
+            (sSurname.length > 2 && normSurname.length > 2 && (sSurname.includes(normSurname) || normSurname.includes(sSurname)));
+
+          if (!surnameMatches) return false;
+
+          // Check forename
+          if (sForename === normForename) return true;
+
+          // Word-level forename overlap (e.g. "Anele Mabheka" vs "Anele")
+          const inputForenameWords = normForename.split(" ").filter((w: string) => w.length > 2);
+          const suspectForenameWords = sForename.split(" ").filter((w: string) => w.length > 2);
+
+          const hasCommonWord = inputForenameWords.some((w: string) => suspectForenameWords.includes(w));
+          if (hasCommonWord) return true;
+
+          return false;
+        });
+
+        const sanitizedMatches = matchedSuspects.map((s: any) => ({
+          bid: s.sapsBid || s.bid,
+          name: s.name || `${s.forename || ""} ${s.surname || ""}`.trim(),
+          forename: s.forename || "",
+          surname: s.surname || "",
+          crime: s.crime || "",
+          circumstances: s.circumstances || "",
+          crimeDate: s.crimeDate || "",
+          aliases: s.aliases || "",
+          gender: s.gender || "",
+          eyeColour: s.eyeColour || "",
+          hairColour: s.hairColour || "",
+          height: s.height || "",
+          weight: s.weight || "",
+          build: s.build || "",
+          station: s.station || "",
+          caseNumber: s.caseNumber || "",
+          stationTelephone: s.stationTelephone || "",
+          investigatingOfficer: s.investigatingOfficer || "",
+          contactNumber: s.contactNumber || "",
+          email: s.email || "",
+          imageUrl: s.imageUrl || "",
+          detailUrl: s.detailUrl || "",
+        }));
+
+        const hasMatch = sanitizedMatches.length > 0;
+        
+        // If matched -> Halt verification, set status to Halted and substatus to verifying_with_attorney, do not send to customer
+        // If not matched -> Status is Completed, sendToCustomer is true, directly show report
+        const status = hasMatch ? "Halted" : "Completed";
+        const sapsWantedStatus = hasMatch ? "verifying_with_attorney" : "completed";
+        const sendToCustomer = !hasMatch;
+
+        const notes = hasMatch
+          ? `Potential match identified on SAPS Wanted registry: ${sanitizedMatches.length} record(s). Verification halted pending attorney review.`
+          : "No similarity matches found in South African Police Service (SAPS) Wanted Persons registry. Clean record verified.";
+
+        const dateFormatted = new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
+
+        await db.collection("verifications").insertOne({
+          id: finalId,
+          name: rawFullName,
+          candidateForename: forename,
+          candidateSurname: surname,
+          candidateDob: candidateDob || "",
+          candidateIdNumber: candidateIdNumber || "",
+          provinceCity: provinceCity || "",
+          email: "",
+          orgName: safeOrgName,
+          requestingOrgName: reqOrgName || safeOrgName,
+          date: dateFormatted,
+          status: status,
+          sapsWantedStatus: sapsWantedStatus,
+          verifier: "System",
+          notes: notes,
+          type: "saps_wanted",
+          sendToCustomer: sendToCustomer,
+          sapsWantedHasRecords: hasMatch,
+          sapsWantedMatches: sanitizedMatches,
+          idProofFile: idProofFile || null,
+          idProofFileName: idProofFileName || "",
+          sapsWantedCompletedAt: hasMatch ? null : new Date().toISOString(),
+          createdAt: new Date().toISOString(),
+        });
+
+        if (reqOrgName && reqOrgName.trim()) {
+          await db.collection("settings").updateOne(
+            { companyName: safeOrgName },
+            { $addToSet: { recentRequestingOrgs: reqOrgName.trim() } },
+            { upsert: true }
+          );
+        }
+
+        await logAuditEvent(db, {
+          actorUserId: user.id,
+          actorEmail: user.email,
+          actorRole: user.role,
+          portal: "client",
+          action: "saps_wanted_verification_created",
+          targetType: "verification",
+          targetId: finalId,
+          ip,
+          userAgent,
+          outcome: "success"
+        });
+
+        return NextResponse.json({
+          success: true,
+          id: finalId,
+          sapsWantedHasRecords: hasMatch,
+          status: status,
+          sapsWantedStatus: sapsWantedStatus,
+          sendToCustomer: sendToCustomer,
+        });
+      }
       case "addSafliiCourtVerification": {
         const { candidateName, candidateDob, birthCity, orgName, requestingOrgName: reqOrgName } = payload;
 
@@ -1478,6 +1672,212 @@ export async function POST(req: NextRequest) {
           }),
         }).catch((err) => {
           console.error(`[SAFLII] Failed to trigger search for ${finalId}:`, err.message);
+        });
+
+        return NextResponse.json({ success: true, id: finalId });
+      }
+      case "addUkCourtVerification": {
+        const { candidateName, candidateDob, birthCity, judgmentType, jurisdiction, orgName, requestingOrgName: reqOrgName } = payload;
+
+        if (!candidateName?.trim()) {
+          return NextResponse.json({ error: "Candidate name is required" }, { status: 400 });
+        }
+
+        const isAdminSession = sessionOrgName?.toLowerCase() === "ozclu" || sessionOrgName?.toLowerCase() === "admin";
+        const safeOrgName = isAdminSession ? (orgName || sessionOrgName) : (sessionOrgName || orgName);
+
+        const nowTime = new Date();
+        const dd = String(nowTime.getDate()).padStart(2, "0");
+        const mm = String(nowTime.getMonth() + 1).padStart(2, "0");
+        const yy = String(nowTime.getFullYear()).slice(-2);
+        const dateStr = `${dd}${mm}${yy}`;
+        const prefix = `UKC${dateStr}-`;
+
+        const count = await db.collection("verifications").countDocuments({
+          id: { $regex: `^${prefix}` }
+        });
+        const finalId = `${prefix}${String(count + 1).padStart(4, "0")}`;
+
+        const dateFormatted = new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
+
+        await db.collection("verifications").insertOne({
+          id: finalId,
+          name: candidateName.trim(),
+          email: "",
+          orgName: safeOrgName,
+          requestingOrgName: reqOrgName || safeOrgName,
+          date: dateFormatted,
+          status: "Processing",
+          verifier: "System",
+          notes: "UK Court Check initiated. Searching Courts and Tribunals Judiciary...",
+          type: "uk_court",
+          candidateDob: candidateDob || "",
+          birthCity: birthCity?.trim() || "",
+          judgmentType: judgmentType || "",
+          jurisdiction: jurisdiction || "",
+          ukCourtStatus: "searching",
+          ukCourtHasRecords: false,
+          ukCourtResults: [],
+          ukCourtTotalResults: 0,
+          ukCourtTotalAvailable: 0,
+          idProofFile: payload.idProofFile || null,
+          idProofFileName: payload.idProofFileName || "",
+          ukCourtCompletedAt: null,
+          createdAt: new Date().toISOString()
+        });
+
+        if (reqOrgName && reqOrgName.trim()) {
+          await db.collection("settings").updateOne(
+            { companyName: safeOrgName },
+            { $addToSet: { recentRequestingOrgs: reqOrgName.trim() } },
+            { upsert: true }
+          );
+        }
+
+        await logAuditEvent(db, {
+          actorUserId: user.id,
+          actorEmail: user.email,
+          actorRole: user.role,
+          portal: "client",
+          action: "uk_court_verification_created",
+          targetType: "verification",
+          targetId: finalId,
+          ip,
+          userAgent,
+          outcome: "success"
+        });
+
+        // Fire-and-forget: trigger UK Court search in background
+        const baseUrl = req.nextUrl.origin || process.env.NEXTAUTH_URL || "http://localhost:3000";
+        fetch(`${baseUrl}/api/uk-court-search`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-internal-api-key": process.env.NEXTAUTH_SECRET || "",
+          },
+          body: JSON.stringify({
+            verificationId: finalId,
+            candidateName: candidateName.trim(),
+            judgmentType: judgmentType || "",
+            jurisdiction: jurisdiction || "",
+          }),
+        }).catch((err) => {
+          console.error(`[UK-COURT] Failed to trigger search for ${finalId}:`, err.message);
+        });
+
+        return NextResponse.json({ success: true, id: finalId });
+      }
+      case "addMalaysiaCourtVerification": {
+        const {
+          candidateName,
+          candidateDob,
+          courtCategory,
+          courtLocation,
+          caseType,
+          dateOfDecisionFrom,
+          dateOfDecisionTo,
+          dateOfAPFrom,
+          dateOfAPTo,
+          judgeName,
+          orgName,
+          requestingOrgName: reqOrgName,
+        } = payload;
+
+        if (!candidateName?.trim()) {
+          return NextResponse.json({ error: "Candidate / Search keyword is required" }, { status: 400 });
+        }
+
+        const isAdminSession = sessionOrgName?.toLowerCase() === "ozclu" || sessionOrgName?.toLowerCase() === "admin";
+        const safeOrgName = isAdminSession ? (orgName || sessionOrgName) : (sessionOrgName || orgName);
+
+        const nowTime = new Date();
+        const dd = String(nowTime.getDate()).padStart(2, "0");
+        const mm = String(nowTime.getMonth() + 1).padStart(2, "0");
+        const yy = String(nowTime.getFullYear()).slice(-2);
+        const dateStr = `${dd}${mm}${yy}`;
+        const prefix = `MYC${dateStr}-`;
+
+        const count = await db.collection("verifications").countDocuments({
+          id: { $regex: `^${prefix}` }
+        });
+        const finalId = `${prefix}${String(count + 1).padStart(4, "0")}`;
+
+        const dateFormatted = new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
+
+        await db.collection("verifications").insertOne({
+          id: finalId,
+          name: candidateName.trim(),
+          email: "",
+          orgName: safeOrgName,
+          requestingOrgName: reqOrgName || safeOrgName,
+          date: dateFormatted,
+          status: "Processing",
+          verifier: "System",
+          notes: "Malaysia Court Check initiated. Searching Portal eJudgment Mahkamah Persekutuan Malaysia...",
+          type: "malaysia_court",
+          candidateDob: candidateDob || "",
+          courtCategory: courtCategory || "",
+          courtLocation: courtLocation || "",
+          caseType: caseType || "",
+          dateOfDecisionFrom: dateOfDecisionFrom || "",
+          dateOfDecisionTo: dateOfDecisionTo || "",
+          dateOfAPFrom: dateOfAPFrom || "",
+          dateOfAPTo: dateOfAPTo || "",
+          judgeName: judgeName?.trim() || "",
+          malaysiaCourtStatus: "searching",
+          malaysiaCourtHasRecords: false,
+          malaysiaCourtResults: [],
+          malaysiaCourtTotalResults: 0,
+          malaysiaCourtTotalAvailable: 0,
+          idProofFile: payload.idProofFile || null,
+          idProofFileName: payload.idProofFileName || "",
+          malaysiaCourtCompletedAt: null,
+          createdAt: new Date().toISOString()
+        });
+
+        if (reqOrgName && reqOrgName.trim()) {
+          await db.collection("settings").updateOne(
+            { companyName: safeOrgName },
+            { $addToSet: { recentRequestingOrgs: reqOrgName.trim() } },
+            { upsert: true }
+          );
+        }
+
+        await logAuditEvent(db, {
+          actorUserId: user.id,
+          actorEmail: user.email,
+          actorRole: user.role,
+          portal: "client",
+          action: "malaysia_court_verification_created",
+          targetType: "verification",
+          targetId: finalId,
+          ip,
+          userAgent,
+          outcome: "success"
+        });
+
+        // Fire-and-forget: trigger Malaysia Court search in background
+        const baseUrl = req.nextUrl.origin || process.env.NEXTAUTH_URL || "http://localhost:3000";
+        fetch(`${baseUrl}/api/malaysia-court-search`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-internal-api-key": process.env.NEXTAUTH_SECRET || "",
+          },
+          body: JSON.stringify({
+            verificationId: finalId,
+            candidateName: candidateName.trim(),
+            courtCategory: courtCategory || "",
+            courtLocation: courtLocation || "",
+            caseType: caseType || "",
+            dateOfDecisionFrom: dateOfDecisionFrom || "",
+            dateOfDecisionTo: dateOfDecisionTo || "",
+            dateOfAPFrom: dateOfAPFrom || "",
+            dateOfAPTo: dateOfAPTo || "",
+            judgeName: judgeName?.trim() || "",
+          }),
+        }).catch((err) => {
+          console.error(`[MY-COURT] Failed to trigger search for ${finalId}:`, err.message);
         });
 
         return NextResponse.json({ success: true, id: finalId });

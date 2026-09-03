@@ -89,6 +89,40 @@ function SearchProgressIndicator({ verification, now }: { verification: Verifica
     );
   }
 
+  if (verType === "uk_court") {
+    const ukcStatus = (verification as any).ukCourtStatus || "searching";
+    return (
+      <div className="flex flex-col items-end gap-1 min-w-[140px]">
+        <div className="flex items-center gap-1.5">
+          <div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse shrink-0"></div>
+          <span className="text-[11px] text-indigo-700 font-bold">
+            {ukcStatus === "searching" ? "Searching UK Courts..." : "Finalizing..."}
+          </span>
+        </div>
+        <span className="text-[9px] text-[#475569] font-medium text-right leading-tight">
+          Checking Courts & Tribunals Judiciary databases
+        </span>
+      </div>
+    );
+  }
+
+  if (verType === "malaysia_court") {
+    const mycStatus = (verification as any).malaysiaCourtStatus || "searching";
+    return (
+      <div className="flex flex-col items-end gap-1 min-w-[140px]">
+        <div className="flex items-center gap-1.5">
+          <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shrink-0"></div>
+          <span className="text-[11px] text-emerald-800 font-bold">
+            {mycStatus === "searching" ? "Searching eJudgment..." : "Finalizing..."}
+          </span>
+        </div>
+        <span className="text-[9px] text-[#475569] font-medium text-right leading-tight">
+          Checking Mahkamah Persekutuan Malaysia
+        </span>
+      </div>
+    );
+  }
+
   const MAX_SEARCH_DURATION_S = 180; // 3 minutes max
 
   // Calculate elapsed time
@@ -149,7 +183,10 @@ function QuickReportProgressIndicator({ verification, now }: { verification: Ver
   const isPassport = verType === "passport";
   const isDigitalAddress = verType === "digital_address";
   const isSafliiCourt = verType === "saflii_court";
-  const MIN_HOLD_S = isPassport ? 5 : isDigitalAddress ? 4 : 10;
+  const isSapsWanted = verType === "saps_wanted";
+  const isUkCourt = verType === "uk_court";
+  const isMalaysiaCourt = verType === "malaysia_court";
+  const MIN_HOLD_S = isPassport ? 5 : isDigitalAddress ? 4 : isSapsWanted ? 4 : isUkCourt || isMalaysiaCourt ? 4 : 10;
   const startedAt = verification.createdAt;
   let elapsedSeconds = 0;
   if (startedAt) {
@@ -163,6 +200,8 @@ function QuickReportProgressIndicator({ verification, now }: { verification: Ver
     ? "Step 1/3: Validating GPS..."
     : isSafliiCourt
     ? "Step 1/3: Querying SA Courts..."
+    : isSapsWanted
+    ? "Step 1/2: Checking SAPS..."
     : "Step 1/3: Scanning NCB...";
 
   if (isPassport) {
@@ -174,6 +213,9 @@ function QuickReportProgressIndicator({ verification, now }: { verification: Ver
   } else if (isSafliiCourt) {
     if (remainingSeconds <= 6 && remainingSeconds >= 3) stepText = "Step 2/3: Scanning Judgments...";
     else if (remainingSeconds <= 2) stepText = "Step 3/3: Generating Report...";
+  } else if (isSapsWanted) {
+    if (remainingSeconds <= 2) stepText = "Step 2/2: Verifying Police Records...";
+    else stepText = "Step 1/2: Querying SAPS Registry...";
   } else {
     if (remainingSeconds <= 6 && remainingSeconds >= 3) stepText = "Step 2/3: Checking Notices...";
     else if (remainingSeconds <= 2) stepText = "Step 3/3: Generating...";
@@ -233,9 +275,9 @@ export default function OrderSummaryPage() {
     if (v.type === "court_record" && v.status === "Processing" && v.courtRecordStatus !== "completed" && v.courtRecordStatus !== "error" && v.courtRecordStatus !== "needs_admin_retry") {
       return true;
     }
-    if (((v.type as string) === "passport" || v.type === "interpol" || (v.type as string) === "rednotice_worldwide" || (v.type as string) === "saflii_court") && v.createdAt) {
+    if (((v.type as string) === "passport" || v.type === "interpol" || (v.type as string) === "rednotice_worldwide" || (v.type as string) === "saflii_court" || (v.type as string) === "saps_wanted" || (v.type as string) === "uk_court" || (v.type as string) === "malaysia_court") && v.createdAt) {
       const elapsed = Math.floor((tickNow - new Date(v.createdAt).getTime()) / 1000);
-      const minHold = (v.type as string) === "passport" ? 5 : 8;
+      const minHold = (v.type as string) === "passport" ? 5 : (v.type as string) === "uk_court" || (v.type as string) === "malaysia_court" || (v.type as string) === "saps_wanted" ? 4 : 8;
       if (elapsed < minHold) return true;
     }
     return false;
@@ -582,6 +624,12 @@ export default function OrderSummaryPage() {
       rate = organisation?.rednoticeWorldwideRate !== undefined ? organisation.rednoticeWorldwideRate : 15;
     } else if (verType === "saflii_court") {
       rate = organisation?.safliiCourtRate !== undefined ? organisation.safliiCourtRate : 15;
+    } else if (verType === "uk_court") {
+      rate = organisation?.ukCourtRate !== undefined ? organisation.ukCourtRate : 25;
+    } else if (verType === "malaysia_court") {
+      rate = (organisation as any)?.malaysiaCourtRate !== undefined ? (organisation as any).malaysiaCourtRate : 20;
+    } else if (verType === "saps_wanted") {
+      rate = (organisation as any)?.sapsWantedRate !== undefined ? (organisation as any).sapsWantedRate : 15;
     } else if (verType === "passport") {
       rate = organisation?.passportRate !== undefined ? organisation.passportRate : 8;
     } else if (verType === "digital_address") {
@@ -830,7 +878,7 @@ export default function OrderSummaryPage() {
                   className="font-bold text-xs text-[#181d16] bg-white hover:bg-[#f0f5ea]/35 px-4 py-2.5 rounded-xl transition-all border border-[#eaf0e4] flex items-center gap-2 cursor-pointer shadow-2xs"
                 >
                   <Layers className="w-4 h-4 text-[#00450e]" />
-                  <span>Type: {typeFilter === "all" ? "ALL" : typeFilter === "court_record" ? "COURT RECORD" : typeFilter === "interpol" ? "INTERPOL CHECK" : typeFilter === "rednotice_worldwide" ? "REDNOTICE WORLDWIDE" : typeFilter === "saflii_court" ? "SA COURT CHECK" : typeFilter === "passport" ? "PASSPORT CHECK" : typeFilter === "digital_address" ? "DIGITAL ADDRESS" : typeFilter === "employment" ? "EMPLOYMENT" : typeFilter === "education" ? "EDUCATION" : "IDENTITY"}</span>
+                  <span>Type: {typeFilter === "all" ? "ALL" : typeFilter === "court_record" ? "COURT RECORD" : typeFilter === "interpol" ? "INTERPOL CHECK" : typeFilter === "rednotice_worldwide" ? "REDNOTICE WORLDWIDE" : typeFilter === "saflii_court" ? "SA COURT CHECK" : typeFilter === "saps_wanted" ? "SAPS WANTED" : typeFilter === "uk_court" ? "UK COURT CHECK" : typeFilter === "malaysia_court" ? "MALAYSIA COURT CHECK" : typeFilter === "passport" ? "PASSPORT CHECK" : typeFilter === "digital_address" ? "DIGITAL ADDRESS" : typeFilter === "employment" ? "EMPLOYMENT" : typeFilter === "education" ? "EDUCATION" : "IDENTITY"}</span>
                 </button>
 
                 {typeDropdownOpen && (
@@ -844,6 +892,9 @@ export default function OrderSummaryPage() {
                         { key: "interpol", label: "INTERPOL CHECK" },
                         { key: "rednotice_worldwide", label: "REDNOTICE WORLDWIDE" },
                         { key: "saflii_court", label: "SA COURT CHECK" },
+                        { key: "saps_wanted", label: "SAPS WANTED" },
+                        { key: "uk_court", label: "UK COURT CHECK" },
+                        { key: "malaysia_court", label: "MALAYSIA COURT CHECK" },
                         { key: "passport", label: "PASSPORT CHECK" },
                         { key: "employment", label: "EMPLOYMENT" },
                         { key: "education", label: "EDUCATION" }
@@ -1104,6 +1155,12 @@ export default function OrderSummaryPage() {
                             ? "bg-rose-50/80 text-rose-800 border-rose-200"
                             : (v.type as string) === "saflii_court"
                             ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                            : (v.type as string) === "uk_court"
+                            ? "bg-indigo-50 text-indigo-900 border-indigo-200"
+                            : (v.type as string) === "malaysia_court"
+                            ? "bg-emerald-50 text-emerald-900 border-emerald-200"
+                            : (v.type as string) === "saps_wanted"
+                            ? "bg-blue-900/10 text-blue-900 border-blue-900/20"
                             : (v.type as string) === "passport"
                             ? "bg-[#EBF5FF] text-[#1E40AF] border-[#BFDBFE]"
                             : (v.type as string) === "digital_address"
@@ -1122,6 +1179,12 @@ export default function OrderSummaryPage() {
                             ? "Red Notice Worldwide"
                             : (v.type as string) === "saflii_court"
                             ? "SA Court Check"
+                            : (v.type as string) === "uk_court"
+                            ? "UK Court Check"
+                            : (v.type as string) === "malaysia_court"
+                            ? "Malaysia Court Check"
+                            : (v.type as string) === "saps_wanted"
+                            ? "SAPS Wanted"
                             : (v.type as string) === "passport"
                             ? "Passport Check"
                             : (v.type as string) === "digital_address"
@@ -1142,8 +1205,8 @@ export default function OrderSummaryPage() {
                                 || (v.courtRecordProgress
                                   ? v.courtRecordProgress
                                   : "Search in progress..."))
-                              : v.type === "interpol" || (v.type as string) === "rednotice_worldwide" || (v.type as string) === "saflii_court"
-                              ? `DOB: ${v.candidateDob || "Not Given"}${v.birthCity ? ` | City: ${v.birthCity}` : ""}`
+                              : v.type === "interpol" || (v.type as string) === "rednotice_worldwide" || (v.type as string) === "saflii_court" || (v.type as string) === "saps_wanted" || (v.type as string) === "uk_court" || (v.type as string) === "malaysia_court"
+                              ? `DOB: ${v.candidateDob || "Not Given"}${v.birthCity ? ` | City: ${v.birthCity}` : ""}${v.candidateIdNumber ? ` | ID: ${v.candidateIdNumber}` : ""}`
                               : (v.type as string) === "passport"
                               ? `File No: ${(v as any).passportData?.fileNumber || "—"}${(v as any).passportData?.dateOfBirth ? ` | DOB: ${(v as any).passportData.dateOfBirth}` : ""}`
                               : (v.type as string) === "digital_address"
@@ -1156,7 +1219,9 @@ export default function OrderSummaryPage() {
                       <td className="py-3.5 px-2.5">
                         <span
                           className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold tracking-wide uppercase border ${
-                            ((v.type === "court_record" && (v.courtRecordStatus === "admin_review" || v.courtRecordStatus === "needs_admin_retry")) || (!v.sendToCustomer && (v.type as string) !== "passport" && v.type !== "interpol" && (v.type as string) !== "rednotice_worldwide" && (v.type as string) !== "saflii_court" && v.type !== "court_record" && (v.type as string) !== "digital_address"))
+                            v.status === "Halted" || (v.type as string) === "saps_wanted" && v.sapsWantedStatus === "verifying_with_attorney"
+                              ? "bg-amber-100 text-amber-800 border-amber-300 font-extrabold"
+                              : ((v.type === "court_record" && (v.courtRecordStatus === "admin_review" || v.courtRecordStatus === "needs_admin_retry")) || (!v.sendToCustomer && (v.type as string) !== "passport" && v.type !== "interpol" && (v.type as string) !== "rednotice_worldwide" && (v.type as string) !== "saflii_court" && (v.type as string) !== "saps_wanted" && (v.type as string) !== "uk_court" && (v.type as string) !== "malaysia_court" && v.type !== "court_record" && (v.type as string) !== "digital_address"))
                               ? "bg-amber-100/60 text-amber-700 border-amber-300/50"
                               : v.status === "Completed"
                               ? "bg-[#E6F8F3] text-[#00684A] border-[#A3EAD6]"
@@ -1165,7 +1230,9 @@ export default function OrderSummaryPage() {
                               : "bg-[#FFF4CC]/40 text-[#805b00] border-[#FFF4CC]"
                           }`}
                         >
-                          {((v.type === "court_record" && (v.courtRecordStatus === "admin_review" || v.courtRecordStatus === "needs_admin_retry")) || (!v.sendToCustomer && (v.type as string) !== "passport" && v.type !== "interpol" && (v.type as string) !== "rednotice_worldwide" && (v.type as string) !== "saflii_court" && v.type !== "court_record" && (v.type as string) !== "digital_address")) ? "In Progress" : v.status}
+                          {v.status === "Halted" || ((v.type as string) === "saps_wanted" && v.sapsWantedStatus === "verifying_with_attorney")
+                            ? "Halted"
+                            : ((v.type === "court_record" && (v.courtRecordStatus === "admin_review" || v.courtRecordStatus === "needs_admin_retry")) || (!v.sendToCustomer && (v.type as string) !== "passport" && v.type !== "interpol" && (v.type as string) !== "rednotice_worldwide" && (v.type as string) !== "saflii_court" && (v.type as string) !== "saps_wanted" && (v.type as string) !== "uk_court" && (v.type as string) !== "malaysia_court" && v.type !== "court_record" && (v.type as string) !== "digital_address")) ? "In Progress" : v.status}
                         </span>
                       </td>
                       <td className="py-3.5 px-2.5 text-right">
@@ -1203,11 +1270,31 @@ export default function OrderSummaryPage() {
                               )}
                             </div>
                           )
-                        ) : (v.type as string) === "court_record" || (v.type as string) === "interpol" || (v.type as string) === "rednotice_worldwide" || (v.type as string) === "saflii_court" || (v.type as string) === "passport" ? (
+                        ) : (v.type as string) === "court_record" || (v.type as string) === "interpol" || (v.type as string) === "rednotice_worldwide" || (v.type as string) === "saflii_court" || (v.type as string) === "saps_wanted" || (v.type as string) === "uk_court" || (v.type as string) === "malaysia_court" || (v.type as string) === "passport" ? (
                           (() => {
                             const isPassport = (v.type as string) === "passport";
-                            const isQuickCheck = isPassport || (v.type as string) === "interpol" || (v.type as string) === "rednotice_worldwide" || (v.type as string) === "saflii_court";
-                            const minHoldS = isPassport ? 5 : 8;
+                            const isSapsWanted = (v.type as string) === "saps_wanted";
+                            const isUkCourt = (v.type as string) === "uk_court";
+                            const isMalaysiaCourt = (v.type as string) === "malaysia_court";
+                            const isHalted = v.status === "Halted" || (isSapsWanted && v.sapsWantedStatus === "verifying_with_attorney");
+                            
+                            // If halted for attorney verification, display the attorney review status indicator
+                            if (isHalted) {
+                              return (
+                                <div className="flex flex-col items-end gap-1 min-w-[140px]">
+                                  <div className="flex items-center gap-1.5">
+                                    <div className="w-2 h-2 bg-amber-500 rounded-full animate-ping shrink-0"></div>
+                                    <span className="text-[11px] text-amber-700 font-bold">Verifying with attorney</span>
+                                  </div>
+                                  <span className="text-[9px] text-[#475569] font-medium text-right leading-tight">
+                                    Match flagged for review
+                                  </span>
+                                </div>
+                              );
+                            }
+
+                            const isQuickCheck = isPassport || (v.type as string) === "interpol" || (v.type as string) === "rednotice_worldwide" || (v.type as string) === "saflii_court" || isSapsWanted || isUkCourt || isMalaysiaCourt;
+                            const minHoldS = isPassport ? 5 : isSapsWanted || isUkCourt || isMalaysiaCourt ? 4 : 8;
                             const elapsedSeconds = v.createdAt ? Math.floor((tickNow - new Date(v.createdAt).getTime()) / 1000) : 999;
                             const isHolding = isQuickCheck && elapsedSeconds < minHoldS;
 
@@ -1219,7 +1306,13 @@ export default function OrderSummaryPage() {
                               return (
                                 <button
                                   onClick={() => window.open(
-                                    (v.type as string) === "rednotice_worldwide"
+                                    (v.type as string) === "malaysia_court"
+                                      ? `/client/malaysia-court-report?id=${v.id}`
+                                      : (v.type as string) === "uk_court"
+                                      ? `/client/uk-court-report?id=${v.id}`
+                                      : (v.type as string) === "saps_wanted"
+                                      ? `/client/saps-wanted-report?id=${v.id}`
+                                      : (v.type as string) === "rednotice_worldwide"
                                       ? `/client/rednotice-worldwide-report?id=${v.id}`
                                       : (v.type as string) === "saflii_court"
                                       ? `/client/saflii-court-report?id=${v.id}`
@@ -1732,7 +1825,7 @@ export default function OrderSummaryPage() {
                   >
                     Close
                   </button>
-                  {((displayVerification.status === "Completed" || displayVerification.status === "Verified" || displayVerification.status === "Needs Attention" || displayVerification.status === "Discrepancy") && ((displayVerification.type as string) === "court_record" || (displayVerification.type as string) === "interpol" || (displayVerification.type as string) === "rednotice_worldwide" || (displayVerification.type as string) === "saflii_court" || (displayVerification.type as string) === "passport" || displayVerification.sendToCustomer)) && (
+                  {((displayVerification.status === "Completed" || displayVerification.status === "Verified" || displayVerification.status === "Needs Attention" || displayVerification.status === "Discrepancy") && ((displayVerification.type as string) === "court_record" || (displayVerification.type as string) === "interpol" || (displayVerification.type as string) === "rednotice_worldwide" || (displayVerification.type as string) === "saflii_court" || (displayVerification.type as string) === "saps_wanted" || (displayVerification.type as string) === "uk_court" || (displayVerification.type as string) === "malaysia_court" || (displayVerification.type as string) === "passport" || displayVerification.sendToCustomer)) && (
                     <button
                       onClick={() => {
                         const reportPath = (displayVerification.type as string) === "court_record"
@@ -1743,6 +1836,12 @@ export default function OrderSummaryPage() {
                           ? `/client/rednotice-worldwide-report?id=${displayVerification.id}`
                           : (displayVerification.type as string) === "saflii_court"
                           ? `/client/saflii-court-report?id=${displayVerification.id}`
+                          : (displayVerification.type as string) === "saps_wanted"
+                          ? `/client/saps-wanted-report?id=${displayVerification.id}`
+                          : (displayVerification.type as string) === "uk_court"
+                          ? `/client/uk-court-report?id=${displayVerification.id}`
+                          : (displayVerification.type as string) === "malaysia_court"
+                          ? `/client/malaysia-court-report?id=${displayVerification.id}`
                           : (displayVerification.type as string) === "passport"
                           ? `/client/passport-report?id=${displayVerification.id}`
                           : (displayVerification.type as string) === "digital_address"

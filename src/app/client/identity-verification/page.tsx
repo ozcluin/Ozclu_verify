@@ -38,7 +38,7 @@ import { INDIAN_STATES } from "src/lib/courts-mapping";
 import { Country, State, City } from "country-state-city";
 import CandidateFillModal from "src/app/components/CandidateFillModal";
 
-type ServiceType = "identity" | "court_record" | "employment" | "education" | "interpol" | "passport" | "digital_address" | "rednotice_worldwide" | "saflii_court";
+type ServiceType = "identity" | "court_record" | "employment" | "education" | "interpol" | "passport" | "digital_address" | "rednotice_worldwide" | "saflii_court" | "saps_wanted" | "uk_court" | "malaysia_court";
 
 const formatSetupUrl = (url?: string) => {
   if (!url) return "";
@@ -499,6 +499,285 @@ function SafliiCourtSuccessModal({ sacCreatedId, sacCandidateName, onCreateAnoth
   );
 }
 
+function UkCourtSuccessModal({
+  ukcCreatedId,
+  ukcCandidateName,
+  onCreateAnother,
+  onGoToSummary,
+}: {
+  ukcCreatedId: string;
+  ukcCandidateName: string;
+  onCreateAnother: () => void;
+  onGoToSummary: () => void;
+}) {
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, []);
+
+  return (
+    <div className="fixed inset-0 bg-slate-400/10 backdrop-blur-md flex items-center justify-center px-3 sm:px-4 z-[99999] animate-fade-in overflow-y-auto">
+      <div className="bg-white border border-[#eaf0e4] rounded-2xl sm:rounded-3xl p-5 sm:p-8 max-w-lg w-full shadow-2xl relative animate-scale-up">
+        <div className="flex flex-col items-center text-center gap-3 sm:gap-4">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-indigo-50 border border-indigo-200 rounded-full flex items-center justify-center text-indigo-700 mb-1 sm:mb-2 animate-bounce-subtle">
+            <Scale className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-700" />
+          </div>
+          <h3 className="font-headline-md text-[#181d16] font-bold text-lg sm:text-xl">UK Court Search Initiated!</h3>
+          <p className="font-body-sm text-[#475569] leading-relaxed text-xs sm:text-sm">
+            Courts and Tribunals Judiciary search has been initiated for <strong className="text-[#181d16] font-bold">{ukcCandidateName || "the candidate"}</strong>.
+            The search is querying the official UK judgments database in the background.
+          </p>
+
+          <div className="w-full mt-1 sm:mt-2 p-3 sm:p-4 bg-[#f0f5ea]/25 border border-[#eaf0e4] rounded-xl sm:rounded-2xl text-left flex flex-col gap-2 shadow-2xs">
+            <div className="flex justify-between items-center text-[11px] sm:text-xs">
+              <span className="text-[#475569] font-semibold">Verification ID</span>
+              <span className="font-mono text-[#181d16] font-bold">{ukcCreatedId}</span>
+            </div>
+            <div className="flex justify-between items-center text-[11px] sm:text-xs">
+              <span className="text-[#475569] font-semibold">Status</span>
+              <span className="text-amber-600 font-bold flex items-center gap-1">
+                <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></div>
+                Processing
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5 text-[9px] sm:text-[10px] text-[#64748B]">
+            <Sparkles className="w-3 h-3 text-[#00450e] shrink-0" />
+            <span>You can review the official judgments report certificate immediately or track in Order Summary.</span>
+          </div>
+
+          <div className="flex flex-col gap-2.5 w-full mt-1">
+            <button
+              onClick={() => {
+                window.open(`/client/uk-court-report?id=${ukcCreatedId}`, "_blank");
+              }}
+              className="w-full py-3 bg-gradient-to-r from-indigo-900 to-slate-900 hover:from-indigo-950 hover:to-slate-950 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-md transition-all"
+            >
+              <span>View Official UK Court Report</span>
+              <ExternalLink className="w-4 h-4" />
+            </button>
+
+            <div className="grid grid-cols-2 gap-2 sm:gap-3 w-full">
+              <button
+                type="button"
+                onClick={onCreateAnother}
+                className="py-2.5 sm:py-3 border border-[#eaf0e4] rounded-xl font-semibold text-[11px] sm:text-xs text-[#334155] hover:bg-[#f6fbf0] transition-colors cursor-pointer bg-white"
+              >
+                Check Another
+              </button>
+              <button
+                type="button"
+                onClick={onGoToSummary}
+                className="py-2.5 sm:py-3 border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-xl transition-all cursor-pointer text-xs bg-white"
+              >
+                Go to Summary
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MalaysiaCourtSuccessModal({
+  mycCreatedId,
+  mycCandidateName,
+  onCreateAnother,
+  onGoToSummary,
+}: {
+  mycCreatedId: string;
+  mycCandidateName: string;
+  onCreateAnother: () => void;
+  onGoToSummary: () => void;
+}) {
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, []);
+
+  return (
+    <div className="fixed inset-0 bg-slate-400/10 backdrop-blur-md flex items-center justify-center px-3 sm:px-4 z-[99999] animate-fade-in overflow-y-auto">
+      <div className="bg-white border border-[#eaf0e4] rounded-2xl sm:rounded-3xl p-5 sm:p-8 max-w-lg w-full shadow-2xl relative animate-scale-up">
+        <div className="flex flex-col items-center text-center gap-3 sm:gap-4">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-emerald-50 border border-emerald-200 rounded-full flex items-center justify-center text-emerald-700 mb-1 sm:mb-2 animate-bounce-subtle">
+            <Scale className="w-6 h-6 sm:w-8 sm:h-8 text-emerald-700" />
+          </div>
+          <h3 className="font-headline-md text-[#181d16] font-bold text-lg sm:text-xl">Malaysia Court Search Initiated!</h3>
+          <p className="font-body-sm text-[#475569] leading-relaxed text-xs sm:text-sm">
+            Portal eJudgment search has been initiated for <strong className="text-[#181d16] font-bold">{mycCandidateName || "the candidate"}</strong>.
+            The search is querying the official Mahkamah Persekutuan Malaysia database in the background.
+          </p>
+
+          <div className="w-full mt-1 sm:mt-2 p-3 sm:p-4 bg-[#f0f5ea]/25 border border-[#eaf0e4] rounded-xl sm:rounded-2xl text-left flex flex-col gap-2 shadow-2xs">
+            <div className="flex justify-between items-center text-[11px] sm:text-xs">
+              <span className="text-[#475569] font-semibold">Verification ID</span>
+              <span className="font-mono text-[#181d16] font-bold">{mycCreatedId}</span>
+            </div>
+            <div className="flex justify-between items-center text-[11px] sm:text-xs">
+              <span className="text-[#475569] font-semibold">Status</span>
+              <span className="text-amber-600 font-bold flex items-center gap-1">
+                <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></div>
+                Processing
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5 text-[9px] sm:text-[10px] text-[#64748B]">
+            <Sparkles className="w-3 h-3 text-[#00450e] shrink-0" />
+            <span>You can review the official judgments report certificate immediately or track in Order Summary.</span>
+          </div>
+
+          <div className="flex flex-col gap-2.5 w-full mt-1">
+            <button
+              onClick={() => {
+                window.open(`/client/malaysia-court-report?id=${mycCreatedId}`, "_blank");
+              }}
+              className="w-full py-3 bg-gradient-to-r from-emerald-800 via-teal-800 to-slate-900 hover:from-emerald-900 hover:to-slate-950 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-md transition-all"
+            >
+              <span>View Official Malaysia Court Report</span>
+              <ExternalLink className="w-4 h-4" />
+            </button>
+
+            <div className="grid grid-cols-2 gap-2 sm:gap-3 w-full">
+              <button
+                type="button"
+                onClick={onCreateAnother}
+                className="py-2.5 sm:py-3 border border-[#eaf0e4] rounded-xl font-semibold text-[11px] sm:text-xs text-[#334155] hover:bg-[#f6fbf0] transition-colors cursor-pointer bg-white"
+              >
+                Check Another
+              </button>
+              <button
+                type="button"
+                onClick={onGoToSummary}
+                className="py-2.5 sm:py-3 border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-xl transition-all cursor-pointer text-xs bg-white"
+              >
+                Go to Summary
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SapsWantedSuccessModal({
+  sapsCreatedId,
+  candidateName,
+  isHalted,
+  hasRecords,
+  onCreateAnother,
+  onGoToSummary,
+}: {
+  sapsCreatedId: string;
+  candidateName: string;
+  isHalted: boolean;
+  hasRecords: boolean;
+  onCreateAnother: () => void;
+  onGoToSummary: () => void;
+}) {
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, []);
+
+  return (
+    <div className="fixed inset-0 bg-slate-400/10 backdrop-blur-md flex items-center justify-center px-4 z-[99999] animate-fade-in">
+      <div className="bg-white border border-[#eaf0e4] rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl relative animate-scale-up flex flex-col items-center text-center gap-4">
+        {isHalted ? (
+          <div className="w-16 h-16 bg-amber-50 border border-amber-200 rounded-full flex items-center justify-center text-amber-600 mb-1 animate-bounce-subtle">
+            <ShieldAlert className="w-8 h-8 text-amber-600" />
+          </div>
+        ) : (
+          <div className="w-16 h-16 bg-emerald-50 border border-emerald-200 rounded-full flex items-center justify-center text-emerald-600 mb-1 animate-bounce-subtle">
+            <ShieldCheck className="w-8 h-8 text-emerald-600" />
+          </div>
+        )}
+
+        <div>
+          <h3 className="font-bold text-slate-800 text-lg sm:text-xl">
+            {isHalted ? "Verification Flagged for Review" : "SAPS Wanted Check Completed!"}
+          </h3>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+            South African Police Service wanted check processed for{" "}
+            <strong className="text-slate-800 font-bold">{candidateName}</strong>.
+          </p>
+
+          <div
+            className={`mt-3 py-2.5 px-4 rounded-xl text-xs font-bold border leading-relaxed ${
+              isHalted
+                ? "bg-amber-50 text-amber-900 border-amber-200 text-left"
+                : "bg-emerald-50 text-emerald-700 border-emerald-200"
+            }`}
+          >
+            {isHalted ? (
+              <div className="flex flex-col gap-1">
+                <span className="font-extrabold text-amber-800 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+                  Halted — Verifying with attorney
+                </span>
+                <span className="font-normal text-[11px] text-amber-900/80 leading-normal">
+                  A similarity match was detected on the SAPS Wanted registry. In accordance with legal review policy, automatic release is halted while our attorney verifies the identification. Once resolved by admin, the finalized report will be released.
+                </span>
+              </div>
+            ) : (
+              "No record matches found in South African Police Service (SAPS) Wanted Persons database. Clean record verified."
+            )}
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2.5 w-full mt-1">
+          {!isHalted ? (
+            <button
+              onClick={() => {
+                window.open(`/client/saps-wanted-report?id=${sapsCreatedId}`, "_blank");
+              }}
+              className="w-full py-3 font-bold rounded-xl transition-all text-xs inline-flex items-center justify-center gap-1.5 bg-[#181d16] hover:bg-[#1E293B] text-white cursor-pointer shadow-xs"
+            >
+              <span>View Official SAPS Report</span>
+              <ExternalLink className="w-4 h-4" />
+            </button>
+          ) : (
+            <button
+              onClick={onGoToSummary}
+              className="w-full py-3 font-bold rounded-xl transition-all text-xs inline-flex items-center justify-center gap-1.5 bg-amber-600 hover:bg-amber-700 text-white cursor-pointer shadow-xs"
+            >
+              <span>Go to Order Summary (Track Status)</span>
+              <ExternalLink className="w-4 h-4" />
+            </button>
+          )}
+
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={onCreateAnother}
+              className="py-3 border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-xl transition-all cursor-pointer text-xs bg-white"
+            >
+              Check Another
+            </button>
+            <button
+              onClick={onGoToSummary}
+              className="py-3 border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-xl transition-all cursor-pointer text-xs bg-white"
+            >
+              Go to Summary
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function PassportSuccessModal({ passportCreatedId, candidateName, statusMessage, onCreateAnother, onGoToSummary }: {
   passportCreatedId: string;
   candidateName: string;
@@ -660,6 +939,24 @@ function FlowIllustration({ activeService }: { activeService: ServiceType }) {
     dbLabel = "Geo-Tagged DB";
     clientLabel = "Initiate Request";
     candidateLabel = "Photo & Location";
+  } else if (activeService === "saps_wanted") {
+    primaryColor = "#1e3a8a";
+    secondaryColor = "#2563eb";
+    dbLabel = "SAPS Police DB";
+    clientLabel = "Initiate Check";
+    candidateLabel = "SAPS Crime Registry";
+  } else if (activeService === "uk_court") {
+    primaryColor = "#312e81";
+    secondaryColor = "#4f46e5";
+    dbLabel = "Judiciary UK DB";
+    clientLabel = "Initiate Check";
+    candidateLabel = "UK Judgments DB";
+  } else if (activeService === "malaysia_court") {
+    primaryColor = "#065f46";
+    secondaryColor = "#059669";
+    dbLabel = "Portal eJudgment";
+    clientLabel = "Initiate Search";
+    candidateLabel = "MY Court Records";
   }
 
   return (
@@ -817,6 +1114,9 @@ function FlowDiagram({ title, activeService }: { title: string; activeService: S
   else if (activeService === "interpol") colorTheme = "linear-gradient(to right, #1d4ed8, #4f46e5)";
   else if (activeService === "passport") colorTheme = "linear-gradient(to right, #4338ca, #6366f1)";
   else if (activeService === "digital_address") colorTheme = "linear-gradient(to right, #0891b2, #06b6d4)";
+  else if (activeService === "saps_wanted") colorTheme = "linear-gradient(to right, #1e3a8a, #2563eb)";
+  else if (activeService === "uk_court") colorTheme = "linear-gradient(to right, #312e81, #4f46e5)";
+  else if (activeService === "malaysia_court") colorTheme = "linear-gradient(to right, #065f46, #059669)";
 
   return (
     <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-md w-full">
@@ -842,7 +1142,7 @@ function FlowDiagram({ title, activeService }: { title: string; activeService: S
 export default function IdentityVerification() {
   const router = useRouter();
   const { user, profile } = useAuth();
-  const { addVerification, addEmploymentVerification, addEducationVerification, addCourtRecordVerification, addInterpolVerification, addRednoticeWorldwideVerification, addSafliiCourtVerification, addPassportVerification, addDigitalAddressVerification, settings, removeRecentRequestingOrg, organisation } = usePortal();
+  const { addVerification, addEmploymentVerification, addEducationVerification, addCourtRecordVerification, addInterpolVerification, addRednoticeWorldwideVerification, addSafliiCourtVerification, addSapsWantedVerification, addUkCourtVerification, addMalaysiaCourtVerification, addPassportVerification, addDigitalAddressVerification, settings, removeRecentRequestingOrg, organisation } = usePortal();
 
   const [activeFillModal, setActiveFillModal] = useState<{
     isOpen: boolean;
@@ -890,6 +1190,59 @@ export default function IdentityVerification() {
   const [sacCreatedId, setSacCreatedId] = useState<string | null>(null);
   const [sacIdProofFile, setSacIdProofFile] = useState<string | null>(null);
   const [sacIdProofFileName, setSacIdProofFileName] = useState("");
+
+  // ─── SAPS Wanted Check States ───
+  const [sapsCandidateName, setSapsCandidateName] = useState("");
+  const [sapsCandidateForename, setSapsCandidateForename] = useState("");
+  const [sapsCandidateSurname, setSapsCandidateSurname] = useState("");
+  const [sapsCandidateDob, setSapsCandidateDob] = useState("");
+  const [sapsCandidateIdNumber, setSapsCandidateIdNumber] = useState("");
+  const [sapsProvinceCity, setSapsProvinceCity] = useState("");
+  const [sapsRequestingOrgName, setSapsRequestingOrgName] = useState("");
+  const [sapsShowOrgDropdown, setSapsShowOrgDropdown] = useState(false);
+  const [sapsSuccessMsg, setSapsSuccessMsg] = useState("");
+  const [sapsErrorMsg, setSapsErrorMsg] = useState("");
+  const [sapsSubmitting, setSapsSubmitting] = useState(false);
+  const [sapsCreatedId, setSapsCreatedId] = useState<string | null>(null);
+  const [sapsIsHalted, setSapsIsHalted] = useState(false);
+  const [sapsHasRecords, setSapsHasRecords] = useState(false);
+  const [sapsIdProofFile, setSapsIdProofFile] = useState<string | null>(null);
+  const [sapsIdProofFileName, setSapsIdProofFileName] = useState("");
+
+  // ─── UK Court Check States ───
+  const [ukcCandidateName, setUkcCandidateName] = useState("");
+  const [ukcCandidateDob, setUkcCandidateDob] = useState("");
+  const [ukcBirthCity, setUkcBirthCity] = useState("");
+  const [ukcJudgmentType, setUkcJudgmentType] = useState("");
+  const [ukcJurisdiction, setUkcJurisdiction] = useState("");
+  const [ukcRequestingOrgName, setUkcRequestingOrgName] = useState("");
+  const [ukcShowOrgDropdown, setUkcShowOrgDropdown] = useState(false);
+  const [ukcSuccessMsg, setUkcSuccessMsg] = useState("");
+  const [ukcErrorMsg, setUkcErrorMsg] = useState("");
+  const [ukcSubmitting, setUkcSubmitting] = useState(false);
+  const [ukcCreatedId, setUkcCreatedId] = useState<string | null>(null);
+  const [ukcIdProofFile, setUkcIdProofFile] = useState<string | null>(null);
+  const [ukcIdProofFileName, setUkcIdProofFileName] = useState("");
+
+  // ─── Malaysia Court Check States ───
+  const [mycCandidateName, setMycCandidateName] = useState("");
+  const [mycCandidateDob, setMycCandidateDob] = useState("");
+  const [mycCourtCategory, setMycCourtCategory] = useState("");
+  const [mycCourtLocation, setMycCourtLocation] = useState("");
+  const [mycCaseType, setMycCaseType] = useState("");
+  const [mycDateOfDecisionFrom, setMycDateOfDecisionFrom] = useState("");
+  const [mycDateOfDecisionTo, setMycDateOfDecisionTo] = useState("");
+  const [mycDateOfAPFrom, setMycDateOfAPFrom] = useState("");
+  const [mycDateOfAPTo, setMycDateOfAPTo] = useState("");
+  const [mycJudgeName, setMycJudgeName] = useState("");
+  const [mycRequestingOrgName, setMycRequestingOrgName] = useState("");
+  const [mycShowOrgDropdown, setMycShowOrgDropdown] = useState(false);
+  const [mycSuccessMsg, setMycSuccessMsg] = useState("");
+  const [mycErrorMsg, setMycErrorMsg] = useState("");
+  const [mycSubmitting, setMycSubmitting] = useState(false);
+  const [mycCreatedId, setMycCreatedId] = useState<string | null>(null);
+  const [mycIdProofFile, setMycIdProofFile] = useState<string | null>(null);
+  const [mycIdProofFileName, setMycIdProofFileName] = useState("");
 
   // ─── Interpol 59-Second Loading Screen States ───
   const [interpolLoadingProgress, setInterpolLoadingProgress] = useState(0);
@@ -943,13 +1296,13 @@ export default function IdentityVerification() {
   const searchParams = useSearchParams();
 
   React.useEffect(() => {
-    const serviceParam = searchParams.get("service");
-    if (serviceParam === "passport") {
-      setActiveService("passport");
-    } else if (serviceParam === "digital_address") {
-      setActiveService("digital_address");
-    } else if (serviceParam === "rednotice_worldwide") {
-      setActiveService("rednotice_worldwide");
+    const serviceParam = searchParams.get("service") || searchParams.get("serviceId") || searchParams.get("type");
+    if (serviceParam && [
+      "identity", "court_record", "employment", "education", "interpol",
+      "passport", "digital_address", "rednotice_worldwide", "saflii_court",
+      "saps_wanted", "uk_court", "malaysia_court"
+    ].includes(serviceParam)) {
+      setActiveService(serviceParam as ServiceType);
     }
   }, [searchParams]);
 
@@ -1084,6 +1437,14 @@ export default function IdentityVerification() {
 
   const sacFilteredOrgs = recentOrgs.filter(org =>
     org.toLowerCase().includes(sacRequestingOrgName.toLowerCase())
+  );
+
+  const ukcFilteredOrgs = recentOrgs.filter(org =>
+    org.toLowerCase().includes(ukcRequestingOrgName.toLowerCase())
+  );
+
+  const mycFilteredOrgs = recentOrgs.filter(org =>
+    org.toLowerCase().includes(mycRequestingOrgName.toLowerCase())
   );
 
   // ─── Identity Check States (existing) ───
@@ -1749,7 +2110,7 @@ export default function IdentityVerification() {
 
       if (res && res.success) {
         setSacSuccessMsg("SA court record search initiated! Search is running in the background.");
-        setSacCreatedId(res.id);
+    setSacCreatedId(res.id);
         setSacCandidateName("");
         setSacCandidateDob("");
         setSacBirthCity("");
@@ -1776,6 +2137,259 @@ export default function IdentityVerification() {
     setSacCreatedId(null);
     setSacIdProofFile(null);
     setSacIdProofFileName("");
+  };
+
+  // ─── SAPS Wanted Check Handlers ───
+  const handleSapsWantedSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSapsErrorMsg("");
+    setSapsSuccessMsg("");
+
+    const isSettingsIncomplete = !settings ||
+      !settings.contactFirstName?.trim() ||
+      !settings.contactLastName?.trim() ||
+      !settings.address?.trim() ||
+      !settings.city?.trim() ||
+      !settings.postalCode?.trim();
+
+    if (isSettingsIncomplete) {
+      setSapsErrorMsg("Please complete your profile settings before creating requests.");
+      return;
+    }
+
+    const resolvedName = sapsCandidateName.trim() || `${sapsCandidateForename.trim()} ${sapsCandidateSurname.trim()}`.trim();
+    if (!resolvedName) {
+      setSapsErrorMsg("Candidate Name (or Forename and Surname) is required.");
+      return;
+    }
+    if (!sapsRequestingOrgName.trim()) {
+      setSapsErrorMsg("Requesting ORG Name is required.");
+      return;
+    }
+
+    setSapsSubmitting(true);
+    try {
+      const effectiveOrgName = isAdmin ? (orgName || profile?.org_name || "Ozclu") : (profile?.org_name || orgName);
+      const res = await addSapsWantedVerification({
+        candidateName: resolvedName,
+        candidateForename: sapsCandidateForename.trim(),
+        candidateSurname: sapsCandidateSurname.trim(),
+        candidateDob: sapsCandidateDob.trim(),
+        candidateIdNumber: sapsCandidateIdNumber.trim(),
+        provinceCity: sapsProvinceCity.trim(),
+        orgName: effectiveOrgName,
+        requestingOrgName: sapsRequestingOrgName.trim(),
+        idProofFile: sapsIdProofFile,
+        idProofFileName: sapsIdProofFileName,
+      });
+
+      if (res && res.success) {
+        setSapsCreatedId(res.id);
+        setSapsIsHalted(res.status === "Halted");
+        setSapsHasRecords(!!res.sapsWantedHasRecords);
+        setSapsSuccessMsg(
+          res.status === "Halted"
+            ? "Potential match found — verification halted pending attorney review."
+            : "SAPS Wanted check completed successfully! Clean record verified."
+        );
+        setSapsCandidateName("");
+        setSapsCandidateForename("");
+        setSapsCandidateSurname("");
+        setSapsCandidateDob("");
+        setSapsCandidateIdNumber("");
+        setSapsProvinceCity("");
+        setSapsRequestingOrgName("");
+        setSapsIdProofFile(null);
+        setSapsIdProofFileName("");
+      } else {
+        setSapsErrorMsg(res?.error || "Failed to submit SAPS Wanted check");
+      }
+    } catch (err: any) {
+      setSapsErrorMsg(err?.message || "Failed to submit SAPS Wanted check");
+    } finally {
+      setSapsSubmitting(false);
+    }
+  };
+
+  const handleSapsWantedCancel = () => {
+    setSapsCandidateName("");
+    setSapsCandidateForename("");
+    setSapsCandidateSurname("");
+    setSapsCandidateDob("");
+    setSapsCandidateIdNumber("");
+    setSapsProvinceCity("");
+    setSapsRequestingOrgName("");
+    setSapsIdProofFile(null);
+    setSapsIdProofFileName("");
+    setSapsErrorMsg("");
+    setSapsSuccessMsg("");
+  };
+
+  // ─── UK Court Check Handlers ───
+  const handleUkCourtSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setUkcErrorMsg("");
+    setUkcSuccessMsg("");
+
+    const isSettingsIncomplete = !settings ||
+      !settings.contactFirstName?.trim() ||
+      !settings.contactLastName?.trim() ||
+      !settings.address?.trim() ||
+      !settings.city?.trim() ||
+      !settings.postalCode?.trim();
+
+    if (isSettingsIncomplete) {
+      setUkcErrorMsg("Please complete your profile settings before creating requests.");
+      return;
+    }
+
+    if (!ukcCandidateName.trim()) {
+      setUkcErrorMsg("Candidate Full Name is required.");
+      return;
+    }
+    if (!ukcRequestingOrgName.trim()) {
+      setUkcErrorMsg("Requesting ORG Name is required.");
+      return;
+    }
+
+    setUkcSubmitting(true);
+    try {
+      const effectiveOrgName = isAdmin ? (orgName || profile?.org_name || "Ozclu") : (profile?.org_name || orgName);
+      const res = await addUkCourtVerification({
+        candidateName: ukcCandidateName.trim(),
+        candidateDob: ukcCandidateDob.trim(),
+        birthCity: ukcBirthCity.trim(),
+        judgmentType: ukcJudgmentType.trim(),
+        jurisdiction: ukcJurisdiction.trim(),
+        orgName: effectiveOrgName,
+        requestingOrgName: ukcRequestingOrgName.trim(),
+        idProofFile: ukcIdProofFile,
+        idProofFileName: ukcIdProofFileName,
+      });
+
+      if (res && res.success) {
+        setUkcSuccessMsg("UK Court check initiated! Searching Courts and Tribunals Judiciary database...");
+        setUkcCreatedId(res.id);
+        setUkcCandidateName("");
+        setUkcCandidateDob("");
+        setUkcBirthCity("");
+        setUkcJudgmentType("");
+        setUkcJurisdiction("");
+        setUkcRequestingOrgName("");
+        setUkcIdProofFile(null);
+        setUkcIdProofFileName("");
+      } else {
+        setUkcErrorMsg(res?.error || "Failed to submit UK Court check");
+      }
+    } catch (err: any) {
+      setUkcErrorMsg(err?.message || "Failed to submit UK Court check");
+    } finally {
+      setUkcSubmitting(false);
+    }
+  };
+
+  const handleUkCourtCancel = () => {
+    setUkcCandidateName("");
+    setUkcCandidateDob("");
+    setUkcBirthCity("");
+    setUkcJudgmentType("");
+    setUkcJurisdiction("");
+    setUkcRequestingOrgName("");
+    setUkcIdProofFile(null);
+    setUkcIdProofFileName("");
+    setUkcErrorMsg("");
+    setUkcSuccessMsg("");
+  };
+
+  // ─── Malaysia Court Check Handlers ───
+  const handleMalaysiaCourtSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setMycErrorMsg("");
+    setMycSuccessMsg("");
+
+    const isSettingsIncomplete = !settings ||
+      !settings.contactFirstName?.trim() ||
+      !settings.contactLastName?.trim() ||
+      !settings.address?.trim() ||
+      !settings.city?.trim() ||
+      !settings.postalCode?.trim();
+
+    if (isSettingsIncomplete) {
+      setMycErrorMsg("Please complete your profile settings before creating requests.");
+      return;
+    }
+
+    if (!mycCandidateName.trim()) {
+      setMycErrorMsg("General Search query (Candidate Name / Parties / Case No) is required.");
+      return;
+    }
+    if (!mycRequestingOrgName.trim()) {
+      setMycErrorMsg("Requesting ORG Name is required.");
+      return;
+    }
+
+    setMycSubmitting(true);
+    try {
+      const effectiveOrgName = isAdmin ? (orgName || profile?.org_name || "Ozclu") : (profile?.org_name || orgName);
+      const res = await addMalaysiaCourtVerification({
+        candidateName: mycCandidateName.trim(),
+        candidateDob: mycCandidateDob.trim(),
+        courtCategory: mycCourtCategory.trim(),
+        courtLocation: mycCourtLocation.trim(),
+        caseType: mycCaseType.trim(),
+        dateOfDecisionFrom: mycDateOfDecisionFrom.trim(),
+        dateOfDecisionTo: mycDateOfDecisionTo.trim(),
+        dateOfAPFrom: mycDateOfAPFrom.trim(),
+        dateOfAPTo: mycDateOfAPTo.trim(),
+        judgeName: mycJudgeName.trim(),
+        orgName: effectiveOrgName,
+        requestingOrgName: mycRequestingOrgName.trim(),
+        idProofFile: mycIdProofFile,
+        idProofFileName: mycIdProofFileName,
+      });
+
+      if (res && res.success) {
+        setMycSuccessMsg("Malaysia Court check initiated! Querying Portal eJudgment Kehakiman...");
+        setMycCreatedId(res.id);
+        setMycCandidateName("");
+        setMycCandidateDob("");
+        setMycCourtCategory("");
+        setMycCourtLocation("");
+        setMycCaseType("");
+        setMycDateOfDecisionFrom("");
+        setMycDateOfDecisionTo("");
+        setMycDateOfAPFrom("");
+        setMycDateOfAPTo("");
+        setMycJudgeName("");
+        setMycRequestingOrgName("");
+        setMycIdProofFile(null);
+        setMycIdProofFileName("");
+      } else {
+        setMycErrorMsg(res?.error || "Failed to submit Malaysia Court check");
+      }
+    } catch (err: any) {
+      setMycErrorMsg(err?.message || "Failed to submit Malaysia Court check");
+    } finally {
+      setMycSubmitting(false);
+    }
+  };
+
+  const handleMalaysiaCourtCancel = () => {
+    setMycCandidateName("");
+    setMycCandidateDob("");
+    setMycCourtCategory("");
+    setMycCourtLocation("");
+    setMycCaseType("");
+    setMycDateOfDecisionFrom("");
+    setMycDateOfDecisionTo("");
+    setMycDateOfAPFrom("");
+    setMycDateOfAPTo("");
+    setMycJudgeName("");
+    setMycRequestingOrgName("");
+    setMycIdProofFile(null);
+    setMycIdProofFileName("");
+    setMycErrorMsg("");
+    setMycSuccessMsg("");
   };
 
   // ─── Passport Check Handlers ───
@@ -2154,6 +2768,79 @@ export default function IdentityVerification() {
               SA Court Check
             </div>
             <div className="text-[11px] text-[#64748B] mt-0.5">Southern Africa Courts</div>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveService("saps_wanted")}
+          className={`flex-1 flex items-center gap-3 p-4 rounded-2xl border-2 transition-all duration-300 cursor-pointer group ${
+            activeService === "saps_wanted"
+              ? "border-[#181d16] bg-white shadow-md"
+              : "border-[#eaf0e4] bg-[#f6fbf0]/50 hover:border-[#d0dbc6] hover:bg-white/80"
+          }`}
+        >
+          <div className={`p-2.5 rounded-xl transition-all ${
+            activeService === "saps_wanted"
+              ? "bg-[#181d16] text-white"
+              : "bg-blue-50 text-blue-800 group-hover:bg-blue-100"
+          }`}>
+            <ShieldAlert className="w-5 h-5" />
+          </div>
+          <div className="text-left">
+            <div className={`font-semibold text-sm ${activeService === "saps_wanted" ? "text-[#181d16]" : "text-[#475569]"}`}>
+              SAPS Wanted
+            </div>
+            <div className="text-[11px] text-[#64748B] mt-0.5">South Africa Police Registry</div>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveService("uk_court")}
+          className={`flex-1 flex items-center gap-3 p-4 rounded-2xl border-2 transition-all duration-300 cursor-pointer group ${
+            activeService === "uk_court"
+              ? "border-[#181d16] bg-white shadow-md"
+              : "border-[#eaf0e4] bg-[#f6fbf0]/50 hover:border-[#d0dbc6] hover:bg-white/80"
+          }`}
+        >
+          <div className={`p-2.5 rounded-xl transition-all ${
+            activeService === "uk_court"
+              ? "bg-[#181d16] text-white"
+              : "bg-indigo-50 text-indigo-800 group-hover:bg-indigo-100"
+          }`}>
+            <Scale className="w-5 h-5 text-indigo-600" />
+          </div>
+          <div className="text-left">
+            <div className={`font-semibold text-sm ${activeService === "uk_court" ? "text-[#181d16]" : "text-[#475569]"}`}>
+              UK Court Check
+            </div>
+            <div className="text-[11px] text-[#64748B] mt-0.5">Judiciary of England & Wales</div>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          id="tab-malaysia-court"
+          onClick={() => setActiveService("malaysia_court")}
+          className={`flex-1 flex items-center gap-3 p-4 rounded-2xl border-2 transition-all duration-300 cursor-pointer group ${
+            activeService === "malaysia_court"
+              ? "border-[#181d16] bg-white shadow-md"
+              : "border-[#eaf0e4] bg-[#f6fbf0]/50 hover:border-[#d0dbc6] hover:bg-white/80"
+          }`}
+        >
+          <div className={`p-2.5 rounded-xl transition-all ${
+            activeService === "malaysia_court"
+              ? "bg-[#181d16] text-white"
+              : "bg-emerald-50 text-emerald-800 group-hover:bg-emerald-100"
+          }`}>
+            <Scale className="w-5 h-5 text-emerald-600" />
+          </div>
+          <div className="text-left">
+            <div className={`font-semibold text-sm ${activeService === "malaysia_court" ? "text-[#181d16]" : "text-[#475569]"}`}>
+              Malaysia Court Check
+            </div>
+            <div className="text-[11px] text-[#64748B] mt-0.5">Portal eJudgment Kehakiman</div>
           </div>
         </button>
 
@@ -4779,6 +5466,969 @@ export default function IdentityVerification() {
               sacCandidateName={sacCandidateName || "Candidate"}
               onCreateAnother={() => { setSacCreatedId(null); setSacSuccessMsg(""); }}
               onGoToSummary={() => { setSacCreatedId(null); router.push("/client/summary"); }}
+            />,
+            document.body
+          )}
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════════ */}
+      {/* SOUTH AFRICAN POLICE SERVICE (SAPS) WANTED CHECK FORM */}
+      {/* ═══════════════════════════════════════════════════ */}
+      {activeService === "saps_wanted" && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start max-w-6xl w-full">
+          <div className="lg:col-span-6 flex flex-col gap-6 w-full">
+            {/* Form Alerts */}
+            {sapsSuccessMsg && !sapsCreatedId && (
+              <div className="bg-[#E6F8F3] text-[#00684A] border border-[#A3EAD6] rounded-xl p-4 font-body-sm flex items-center gap-3 max-w-2xl animate-fade-in shadow-2xs">
+                <CheckCircle className="w-5 h-5 text-[#00a877] shrink-0" />
+                <span className="font-semibold">{sapsSuccessMsg}</span>
+              </div>
+            )}
+
+            {sapsErrorMsg && (
+              <div className="bg-red-50 text-red-800 border border-red-200 rounded-xl p-4 font-body-sm flex items-center gap-3 max-w-2xl animate-fade-in shadow-2xs">
+                <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
+                <span className="font-semibold">{sapsErrorMsg}</span>
+              </div>
+            )}
+
+            {/* SAPS Wanted Check Form Card */}
+            <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-lg relative overflow-hidden transition-all duration-300 hover:shadow-xl w-full">
+              {/* Top gradient line */}
+              <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-blue-900 via-indigo-700 to-sky-600"></div>
+
+              {/* Decorative background shapes */}
+              <div className="absolute -right-12 -bottom-12 w-32 h-32 bg-blue-50/30 rounded-full blur-2xl pointer-events-none"></div>
+              <div className="absolute -left-12 -top-12 w-32 h-32 bg-indigo-500/5 rounded-full blur-2xl pointer-events-none"></div>
+
+              <form onSubmit={handleSapsWantedSubmit} className="flex flex-col gap-6 mt-2 relative z-10">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2.5 bg-gradient-to-br from-blue-900 to-indigo-950 rounded-xl shadow-md text-white">
+                    <ShieldAlert className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-slate-800 text-lg leading-tight">SAPS Wanted Persons Check</h3>
+                    <p className="text-xs text-slate-500 font-medium mt-0.5">
+                      Verify candidates against the South African Police Service Wanted Registry
+                    </p>
+                  </div>
+                </div>
+
+                {/* Candidate Full Name / Forename & Surname */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
+                      <span>First / Given Names</span>
+                      <span className="text-rose-500 font-bold">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={sapsCandidateForename}
+                      onChange={(e) => {
+                        setSapsCandidateForename(e.target.value);
+                        setSapsCandidateName(`${e.target.value} ${sapsCandidateSurname}`.trim());
+                      }}
+                      placeholder="e.g. Clarise"
+                      disabled={sapsSubmitting}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all outline-hidden disabled:opacity-60"
+                      required
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
+                      <span>Surname / Last Name</span>
+                      <span className="text-rose-500 font-bold">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={sapsCandidateSurname}
+                      onChange={(e) => {
+                        setSapsCandidateSurname(e.target.value);
+                        setSapsCandidateName(`${sapsCandidateForename} ${e.target.value}`.trim());
+                      }}
+                      placeholder="e.g. Klue"
+                      disabled={sapsSubmitting}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all outline-hidden disabled:opacity-60"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Candidate Full Name (Composite Preview) */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center justify-between">
+                    <span>Full Legal Name</span>
+                    <span className="text-[9px] text-slate-400 font-normal">Auto-compiled</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={sapsCandidateName}
+                    onChange={(e) => setSapsCandidateName(e.target.value)}
+                    placeholder="Candidate full legal name"
+                    disabled={sapsSubmitting}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all outline-hidden disabled:opacity-60"
+                  />
+                </div>
+
+                {/* Date of Birth & SA ID Number */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
+                      <span>Date of Birth</span>
+                      <span className="text-slate-400 font-bold">(Optional)</span>
+                    </label>
+                    <input
+                      type="date"
+                      value={sapsCandidateDob}
+                      onChange={(e) => setSapsCandidateDob(e.target.value)}
+                      disabled={sapsSubmitting}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all outline-hidden disabled:opacity-60"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
+                      <span>SA ID / Passport No.</span>
+                      <span className="text-slate-400 font-bold">(Optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={sapsCandidateIdNumber}
+                      onChange={(e) => setSapsCandidateIdNumber(e.target.value)}
+                      placeholder="e.g. 9508125023087"
+                      disabled={sapsSubmitting}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all outline-hidden disabled:opacity-60"
+                    />
+                  </div>
+                </div>
+
+                {/* Province / Region */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
+                    <span>Target Police Station / Province</span>
+                    <span className="text-slate-400 font-bold">(Optional)</span>
+                  </label>
+                  <select
+                    value={sapsProvinceCity}
+                    onChange={(e) => setSapsProvinceCity(e.target.value)}
+                    disabled={sapsSubmitting}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all outline-hidden disabled:opacity-60"
+                  >
+                    <option value="">All Provinces (National Search)</option>
+                    <option value="Western Cape">Western Cape (Cape Town, Milnerton, etc.)</option>
+                    <option value="Gauteng">Gauteng (Johannesburg, Pretoria, etc.)</option>
+                    <option value="KwaZulu-Natal">KwaZulu-Natal (Durban, Pietermaritzburg)</option>
+                    <option value="Eastern Cape">Eastern Cape (Gqeberha, East London)</option>
+                    <option value="Free State">Free State (Bloemfontein, Welkom)</option>
+                    <option value="Limpopo">Limpopo (Polokwane)</option>
+                    <option value="Mpumalanga">Mpumalanga (Mbombela, Nelspruit)</option>
+                    <option value="North West">North West (Rustenburg, Mahikeng)</option>
+                    <option value="Northern Cape">Northern Cape (Kimberley)</option>
+                  </select>
+                </div>
+
+                {/* Requesting Organization Name */}
+                <div className="flex flex-col gap-1.5 relative">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
+                    <span>Requesting Organization Name</span>
+                    <span className="text-rose-500 font-bold">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={sapsRequestingOrgName}
+                      onChange={(e) => {
+                        setSapsRequestingOrgName(e.target.value);
+                        setSapsShowOrgDropdown(true);
+                      }}
+                      onFocus={() => setSapsShowOrgDropdown(true)}
+                      onBlur={() => setTimeout(() => setSapsShowOrgDropdown(false), 200)}
+                      placeholder="e.g. Acme Corp SA / Standard Bank"
+                      disabled={sapsSubmitting}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all outline-hidden disabled:opacity-60"
+                      required
+                    />
+                    {settings?.recentRequestingOrgs && settings.recentRequestingOrgs.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setSapsShowOrgDropdown(!sapsShowOrgDropdown)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      >
+                        <ChevronDown className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+
+                  {sapsShowOrgDropdown && settings?.recentRequestingOrgs && settings.recentRequestingOrgs.length > 0 && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-50 overflow-hidden max-h-48 overflow-y-auto">
+                      {settings.recentRequestingOrgs.map((org: string, idx: number) => (
+                        <div
+                          key={idx}
+                          onMouseDown={() => {
+                            setSapsRequestingOrgName(org);
+                            setSapsShowOrgDropdown(false);
+                          }}
+                          className="px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 cursor-pointer font-medium flex items-center justify-between border-b border-slate-100 last:border-0"
+                        >
+                          <span>{org}</span>
+                          <span className="text-[10px] text-slate-400">Recent</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* ID Proof / Document Upload (Optional) */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center justify-between">
+                    <span>Identity Document / Verification Slip</span>
+                    <span className="text-slate-400 font-bold">(Optional)</span>
+                  </label>
+                  <div className="border border-dashed border-slate-300 rounded-xl p-4 text-center bg-slate-50 hover:bg-white transition-all">
+                    <input
+                      type="file"
+                      id="sapsIdProofInput"
+                      className="hidden"
+                      accept=".pdf,.png,.jpg,.jpeg"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setSapsIdProofFileName(file.name);
+                          const reader = new FileReader();
+                          reader.onload = (event) => {
+                            setSapsIdProofFile(event.target?.result as string);
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                    <label htmlFor="sapsIdProofInput" className="cursor-pointer flex flex-col items-center gap-1.5">
+                      <UploadCloud className="w-5 h-5 text-blue-600" />
+                      <span className="text-xs font-bold text-slate-700">
+                        {sapsIdProofFileName || "Upload ID Document / Passport (PDF or Image)"}
+                      </span>
+                      <span className="text-[10px] text-slate-400">Max size: 5MB</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="pt-2 border-t border-slate-100 flex flex-col gap-3">
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={handleSapsWantedCancel}
+                      disabled={sapsSubmitting}
+                      className="flex-1 py-3 border border-slate-200 text-slate-600 rounded-xl font-bold text-xs hover:bg-slate-50 transition-all cursor-pointer"
+                    >
+                      Clear
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={sapsSubmitting}
+                      className="flex-2 py-3 bg-gradient-to-r from-blue-900 to-indigo-900 hover:from-blue-950 hover:to-indigo-950 text-white rounded-xl font-bold text-xs shadow-md hover:shadow-lg transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-60"
+                    >
+                      {sapsSubmitting ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Searching SAPS Registry...</span>
+                        </>
+                      ) : (
+                        <>
+                          <ShieldCheck className="w-4 h-4" />
+                          <span>Run SAPS Wanted Check</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <div className="lg:col-span-6 w-full lg:sticky lg:top-24">
+            <FlowDiagram 
+              title="South African Police Wanted Check Flow" 
+              activeService="saps_wanted" 
+            />
+          </div>
+
+          {/* Success Modal for SAPS Wanted Check */}
+          {sapsCreatedId && typeof document !== "undefined" && createPortal(
+            <SapsWantedSuccessModal
+              sapsCreatedId={sapsCreatedId}
+              candidateName={sapsCandidateName || `${sapsCandidateForename} ${sapsCandidateSurname}`.trim() || "Candidate"}
+              isHalted={sapsIsHalted}
+              hasRecords={sapsHasRecords}
+              onCreateAnother={() => { setSapsCreatedId(null); setSapsSuccessMsg(""); setSapsIsHalted(false); }}
+              onGoToSummary={() => { setSapsCreatedId(null); router.push("/client/summary"); }}
+            />,
+            document.body
+          )}
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════════ */}
+      {/* UK COURT CHECK FORM */}
+      {/* ═══════════════════════════════════════════════════ */}
+      {activeService === "uk_court" && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start max-w-6xl w-full">
+          <div className="lg:col-span-6 flex flex-col gap-6 w-full">
+            {/* Form Alerts */}
+            {ukcSuccessMsg && !ukcCreatedId && (
+              <div className="bg-[#E6F8F3] text-[#00684A] border border-[#A3EAD6] rounded-xl p-4 font-body-sm flex items-center gap-3 max-w-2xl animate-fade-in shadow-2xs">
+                <CheckCircle className="w-5 h-5 text-[#00a877] shrink-0" />
+                <span className="font-semibold">{ukcSuccessMsg}</span>
+              </div>
+            )}
+
+            {ukcErrorMsg && (
+              <div className="bg-red-50 text-red-800 border border-red-200 rounded-xl p-4 font-body-sm flex items-center gap-3 max-w-2xl animate-fade-in shadow-2xs">
+                <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
+                <span className="font-semibold">{ukcErrorMsg}</span>
+              </div>
+            )}
+
+            {/* UK Court Check Form Card */}
+            <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-lg relative overflow-hidden transition-all duration-300 hover:shadow-xl w-full">
+              {/* Top gradient line */}
+              <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-indigo-950 via-indigo-800 to-indigo-600"></div>
+
+              {/* Decorative background shapes */}
+              <div className="absolute -right-12 -bottom-12 w-32 h-32 bg-indigo-50/30 rounded-full blur-2xl pointer-events-none"></div>
+              <div className="absolute -left-12 -top-12 w-32 h-32 bg-indigo-500/5 rounded-full blur-2xl pointer-events-none"></div>
+
+              <form onSubmit={handleUkCourtSubmit} className="flex flex-col gap-6 mt-2 relative z-10">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2.5 bg-gradient-to-br from-indigo-900 to-slate-900 rounded-xl shadow-md text-white">
+                    <Scale className="w-5 h-5 text-indigo-200" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-slate-800 text-lg leading-tight">UK Court Check</h3>
+                    <p className="text-xs text-slate-500 font-medium mt-0.5">
+                      Courts and Tribunals Judiciary of England & Wales (Judgments, Orders & Sentencing Remarks)
+                    </p>
+                  </div>
+                </div>
+
+                {/* Candidate Full Name */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
+                    <span>Candidate Full Name / Keyword</span>
+                    <span className="text-rose-500 font-bold">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={ukcCandidateName}
+                      onChange={(e) => setUkcCandidateName(e.target.value)}
+                      placeholder="e.g. Clive or Full Candidate Name"
+                      disabled={ukcSubmitting}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all outline-hidden disabled:opacity-60"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Date of Birth & Place / Country */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
+                      <span>Date of Birth</span>
+                      <span className="text-slate-400 font-bold">(Optional)</span>
+                    </label>
+                    <input
+                      type="date"
+                      value={ukcCandidateDob}
+                      onChange={(e) => setUkcCandidateDob(e.target.value)}
+                      disabled={ukcSubmitting}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all outline-hidden disabled:opacity-60"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
+                      <span>Place / Country of Birth</span>
+                      <span className="text-slate-400 font-bold">(Optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={ukcBirthCity}
+                      onChange={(e) => setUkcBirthCity(e.target.value)}
+                      placeholder="e.g. London, Manchester, UK"
+                      disabled={ukcSubmitting}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all outline-hidden disabled:opacity-60"
+                    />
+                  </div>
+                </div>
+
+                {/* Judgment Type & Subject / Jurisdiction Filters */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
+                      <span>Judgment Type</span>
+                      <span className="text-slate-400 font-bold">(Optional)</span>
+                    </label>
+                    <select
+                      value={ukcJudgmentType}
+                      onChange={(e) => setUkcJudgmentType(e.target.value)}
+                      disabled={ukcSubmitting}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all outline-hidden disabled:opacity-60 cursor-pointer"
+                    >
+                      <option value="">All Judgment Types</option>
+                      <option value="judgment">Judgment</option>
+                      <option value="sentencing-remarks">Sentencing Remarks</option>
+                      <option value="committal-for-contempt-of-court">Committal for Contempt of Court</option>
+                      <option value="order">Order</option>
+                      <option value="anonymity-order">Anonymity Order</option>
+                      <option value="privacy-order">Privacy Order</option>
+                      <option value="tribunal-decision">Tribunal Decision</option>
+                      <option value="transmission-direction-order">Transmission Direction Order</option>
+                      <option value="transparency-order">Transparency Order</option>
+                    </select>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
+                      <span>Subject / Jurisdiction</span>
+                      <span className="text-slate-400 font-bold">(Optional)</span>
+                    </label>
+                    <select
+                      value={ukcJurisdiction}
+                      onChange={(e) => setUkcJurisdiction(e.target.value)}
+                      disabled={ukcSubmitting}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all outline-hidden disabled:opacity-60 cursor-pointer"
+                    >
+                      <option value="">All UK Jurisdictions / Courts</option>
+                      <option value="high-court">High Court</option>
+                      <option value="court-of-appeal-civil-division">Court of Appeal Civil Division</option>
+                      <option value="court-of-appeal-criminal-division">Court of Appeal Criminal Division</option>
+                      <option value="crown-court">Crown Court</option>
+                      <option value="kings-bench-division">King's Bench Division</option>
+                      <option value="chancery-division">Chancery Division</option>
+                      <option value="administrative-court">Administrative Court</option>
+                      <option value="commercial-court">Commercial Court</option>
+                      <option value="the-business-and-property-courts">Business and Property Courts</option>
+                      <option value="central-criminal-court-old-bailey">Central Criminal Court (Old Bailey)</option>
+                      <option value="family-court">Family Court</option>
+                      <option value="magistrates-court">Magistrates' Court</option>
+                      <option value="employment-appeal-tribunal">Employment Appeal Tribunal</option>
+                      <option value="employment-tribunal">Employment Tribunal</option>
+                      <option value="tribunals">Tribunals</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Requesting Organization Name */}
+                <div className="flex flex-col gap-1.5 relative">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
+                    <span>Requesting Organization Name</span>
+                    <span className="text-rose-500 font-bold">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={ukcRequestingOrgName}
+                      onChange={(e) => {
+                        setUkcRequestingOrgName(e.target.value);
+                        setUkcShowOrgDropdown(true);
+                      }}
+                      onFocus={() => setUkcShowOrgDropdown(true)}
+                      onBlur={() => setTimeout(() => setUkcShowOrgDropdown(false), 200)}
+                      placeholder="e.g. Barclays UK / London Tech Labs"
+                      disabled={ukcSubmitting}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all outline-hidden disabled:opacity-60"
+                      required
+                    />
+                    {settings?.recentRequestingOrgs && settings.recentRequestingOrgs.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setUkcShowOrgDropdown(!ukcShowOrgDropdown)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      >
+                        <ChevronDown className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+
+                  {ukcShowOrgDropdown && ukcFilteredOrgs.length > 0 && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-50 overflow-hidden max-h-48 overflow-y-auto">
+                      {ukcFilteredOrgs.map((org: string, idx: number) => (
+                        <div
+                          key={idx}
+                          onMouseDown={() => {
+                            setUkcRequestingOrgName(org);
+                            setUkcShowOrgDropdown(false);
+                          }}
+                          className="px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 cursor-pointer font-medium flex items-center justify-between border-b border-slate-100 last:border-0"
+                        >
+                          <span>{org}</span>
+                          <span className="text-[10px] text-slate-400">Recent</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* ID Proof / Verification Document Upload (Optional) */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center justify-between">
+                    <span>Candidate Identity Document / Slip</span>
+                    <span className="text-slate-400 font-bold">(Optional)</span>
+                  </label>
+                  <div className="border border-dashed border-slate-300 rounded-xl p-4 text-center bg-slate-50 hover:bg-white transition-all">
+                    <input
+                      type="file"
+                      id="ukcIdProofInput"
+                      className="hidden"
+                      accept=".pdf,.png,.jpg,.jpeg"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setUkcIdProofFileName(file.name);
+                          const reader = new FileReader();
+                          reader.onload = (event) => {
+                            setUkcIdProofFile(event.target?.result as string);
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                    <label htmlFor="ukcIdProofInput" className="cursor-pointer flex flex-col items-center gap-1.5">
+                      <UploadCloud className="w-5 h-5 text-indigo-600" />
+                      <span className="text-xs font-bold text-slate-700">
+                        {ukcIdProofFileName || "Upload Candidate ID / Passport Slip (PDF or Image)"}
+                      </span>
+                      <span className="text-[10px] text-slate-400">Max size: 5MB</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="pt-2 border-t border-slate-100 flex flex-col gap-3">
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={handleUkCourtCancel}
+                      disabled={ukcSubmitting}
+                      className="flex-1 py-3 border border-slate-200 text-slate-600 rounded-xl font-bold text-xs hover:bg-slate-50 transition-all cursor-pointer"
+                    >
+                      Clear
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={ukcSubmitting}
+                      className="flex-2 py-3 bg-gradient-to-r from-indigo-950 via-indigo-900 to-slate-900 hover:from-black hover:to-indigo-950 text-white rounded-xl font-bold text-xs shadow-md hover:shadow-lg transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-60"
+                    >
+                      {ukcSubmitting ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Searching UK Judiciary...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Scale className="w-4 h-4 text-indigo-300" />
+                          <span>Run UK Court Check</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <div className="lg:col-span-6 w-full lg:sticky lg:top-24">
+            <FlowDiagram 
+              title="UK Court Check Data Flow" 
+              activeService="uk_court" 
+            />
+          </div>
+
+          {/* Success Modal for UK Court Check — rendered via Portal */}
+          {ukcCreatedId && typeof document !== "undefined" && createPortal(
+            <UkCourtSuccessModal
+              ukcCreatedId={ukcCreatedId}
+              ukcCandidateName={ukcCandidateName || "Candidate"}
+              onCreateAnother={() => { setUkcCreatedId(null); setUkcSuccessMsg(""); }}
+              onGoToSummary={() => { setUkcCreatedId(null); router.push("/client/summary"); }}
+            />,
+            document.body
+          )}
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════════ */}
+      {/* MALAYSIA COURT CHECK FORM (Portal eJudgment API)   */}
+      {/* ═══════════════════════════════════════════════════ */}
+      {activeService === "malaysia_court" && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start max-w-6xl w-full">
+          <div className="lg:col-span-6 flex flex-col gap-6 w-full">
+            {/* Form Alerts */}
+            {mycSuccessMsg && !mycCreatedId && (
+              <div className="bg-[#E6F8F3] text-[#00684A] border border-[#A3EAD6] rounded-xl p-4 font-body-sm flex items-center gap-3 max-w-2xl animate-fade-in shadow-2xs">
+                <CheckCircle className="w-5 h-5 text-[#00a877] shrink-0" />
+                <span className="font-semibold">{mycSuccessMsg}</span>
+              </div>
+            )}
+
+            {mycErrorMsg && (
+              <div className="bg-red-50 text-red-800 border border-red-200 rounded-xl p-4 font-body-sm flex items-center gap-3 max-w-2xl animate-fade-in shadow-2xs">
+                <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
+                <span className="font-semibold">{mycErrorMsg}</span>
+              </div>
+            )}
+
+            {/* Malaysia Court Check Form Card */}
+            <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-lg relative overflow-hidden transition-all duration-300 hover:shadow-xl w-full">
+              {/* Top gradient line */}
+              <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-emerald-900 via-teal-800 to-amber-600"></div>
+
+              {/* Decorative background shapes */}
+              <div className="absolute -right-12 -bottom-12 w-32 h-32 bg-emerald-50/30 rounded-full blur-2xl pointer-events-none"></div>
+              <div className="absolute -left-12 -top-12 w-32 h-32 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none"></div>
+
+              <form onSubmit={handleMalaysiaCourtSubmit} className="flex flex-col gap-6 mt-2 relative z-10">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2.5 bg-gradient-to-br from-emerald-800 to-slate-900 rounded-xl shadow-md text-white">
+                    <Scale className="w-5 h-5 text-amber-300" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-slate-800 text-lg leading-tight">Malaysia Court Check</h3>
+                    <p className="text-xs text-slate-500 font-medium mt-0.5">
+                      Mahkamah Persekutuan Malaysia • Portal eJudgment (Grounds of Judgment, Orders & Rulings)
+                    </p>
+                  </div>
+                </div>
+
+                {/* General Search (Candidate Name / Case No / Parties / Keyword) */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
+                    <span>General Search (Candidate Name / Parties / Case No / Keyword)</span>
+                    <span className="text-rose-500 font-bold">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      id="myc-candidate-name"
+                      value={mycCandidateName}
+                      onChange={(e) => setMycCandidateName(e.target.value)}
+                      placeholder="e.g. Mohamad or Company / Case Number"
+                      disabled={mycSubmitting}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition-all outline-hidden disabled:opacity-60"
+                      required
+                    />
+                  </div>
+                  <span className="text-[10px] text-slate-400">
+                    Searches are performed directly against official case numbers, parties, and keywords.
+                  </span>
+                </div>
+
+                {/* Court Category & Court Location */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
+                      <span>Court Category</span>
+                      <span className="text-slate-400 font-bold">(Optional)</span>
+                    </label>
+                    <select
+                      id="myc-court-category"
+                      value={mycCourtCategory}
+                      onChange={(e) => setMycCourtCategory(e.target.value)}
+                      disabled={mycSubmitting}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition-all outline-hidden disabled:opacity-60 cursor-pointer"
+                    >
+                      <option value="">All Categories (Semua Kategori)</option>
+                      <option value="11">Federal Court (Mahkamah Persekutuan)</option>
+                      <option value="3">Court of Appeal (Mahkamah Rayuan)</option>
+                      <option value="2">High Court (Mahkamah Tinggi)</option>
+                      <option value="10">Sessions Court (Mahkamah Sesyen)</option>
+                      <option value="5">Magistrate Court (Mahkamah Majistret)</option>
+                    </select>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
+                      <span>Court Location</span>
+                      <span className="text-slate-400 font-bold">(Optional)</span>
+                    </label>
+                    <select
+                      id="myc-court-location"
+                      value={mycCourtLocation}
+                      onChange={(e) => setMycCourtLocation(e.target.value)}
+                      disabled={mycSubmitting}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition-all outline-hidden disabled:opacity-60 cursor-pointer"
+                    >
+                      <option value="">All Locations (Semua Lokasi)</option>
+                      <option value="Istana Kehakiman">Istana Kehakiman Putrajaya</option>
+                      <option value="Kompleks Mahkamah Kuala Lumpur">Kompleks Mahkamah Kuala Lumpur</option>
+                      <option value="Kompleks Mahkamah Shah Alam">Kompleks Mahkamah Shah Alam</option>
+                      <option value="Kompleks Mahkamah Pulau Pinang">Kompleks Mahkamah Pulau Pinang</option>
+                      <option value="Kompleks Mahkamah Johor Bahru">Kompleks Mahkamah Johor Bahru</option>
+                      <option value="Kompleks Mahkamah Ipoh">Kompleks Mahkamah Ipoh</option>
+                      <option value="Kompleks Mahkamah Alor Setar">Kompleks Mahkamah Alor Setar</option>
+                      <option value="Kompleks Mahkamah Kuantan">Kompleks Mahkamah Kuantan</option>
+                      <option value="Kompleks Mahkamah Melaka">Kompleks Mahkamah Melaka</option>
+                      <option value="Kompleks Mahkamah Seremban">Kompleks Mahkamah Seremban</option>
+                      <option value="Kompleks Mahkamah Kota Bharu">Kompleks Mahkamah Kota Bharu</option>
+                      <option value="Kompleks Mahkamah Kuala Terengganu">Kompleks Mahkamah Kuala Terengganu</option>
+                      <option value="Kompleks Mahkamah Kuching">Kompleks Mahkamah Kuching</option>
+                      <option value="Kompleks Mahkamah Kota Kinabalu">Kompleks Mahkamah Kota Kinabalu</option>
+                      <option value="Kompleks Mahkamah Petaling Jaya">Kompleks Mahkamah Petaling Jaya</option>
+                      <option value="Kompleks Mahkamah Klang">Kompleks Mahkamah Klang</option>
+                      <option value="Kompleks Mahkamah Selayang">Kompleks Mahkamah Selayang</option>
+                      <option value="Kompleks Mahkamah Kajang">Kompleks Mahkamah Kajang</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Case Type & Judge Name */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
+                      <span>Case Type / Division</span>
+                      <span className="text-slate-400 font-bold">(Optional)</span>
+                    </label>
+                    <select
+                      id="myc-case-type"
+                      value={mycCaseType}
+                      onChange={(e) => setMycCaseType(e.target.value)}
+                      disabled={mycSubmitting}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition-all outline-hidden disabled:opacity-60 cursor-pointer"
+                    >
+                      <option value="">All Case Types</option>
+                      <option value="2">Criminal (Jenayah)</option>
+                      <option value="3">Civil (Sivil)</option>
+                      <option value="8">Commercial (Dagang)</option>
+                      <option value="1">Bankruptcy (Kebankrapan)</option>
+                      <option value="7">Appellate & Special Powers (Rayuan & Kuasa Khas)</option>
+                      <option value="6">Family (Keluarga)</option>
+                      <option value="9">Caveat (Kaveat)</option>
+                      <option value="4">Execution (Pelaksanaan)</option>
+                      <option value="10">Muamalat</option>
+                      <option value="11">Admiralty (Maritim)</option>
+                      <option value="12">Intellectual Property (Harta Intelek)</option>
+                      <option value="14">Special Cyber Court (Mahkamah Siber)</option>
+                      <option value="15">Environmental Court (Mahkamah Alam Sekitar)</option>
+                    </select>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
+                      <span>Judge / Magistrate Name</span>
+                      <span className="text-slate-400 font-bold">(Optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="myc-judge-name"
+                      value={mycJudgeName}
+                      onChange={(e) => setMycJudgeName(e.target.value)}
+                      placeholder="e.g. YA Azhar or Judge Name"
+                      disabled={mycSubmitting}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition-all outline-hidden disabled:opacity-60"
+                    />
+                  </div>
+                </div>
+
+                {/* Date of Decision (From / To) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
+                      <span>Date of Decision (From)</span>
+                      <span className="text-slate-400 font-bold">(Optional)</span>
+                    </label>
+                    <input
+                      type="date"
+                      value={mycDateOfDecisionFrom}
+                      onChange={(e) => setMycDateOfDecisionFrom(e.target.value)}
+                      disabled={mycSubmitting}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition-all outline-hidden disabled:opacity-60"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
+                      <span>Date of Decision (To)</span>
+                      <span className="text-slate-400 font-bold">(Optional)</span>
+                    </label>
+                    <input
+                      type="date"
+                      value={mycDateOfDecisionTo}
+                      onChange={(e) => setMycDateOfDecisionTo(e.target.value)}
+                      disabled={mycSubmitting}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition-all outline-hidden disabled:opacity-60"
+                    />
+                  </div>
+                </div>
+
+                {/* Date of GOJ Filing (From / To) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
+                      <span>Date of GOJ Filing (From)</span>
+                      <span className="text-slate-400 font-bold">(Optional)</span>
+                    </label>
+                    <input
+                      type="date"
+                      value={mycDateOfAPFrom}
+                      onChange={(e) => setMycDateOfAPFrom(e.target.value)}
+                      disabled={mycSubmitting}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition-all outline-hidden disabled:opacity-60"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
+                      <span>Date of GOJ Filing (To)</span>
+                      <span className="text-slate-400 font-bold">(Optional)</span>
+                    </label>
+                    <input
+                      type="date"
+                      value={mycDateOfAPTo}
+                      onChange={(e) => setMycDateOfAPTo(e.target.value)}
+                      disabled={mycSubmitting}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition-all outline-hidden disabled:opacity-60"
+                    />
+                  </div>
+                </div>
+
+                {/* Requesting Organization Name */}
+                <div className="flex flex-col gap-1.5 relative">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
+                    <span>Requesting Organization Name</span>
+                    <span className="text-rose-500 font-bold">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      id="myc-req-org"
+                      value={mycRequestingOrgName}
+                      onChange={(e) => {
+                        setMycRequestingOrgName(e.target.value);
+                        setMycShowOrgDropdown(true);
+                      }}
+                      onFocus={() => setMycShowOrgDropdown(true)}
+                      onBlur={() => setTimeout(() => setMycShowOrgDropdown(false), 200)}
+                      placeholder="e.g. Maybank Malaysia / Kuala Lumpur Holdings"
+                      disabled={mycSubmitting}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition-all outline-hidden disabled:opacity-60"
+                      required
+                    />
+                    {settings?.recentRequestingOrgs && settings.recentRequestingOrgs.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setMycShowOrgDropdown(!mycShowOrgDropdown)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      >
+                        <ChevronDown className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+
+                  {mycShowOrgDropdown && mycFilteredOrgs.length > 0 && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-50 overflow-hidden max-h-48 overflow-y-auto">
+                      {mycFilteredOrgs.map((org: string, idx: number) => (
+                        <div
+                          key={idx}
+                          onMouseDown={() => {
+                            setMycRequestingOrgName(org);
+                            setMycShowOrgDropdown(false);
+                          }}
+                          className="px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 cursor-pointer font-medium flex items-center justify-between border-b border-slate-100 last:border-0"
+                        >
+                          <span>{org}</span>
+                          <span className="text-[10px] text-slate-400">Recent</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* ID Proof / Verification Document Upload (Optional) */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center justify-between">
+                    <span>Candidate Identity Document / Slip</span>
+                    <span className="text-slate-400 font-bold">(Optional)</span>
+                  </label>
+                  <div className="border border-dashed border-slate-300 rounded-xl p-4 text-center bg-slate-50 hover:bg-white transition-all">
+                    <input
+                      type="file"
+                      id="mycIdProofInput"
+                      className="hidden"
+                      accept=".pdf,.png,.jpg,.jpeg"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setMycIdProofFileName(file.name);
+                          const reader = new FileReader();
+                          reader.onload = (event) => {
+                            setMycIdProofFile(event.target?.result as string);
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                    <label htmlFor="mycIdProofInput" className="cursor-pointer flex flex-col items-center gap-1.5">
+                      <UploadCloud className="w-5 h-5 text-emerald-600" />
+                      <span className="text-xs font-bold text-slate-700">
+                        {mycIdProofFileName || "Upload Candidate MyKad / Passport Slip (PDF or Image)"}
+                      </span>
+                      <span className="text-[10px] text-slate-400">Max size: 5MB</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="pt-2 border-t border-slate-100 flex flex-col gap-3">
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={handleMalaysiaCourtCancel}
+                      disabled={mycSubmitting}
+                      className="flex-1 py-3 border border-slate-200 text-slate-600 rounded-xl font-bold text-xs hover:bg-slate-50 transition-all cursor-pointer"
+                    >
+                      Clear
+                    </button>
+                    <button
+                      type="submit"
+                      id="btn-submit-malaysia-court"
+                      disabled={mycSubmitting}
+                      className="flex-2 py-3 bg-gradient-to-r from-emerald-900 via-teal-800 to-slate-900 hover:from-black hover:to-emerald-950 text-white rounded-xl font-bold text-xs shadow-md hover:shadow-lg transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-60"
+                    >
+                      {mycSubmitting ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Searching Portal eJudgment...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Scale className="w-4 h-4 text-amber-300" />
+                          <span>Run Malaysia Court Check</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <div className="lg:col-span-6 w-full lg:sticky lg:top-24">
+            <FlowDiagram 
+              title="Malaysia Court Check Data Flow" 
+              activeService="malaysia_court" 
+            />
+          </div>
+
+          {/* Success Modal for Malaysia Court Check — rendered via Portal */}
+          {mycCreatedId && typeof document !== "undefined" && createPortal(
+            <MalaysiaCourtSuccessModal
+              mycCreatedId={mycCreatedId}
+              mycCandidateName={mycCandidateName || "Candidate"}
+              onCreateAnother={() => { setMycCreatedId(null); setMycSuccessMsg(""); }}
+              onGoToSummary={() => { setMycCreatedId(null); router.push("/client/summary"); }}
             />,
             document.body
           )}

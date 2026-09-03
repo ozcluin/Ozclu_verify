@@ -344,6 +344,33 @@ export default function SettingsPage() {
       enabled: organisation?.safliiCourtEnabled !== false,
       tat: organisation?.serviceTats?.saflii_court || "24 Hours",
       icon: "gavel"
+    },
+    {
+      key: "saps_wanted",
+      title: "SAPS Wanted Check",
+      desc: "South African Police Service crime stop wanted suspects registry",
+      rate: (organisation as any)?.sapsWantedRate ?? 15,
+      enabled: (organisation as any)?.sapsWantedEnabled !== false,
+      tat: organisation?.serviceTats?.saps_wanted || "24 Hours",
+      icon: "local_police"
+    },
+    {
+      key: "uk_court",
+      title: "UK Court Check",
+      desc: "Official Courts and Tribunals Judiciary of England & Wales judgments & orders check",
+      rate: organisation?.ukCourtRate ?? 25,
+      enabled: organisation?.ukCourtEnabled !== false,
+      tat: organisation?.serviceTats?.uk_court || "24 Hours",
+      icon: "gavel"
+    },
+    {
+      key: "malaysia_court",
+      title: "Malaysia Court Check",
+      desc: "Official Portal eJudgment Mahkamah Persekutuan Malaysia judgments & court orders check",
+      rate: (organisation as any)?.malaysiaCourtRate ?? 20,
+      enabled: (organisation as any)?.malaysiaCourtEnabled !== false,
+      tat: organisation?.serviceTats?.malaysia_court || "24 Hours",
+      icon: "gavel"
     }
   ];
 
@@ -934,6 +961,9 @@ export default function SettingsPage() {
                 <option value="passport">Passport Verification</option>
                 <option value="digital_address">Digital Address Verification</option>
                 <option value="saflii_court">South African Court Check</option>
+                <option value="saps_wanted">SAPS Wanted Check</option>
+                <option value="uk_court">UK Court Check</option>
+                <option value="malaysia_court">Malaysia Court Check</option>
               </select>
             </div>
 
