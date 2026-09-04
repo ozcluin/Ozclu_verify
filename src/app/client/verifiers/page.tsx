@@ -29,8 +29,424 @@ import {
   Globe,
   Layers,
   Sparkles,
-  Lock
+  FileCode,
+  Filter
 } from "lucide-react";
+
+// ─── All 15 API Endpoints with Example cURLs & Responses ────────────
+
+interface EndpointExample {
+  id: string;
+  category: "verification" | "retrieval";
+  name: string;
+  method: "POST" | "GET";
+  path: string;
+  description: string;
+  requestCurl: string;
+  sampleResponse: any;
+  notes?: string;
+}
+
+const API_ENDPOINTS: EndpointExample[] = [
+  {
+    id: "identity",
+    category: "verification",
+    name: "Identity & Candidate Setup",
+    method: "POST",
+    path: "/api/v1/external/verify/identity",
+    description: "Initiates candidate identity check, creates candidate portal login, and returns self-setup URL.",
+    requestCurl: `curl -X POST https://verify.ozclu.in/api/v1/external/verify/identity \\
+  -H "Authorization: Bearer sk_live_YOUR_KEY_HERE" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "candidateName": "Jane Doe",
+    "candidateEmail": "jane.doe@example.com",
+    "requestingOrgName": "Acme Corp"
+  }'`,
+    sampleResponse: {
+      success: true,
+      requestId: "INF040926-0001",
+      status: "processing",
+      candidateSetupUrl: "http://localhost:3012/?email=jane.doe%40example.com&password=Ozclu%40...",
+      message: "Identity verification request created successfully."
+    },
+    notes: "Returns candidateSetupUrl which you can send to candidate via email/SMS."
+  },
+  {
+    id: "court-record",
+    category: "verification",
+    name: "Court Record (eCourts)",
+    method: "POST",
+    path: "/api/v1/external/verify/court-record",
+    description: "Multi-address civil and criminal litigation search across Indian district and high courts.",
+    requestCurl: `curl -X POST https://verify.ozclu.in/api/v1/external/verify/court-record \\
+  -H "Authorization: Bearer sk_live_YOUR_KEY_HERE" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "candidateName": "Rajesh Kumar",
+    "candidateDob": "1992-05-14",
+    "fatherName": "Suresh Kumar",
+    "gender": "Male",
+    "addresses": [
+      {
+        "address": "42 MG Road, Indiranagar",
+        "city": "Bengaluru",
+        "state": "Karnataka",
+        "district": "Bengaluru Urban",
+        "stateCode": "29",
+        "districtCode": "1"
+      }
+    ]
+  }'`,
+    sampleResponse: {
+      success: true,
+      requestId: "INF040926-0002",
+      status: "processing",
+      message: "Court record verification created. eCourts search initiated."
+    },
+    notes: "Requires candidateName and at least one address object with state and district."
+  },
+  {
+    id: "passport",
+    category: "verification",
+    name: "Passport Status Check",
+    method: "POST",
+    path: "/api/v1/external/verify/passport",
+    description: "Live government validation of Indian passport file number and date of birth via Passport Seva.",
+    requestCurl: `curl -X POST https://verify.ozclu.in/api/v1/external/verify/passport \\
+  -H "Authorization: Bearer sk_live_YOUR_KEY_HERE" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "fileNumber": "BGO076543210924",
+    "dateOfBirth": "15/08/1990"
+  }'`,
+    sampleResponse: {
+      success: true,
+      requestId: "PSP040926-0001",
+      status: "completed",
+      candidateName: "SURESH KUMAR",
+      fileNumber: "BGO076543210924",
+      passportStatus: "Passport has been delivered to applicant.",
+      details: {
+        typeOfApplication: "Normal",
+        applicationReceivedDate: "12/05/2024",
+        statusMessage: "Passport has been delivered to applicant."
+      }
+    },
+    notes: "Synchronous check. Returns government dispatch status and applicant name immediately."
+  },
+  {
+    id: "digital-address",
+    category: "verification",
+    name: "Digital Address Verification",
+    method: "POST",
+    path: "/api/v1/external/verify/digital-address",
+    description: "GPS-tagged geo-selfie and doorstep verification for physical residential address confirmation.",
+    requestCurl: `curl -X POST https://verify.ozclu.in/api/v1/external/verify/digital-address \\
+  -H "Authorization: Bearer sk_live_YOUR_KEY_HERE" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "candidateName": "Priya Sharma",
+    "candidateEmail": "priya.sharma@example.com",
+    "candidateAddress": "Flat 402, Sunrise Towers, HSR Layout, Bengaluru"
+  }'`,
+    sampleResponse: {
+      success: true,
+      requestId: "DAV040926-0001",
+      status: "processing",
+      candidateSetupUrl: "http://localhost:3012/?email=priya.sharma%40example.com&password=...",
+      message: "Digital address verification created successfully."
+    },
+    notes: "Candidate opens candidateSetupUrl on mobile to capture GPS geotagged address photos."
+  },
+  {
+    id: "interpol",
+    category: "verification",
+    name: "Interpol Wanted Notices",
+    method: "POST",
+    path: "/api/v1/external/verify/interpol",
+    description: "Instant cross-reference against international Interpol wanted and missing persons database.",
+    requestCurl: `curl -X POST https://verify.ozclu.in/api/v1/external/verify/interpol \\
+  -H "Authorization: Bearer sk_live_YOUR_KEY_HERE" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "candidateName": "Vikram Singh",
+    "candidateDob": "1988-11-20",
+    "birthCity": "Mumbai"
+  }'`,
+    sampleResponse: {
+      success: true,
+      requestId: "INT040926-0001",
+      status: "completed",
+      hasRecords: false,
+      matchCount: 0,
+      message: "No records found. Clean record."
+    },
+    notes: "Instant synchronous check. Returns matched notices and warrant charges if any."
+  },
+  {
+    id: "rednotice",
+    category: "verification",
+    name: "Interpol Worldwide Red Notice",
+    method: "POST",
+    path: "/api/v1/external/verify/rednotice",
+    description: "Global screening across 196 member countries for active international fugitive red notices.",
+    requestCurl: `curl -X POST https://verify.ozclu.in/api/v1/external/verify/rednotice \\
+  -H "Authorization: Bearer sk_live_YOUR_KEY_HERE" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "candidateName": "Alexander Petrov",
+    "candidateDob": "1985-04-12",
+    "birthCity": "Moscow"
+  }'`,
+    sampleResponse: {
+      success: true,
+      requestId: "RNW040926-0001",
+      status: "completed",
+      hasRecords: false,
+      matchCount: 0
+    },
+    notes: "Instant database check against 5,820+ worldwide red notice records."
+  },
+  {
+    id: "saflii-court",
+    category: "verification",
+    name: "South African Court (SAFLII)",
+    method: "POST",
+    path: "/api/v1/external/verify/saflii-court",
+    description: "Litigation & judgment checks across High Courts and Supreme Court of Appeal of South Africa.",
+    requestCurl: `curl -X POST https://verify.ozclu.in/api/v1/external/verify/saflii-court \\
+  -H "Authorization: Bearer sk_live_YOUR_KEY_HERE" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "candidateName": "Sipho Dlamini",
+    "candidateDob": "1991-03-10",
+    "birthCity": "Johannesburg"
+  }'`,
+    sampleResponse: {
+      success: true,
+      requestId: "SAF040926-0001",
+      status: "processing",
+      message: "SAFLII Court check initiated. Results will be available via the status endpoint."
+    },
+    notes: "Asynchronous scraper. Query status after 5-10 seconds to retrieve matching case citations."
+  },
+  {
+    id: "saps-wanted",
+    category: "verification",
+    name: "SAPS Wanted Persons (South Africa)",
+    method: "POST",
+    path: "/api/v1/external/verify/saps-wanted",
+    description: "National police wanted persons registry check for South Africa.",
+    requestCurl: `curl -X POST https://verify.ozclu.in/api/v1/external/verify/saps-wanted \\
+  -H "Authorization: Bearer sk_live_YOUR_KEY_HERE" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "candidateName": "David Van Der Merwe",
+    "candidateDob": "1989-07-22",
+    "candidateIdNumber": "8907225000081",
+    "provinceCity": "Gauteng"
+  }'`,
+    sampleResponse: {
+      success: true,
+      requestId: "SAPS040926-0001",
+      status: "completed",
+      hasRecords: false,
+      matchCount: 0
+    },
+    notes: "Instant check. If potential match is detected, status marks 'halted' for legal review."
+  },
+  {
+    id: "uk-court",
+    category: "verification",
+    name: "UK Court Records Check",
+    method: "POST",
+    path: "/api/v1/external/verify/uk-court",
+    description: "Courts and Tribunals Judiciary of England & Wales official judgments and sentencing remarks.",
+    requestCurl: `curl -X POST https://verify.ozclu.in/api/v1/external/verify/uk-court \\
+  -H "Authorization: Bearer sk_live_YOUR_KEY_HERE" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "candidateName": "Oliver James Smith",
+    "candidateDob": "1987-09-18",
+    "judgmentType": "Criminal",
+    "jurisdiction": "Crown Court"
+  }'`,
+    sampleResponse: {
+      success: true,
+      requestId: "UKC040926-0001",
+      status: "processing",
+      message: "UK Court check initiated. Results will be available via the status endpoint."
+    },
+    notes: "Queries official judiciary portal for judgment transcripts and committals."
+  },
+  {
+    id: "malaysia-court",
+    category: "verification",
+    name: "Malaysia Court Records Check",
+    method: "POST",
+    path: "/api/v1/external/verify/malaysia-court",
+    description: "Official eJudgment portal of Mahkamah Persekutuan Malaysia litigation records.",
+    requestCurl: `curl -X POST https://verify.ozclu.in/api/v1/external/verify/malaysia-court \\
+  -H "Authorization: Bearer sk_live_YOUR_KEY_HERE" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "candidateName": "Ahmad Bin Abdullah",
+    "courtCategory": "High Court",
+    "courtLocation": "Kuala Lumpur",
+    "caseType": "Criminal"
+  }'`,
+    sampleResponse: {
+      success: true,
+      requestId: "MYC040926-0001",
+      status: "processing",
+      message: "Malaysia Court check initiated. Results will be available via the status endpoint."
+    },
+    notes: "Asynchronous search. Full case numbers and judgment PDFs returned when completed."
+  },
+  {
+    id: "employment",
+    category: "verification",
+    name: "Employment Verification",
+    method: "POST",
+    path: "/api/v1/external/verify/employment",
+    description: "Previous employer background check with multi-tenure and designation validation.",
+    requestCurl: `curl -X POST https://verify.ozclu.in/api/v1/external/verify/employment \\
+  -H "Authorization: Bearer sk_live_YOUR_KEY_HERE" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "candidateName": "Ananya Roy",
+    "candidateEmail": "ananya.roy@example.com",
+    "candidateMobile": "+919876543210",
+    "skipCandidateLogin": true,
+    "employments": [
+      {
+        "companyName": "TechCorp Global",
+        "position": "Senior Software Engineer",
+        "joiningYear": "2021",
+        "leavingYear": "2024",
+        "employeeCode": "TC-8821"
+      }
+    ]
+  }'`,
+    sampleResponse: {
+      success: true,
+      requestId: "INF040926-0003",
+      status: "processing",
+      message: "Employment verification created successfully."
+    },
+    notes: "Set skipCandidateLogin: true to provide employer records directly from your ATS."
+  },
+  {
+    id: "education",
+    category: "verification",
+    name: "Education Verification",
+    method: "POST",
+    path: "/api/v1/external/verify/education",
+    description: "Academic degree, university board, roll number, and graduation credentials verification.",
+    requestCurl: `curl -X POST https://verify.ozclu.in/api/v1/external/verify/education \\
+  -H "Authorization: Bearer sk_live_YOUR_KEY_HERE" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "candidateName": "Rohan Gupta",
+    "candidateEmail": "rohan.gupta@example.com",
+    "skipCandidateLogin": true,
+    "educationList": [
+      {
+        "boardUniversity": "Delhi University",
+        "courseName": "Bachelor of Technology (Computer Science)",
+        "passingYear": "2022",
+        "rollNumber": "CS-2018-9921"
+      }
+    ]
+  }'`,
+    sampleResponse: {
+      success: true,
+      requestId: "INF040926-0004",
+      status: "processing",
+      message: "Education verification created successfully."
+    },
+    notes: "Set skipCandidateLogin: true to inject university degrees directly."
+  },
+  {
+    id: "status",
+    category: "retrieval",
+    name: "Check Request Status",
+    method: "GET",
+    path: "/api/v1/external/status/{requestId}",
+    description: "Poll real-time processing status, sub-status, and timestamps for any verification check.",
+    requestCurl: `curl -X GET "https://verify.ozclu.in/api/v1/external/status/INF040926-0001" \\
+  -H "Authorization: Bearer sk_live_YOUR_KEY_HERE"`,
+    sampleResponse: {
+      success: true,
+      requestId: "INF040926-0001",
+      candidateName: "Jane Doe",
+      type: "identity",
+      status: "Processing",
+      createdAt: "2026-09-04T12:00:00.000Z",
+      completedAt: null,
+      progress: {
+        subStatus: "active",
+        onboardingStatus: "active",
+        candidateSetupUrl: "http://localhost:3012/?email=..."
+      }
+    },
+    notes: "Status polling is free of charge (cost: 0). Recommended interval: 5 to 10 seconds."
+  },
+  {
+    id: "report",
+    category: "retrieval",
+    name: "Fetch Final Verification Report",
+    method: "GET",
+    path: "/api/v1/external/report/{requestId}",
+    description: "Download the complete sanitized verification report JSON payload once check is completed.",
+    requestCurl: `curl -X GET "https://verify.ozclu.in/api/v1/external/report/INF040926-0001" \\
+  -H "Authorization: Bearer sk_live_YOUR_KEY_HERE"`,
+    sampleResponse: {
+      success: true,
+      requestId: "INF040926-0001",
+      type: "identity",
+      status: "Completed",
+      candidateName: "Jane Doe",
+      report: {
+        id: "INF040926-0001",
+        name: "Jane Doe",
+        email: "jane.doe@example.com",
+        status: "Completed",
+        date: "Sep 04, 2026",
+        source: "api"
+      }
+    },
+    notes: "Returns 200 with status message if verification is still in processing."
+  },
+  {
+    id: "list",
+    category: "retrieval",
+    name: "List All Verifications",
+    method: "GET",
+    path: "/api/v1/external/list",
+    description: "Paginated list of verifications for your organisation with optional filters (page, limit, status, type).",
+    requestCurl: `curl -X GET "https://verify.ozclu.in/api/v1/external/list?page=1&limit=20&status=Completed" \\
+  -H "Authorization: Bearer sk_live_YOUR_KEY_HERE"`,
+    sampleResponse: {
+      success: true,
+      page: 1,
+      limit: 20,
+      total: 42,
+      totalPages: 3,
+      verifications: [
+        {
+          id: "INF040926-0001",
+          name: "Jane Doe",
+          type: "identity",
+          status: "Completed",
+          date: "Sep 04, 2026"
+        }
+      ]
+    },
+    notes: "Supports query parameters: page, limit (max 100), status, and type."
+  }
+];
 
 export default function ManageVerifiersPage() {
   const { 
@@ -67,8 +483,13 @@ export default function ManageVerifiersPage() {
   const [showNewKeyModal, setShowNewKeyModal] = useState(false);
   const [copied, setCopied] = useState(false);
   const [revokingId, setRevokingId] = useState<string | null>(null);
-  const [copiedCurl, setCopiedCurl] = useState(false);
   const [copiedEndpoint, setCopiedEndpoint] = useState<string | null>(null);
+
+  // Interactive Endpoint Viewer state
+  const [selectedEndpointId, setSelectedEndpointId] = useState<string>("identity");
+  const [selectedView, setSelectedView] = useState<"curl" | "response">("curl");
+  const [endpointCategoryFilter, setEndpointCategoryFilter] = useState<"all" | "verification" | "retrieval">("all");
+  const [copiedSnippet, setCopiedSnippet] = useState<boolean>(false);
 
   // Sync tab from URL query param (?tab=api)
   useEffect(() => {
@@ -212,18 +633,17 @@ export default function ManageVerifiersPage() {
     }
   };
 
-  const sampleCurl = `curl -X POST https://verify.ozclu.in/api/v1/external/verify/identity \\
-  -H "Authorization: Bearer sk_live_YOUR_KEY_HERE" \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "candidateName": "Jane Doe",
-    "candidateEmail": "jane.doe@example.com"
-  }'`;
+  // Active endpoint object
+  const activeEndpoint = API_ENDPOINTS.find(ep => ep.id === selectedEndpointId) || API_ENDPOINTS[0];
 
-  const handleCopyCurl = () => {
-    navigator.clipboard.writeText(sampleCurl);
-    setCopiedCurl(true);
-    setTimeout(() => setCopiedCurl(false), 2500);
+  // Copy active code snippet (cURL or response)
+  const handleCopySnippet = () => {
+    const textToCopy = selectedView === "curl" 
+      ? activeEndpoint.requestCurl 
+      : JSON.stringify(activeEndpoint.sampleResponse, null, 2);
+    navigator.clipboard.writeText(textToCopy);
+    setCopiedSnippet(true);
+    setTimeout(() => setCopiedSnippet(false), 2000);
   };
 
   const handleCopyText = (text: string, id: string) => {
@@ -231,6 +651,12 @@ export default function ManageVerifiersPage() {
     setCopiedEndpoint(id);
     setTimeout(() => setCopiedEndpoint(null), 2000);
   };
+
+  // Filtered endpoints for right column list
+  const displayedEndpoints = API_ENDPOINTS.filter(ep => {
+    if (endpointCategoryFilter === "all") return true;
+    return ep.category === endpointCategoryFilter;
+  });
 
   return (
     <div className="p-6 md:p-10 max-w-6xl mx-auto flex flex-col gap-8">
@@ -795,93 +1221,236 @@ export default function ManageVerifiersPage() {
             )}
           </div>
 
-          {/* Quick Start & cURL Example */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-            {/* cURL Snippet */}
-            <div className="bg-slate-900 text-white rounded-3xl p-6 shadow-sm space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                <div className="flex items-center gap-2">
-                  <Terminal className="w-4 h-4 text-emerald-400" />
-                  <h4 className="text-xs font-bold text-white uppercase tracking-wider">Example Request (cURL)</h4>
-                </div>
-                <button
-                  onClick={handleCopyCurl}
-                  className="inline-flex items-center gap-1.5 text-xs text-emerald-400 hover:text-emerald-300 font-bold transition-colors cursor-pointer"
-                >
-                  {copiedCurl ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>Copied!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3.5 h-3.5" />
-                      <span>Copy cURL</span>
-                    </>
-                  )}
-                </button>
-              </div>
+          {/* ─────────────────────────────────────────────────────────
+              DYNAMIC INTERACTIVE ENDPOINT VIEWER & EXAMPLES
+          ───────────────────────────────────────────────────────── */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* Left Card: Example Request (cURL) */}
+            <div className="lg:col-span-7 bg-[#0b1329] text-white rounded-3xl p-6 shadow-xl space-y-4 border border-slate-800/80 flex flex-col justify-between">
+              <div>
+                {/* Header matching screenshot: >_ EXAMPLE REQUEST (CURL) and Copy cURL */}
+                <div className="flex items-center justify-between gap-3 border-b border-slate-800/80 pb-4">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="font-mono text-emerald-400 font-bold text-sm select-none">&gt;_</span>
+                    <h3 className="text-xs sm:text-sm font-bold tracking-wider text-slate-100 uppercase font-sans">
+                      EXAMPLE REQUEST (CURL)
+                    </h3>
+                  </div>
 
-              <pre className="text-[11px] font-mono leading-relaxed overflow-x-auto text-emerald-300 bg-slate-950 p-4 rounded-2xl border border-slate-800">
-                {sampleCurl}
-              </pre>
-
-              <p className="text-[11px] text-slate-400">
-                Replace <code className="text-emerald-400 font-mono">sk_live_YOUR_KEY_HERE</code> with an active secret key issued above.
-              </p>
-            </div>
-
-            {/* Endpoints Reference Grid */}
-            <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <div className="flex items-center gap-2">
-                  <Globe className="w-4 h-4 text-[#134074]" />
-                  <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Primary API Endpoints</h4>
-                </div>
-                <Link
-                  href="/api-docs"
-                  target="_blank"
-                  className="text-xs text-emerald-700 hover:underline font-bold flex items-center gap-1"
-                >
-                  <span>All 15 Endpoints</span>
-                  <ArrowRight className="w-3 h-3" />
-                </Link>
-              </div>
-
-              <div className="space-y-2">
-                {[
-                  { method: "POST", path: "/api/v1/external/verify/identity", label: "Identity Check" },
-                  { method: "POST", path: "/api/v1/external/verify/court-record", label: "Court Record (eCourts)" },
-                  { method: "POST", path: "/api/v1/external/verify/passport", label: "Passport Verification" },
-                  { method: "POST", path: "/api/v1/external/verify/digital-address", label: "Digital Address Check" },
-                  { method: "GET", path: "/api/v1/external/status/{requestId}", label: "Check Request Status" },
-                  { method: "GET", path: "/api/v1/external/report/{requestId}", label: "Fetch Final Report" },
-                ].map((ep) => (
-                  <div 
-                    key={ep.path} 
-                    className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100/80 border border-slate-200/60 transition-colors"
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className={`px-1.5 py-0.5 rounded text-[9px] font-black font-mono ${
-                        ep.method === "POST" ? "bg-emerald-100 text-emerald-800" : "bg-blue-100 text-blue-800"
-                      }`}>
-                        {ep.method}
-                      </span>
-                      <span className="font-mono text-[11px] text-slate-800 truncate">{ep.path}</span>
+                  <div className="flex items-center gap-2">
+                    {/* Mode Toggle: cURL vs JSON Response */}
+                    <div className="hidden sm:flex items-center bg-[#131d38] p-0.5 rounded-lg border border-slate-800">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedView("curl")}
+                        className={`px-2.5 py-1 rounded-md text-[10px] font-bold transition-all cursor-pointer ${
+                          selectedView === "curl"
+                            ? "bg-emerald-500 text-slate-950 shadow-xs"
+                            : "text-slate-400 hover:text-white"
+                        }`}
+                      >
+                        cURL
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedView("response")}
+                        className={`px-2.5 py-1 rounded-md text-[10px] font-bold transition-all cursor-pointer ${
+                          selectedView === "response"
+                            ? "bg-emerald-500 text-slate-950 shadow-xs"
+                            : "text-slate-400 hover:text-white"
+                        }`}
+                      >
+                        200 OK
+                      </button>
                     </div>
+
                     <button
-                      onClick={() => handleCopyText(`https://verify.ozclu.in${ep.path}`, ep.path)}
-                      className="text-slate-400 hover:text-slate-700 p-1 cursor-pointer"
-                      title="Copy URL"
+                      onClick={handleCopySnippet}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-emerald-400 hover:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 rounded-xl font-bold transition-all cursor-pointer shrink-0"
                     >
-                      {copiedEndpoint === ep.path ? (
-                        <Check className="w-3.5 h-3.5 text-emerald-600" />
+                      {copiedSnippet ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>Copied!</span>
+                        </>
                       ) : (
-                        <Copy className="w-3.5 h-3.5" />
+                        <>
+                          <Copy className="w-3.5 h-3.5" />
+                          <span>Copy {selectedView === "curl" ? "cURL" : "JSON"}</span>
+                        </>
                       )}
                     </button>
                   </div>
-                ))}
+                </div>
+
+                {/* Sub-bar showing active endpoint name & description */}
+                <div className="flex items-center justify-between gap-2 mt-3 mb-2 px-1">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className={`px-1.5 py-0.5 rounded text-[9px] font-black font-mono ${
+                      activeEndpoint.method === "POST" 
+                        ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30" 
+                        : "bg-blue-500/20 text-blue-300 border border-blue-500/30"
+                    }`}>
+                      {activeEndpoint.method}
+                    </span>
+                    <span className="text-xs font-semibold text-slate-200 truncate">
+                      {activeEndpoint.name}
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-mono text-slate-400 truncate max-w-[220px]">
+                    {activeEndpoint.path}
+                  </span>
+                </div>
+
+                {/* Code Terminal Box */}
+                <div className="relative mt-2">
+                  <pre className="text-[11px] font-mono leading-relaxed overflow-x-auto text-[#64f4c2] bg-[#070d1f] p-4 rounded-2xl border border-slate-800/90 max-h-[380px] select-all shadow-inner">
+                    {selectedView === "curl" 
+                      ? activeEndpoint.requestCurl 
+                      : JSON.stringify(activeEndpoint.sampleResponse, null, 2)}
+                  </pre>
+                </div>
+              </div>
+
+              {/* Context Footer matching screenshot note */}
+              <div className="pt-3 border-t border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px] text-slate-400">
+                <p className="leading-snug">
+                  Replace <code className="text-emerald-400 font-mono">sk_live_YOUR_KEY_HERE</code> with an active secret key issued above.
+                </p>
+                <Link
+                  href="/api-docs"
+                  target="_blank"
+                  className="text-emerald-400 hover:underline inline-flex items-center gap-1 shrink-0 font-bold text-[10px]"
+                >
+                  <span>Full API Docs</span>
+                  <ExternalLink className="w-3 h-3" />
+                </Link>
+              </div>
+            </div>
+
+            {/* Right Card: Primary API Endpoints (All 15) */}
+            <div className="lg:col-span-5 bg-white border border-slate-200/90 rounded-3xl p-6 shadow-sm space-y-4">
+              {/* Header matching screenshot: 🌐 PRIMARY API ENDPOINTS & All 15 Endpoints -> */}
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-[#134074]" />
+                  <h3 className="text-xs sm:text-sm font-bold tracking-wider text-slate-900 uppercase font-sans">
+                    PRIMARY API ENDPOINTS
+                  </h3>
+                </div>
+
+                <Link
+                  href="/api-docs"
+                  target="_blank"
+                  className="text-xs font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1 group"
+                >
+                  <span>All 15 Endpoints</span>
+                  <span className="transition-transform group-hover:translate-x-0.5">&rarr;</span>
+                </Link>
+              </div>
+
+              {/* Category Filter Pills */}
+              <div className="flex items-center gap-1.5 p-1 bg-slate-100/90 rounded-xl border border-slate-200/80">
+                <button
+                  type="button"
+                  onClick={() => setEndpointCategoryFilter("all")}
+                  className={`flex-1 py-1 text-[10px] font-bold rounded-lg transition-all cursor-pointer text-center ${
+                    endpointCategoryFilter === "all"
+                      ? "bg-white text-slate-900 shadow-xs"
+                      : "text-slate-500 hover:text-slate-900"
+                  }`}
+                >
+                  All ({API_ENDPOINTS.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEndpointCategoryFilter("verification")}
+                  className={`flex-1 py-1 text-[10px] font-bold rounded-lg transition-all cursor-pointer text-center ${
+                    endpointCategoryFilter === "verification"
+                      ? "bg-white text-slate-900 shadow-xs"
+                      : "text-slate-500 hover:text-slate-900"
+                  }`}
+                >
+                  Verify (12)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEndpointCategoryFilter("retrieval")}
+                  className={`flex-1 py-1 text-[10px] font-bold rounded-lg transition-all cursor-pointer text-center ${
+                    endpointCategoryFilter === "retrieval"
+                      ? "bg-white text-slate-900 shadow-xs"
+                      : "text-slate-500 hover:text-slate-900"
+                  }`}
+                >
+                  Reports (3)
+                </button>
+              </div>
+
+              {/* Scrollable Endpoints List matching screenshot cards */}
+              <div className="space-y-2.5 max-h-[460px] overflow-y-auto pr-1">
+                {displayedEndpoints.map((ep) => {
+                  const isSelected = selectedEndpointId === ep.id;
+
+                  return (
+                    <div 
+                      key={ep.id} 
+                      onClick={() => setSelectedEndpointId(ep.id)}
+                      className={`group flex items-center justify-between px-3 py-2.5 rounded-xl border transition-all cursor-pointer text-left ${
+                        isSelected
+                          ? "bg-emerald-50/80 border-emerald-500 shadow-xs ring-2 ring-emerald-500/20"
+                          : "bg-slate-50/70 hover:bg-slate-100/90 border-slate-200/80"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <span className={`px-2 py-0.5 rounded text-[9px] font-black font-mono tracking-wider shrink-0 ${
+                          ep.method === "POST" 
+                            ? "bg-emerald-100 text-emerald-800" 
+                            : "bg-blue-100 text-blue-800"
+                        }`}>
+                          {ep.method}
+                        </span>
+                        <span className={`font-mono text-[11px] truncate ${
+                          isSelected ? "text-emerald-950 font-bold" : "text-slate-800 group-hover:text-slate-950 font-medium"
+                        }`}>
+                          {ep.path}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                        {isSelected && (
+                          <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded-md text-[8px] font-bold bg-emerald-600 text-white uppercase tracking-wider">
+                            Active
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCopyText(`https://verify.ozclu.in${ep.path}`, ep.id);
+                          }}
+                          className={`p-1 rounded-md transition-colors cursor-pointer ${
+                            copiedEndpoint === ep.id
+                              ? "text-emerald-600"
+                              : "text-slate-400 hover:text-slate-700"
+                          }`}
+                          title="Copy Endpoint Path"
+                        >
+                          {copiedEndpoint === ep.id ? (
+                            <Check className="w-3.5 h-3.5 text-emerald-600" />
+                          ) : (
+                            <Copy className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Bottom hint */}
+              <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
+                <span>Click any endpoint above to preview its cURL request</span>
+                <span className="font-semibold text-slate-500">15 / 15 active</span>
               </div>
             </div>
           </div>
