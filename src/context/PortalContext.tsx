@@ -47,6 +47,7 @@ export interface Verification {
   educationList?: Array<{ boardUniversity: string; courseName: string; passingYear?: string; rollNumber?: string }>;
   // Court Record Verification & Watchlist fields
   type?: "identity" | "court_record" | "employment" | "education" | "interpol" | "passport" | "digital_address" | "rednotice_worldwide" | "saflii_court" | "saps_wanted" | "uk_court" | "malaysia_court";
+  source?: "portal" | "api";
   candidateDob?: string;
   birthCity?: string;
   interpolHasRecords?: boolean;
@@ -387,6 +388,42 @@ export interface Organisation {
   employmentRates?: Record<string, number>;
   educationRates?: Record<string, number>;
   serviceTats?: Record<string, string>;
+  apiEnabled?: boolean;
+}
+
+export interface ApiKey {
+  _id: string;
+  orgId: string;
+  orgName: string;
+  keySuffix: string;
+  keyPrefix: string;
+  permissions: string[];
+  rateLimit: number;
+  status: "active" | "revoked";
+  createdBy: string;
+  createdAt: string;
+  lastUsedAt: string | null;
+  revokedAt: string | null;
+}
+
+export interface ApiUsageSummary {
+  totalCalls: number;
+  successfulCalls: number;
+  failedCalls: number;
+  totalCost: number;
+  currency: string;
+  breakdown: Record<string, { count: number; cost: number }>;
+  recentLogs: Array<{
+    _id: string;
+    endpoint: string;
+    checkType: string;
+    method: string;
+    statusCode: number;
+    cost: number;
+    timestamp: string | null;
+    ipAddress?: string;
+    responseTimeMs?: number;
+  }>;
 }
 
 export interface ClientSuggestion {
@@ -408,6 +445,11 @@ interface PortalContextType {
   verifications: Verification[];
   invoices: Invoice[];
   verifiers: Verifier[];
+  apiKeys: ApiKey[];
+  apiUsage: ApiUsageSummary | null;
+  generateApiKey: () => Promise<any>;
+  revokeApiKey: (apiKeyId: string) => Promise<void>;
+  fetchApiUsage: () => Promise<void>;
   settings: CompanySettings;
   organisation: Organisation | null;
   ozcluSettings: CompanySettings | null;
@@ -559,6 +601,8 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [organisation, setOrganisation] = useState<Organisation | null>(null);
   const [ozcluSettings, setOzcluSettings] = useState<CompanySettings | null>(null);
   const [suggestions, setSuggestions] = useState<ClientSuggestion[]>([]);
+  const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
+  const [apiUsage, setApiUsage] = useState<ApiUsageSummary | null>(null);
   const [loaded, setLoaded] = useState(false);
 
   // Sync / Fetch function from MongoDB API route
@@ -628,6 +672,14 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       if (data.suggestions) {
         setSuggestions(data.suggestions);
       }
+
+      if (data.apiKeys) {
+        setApiKeys(data.apiKeys);
+      }
+
+      if (data.apiUsage) {
+        setApiUsage(data.apiUsage);
+      }
     } catch (err) {
       console.error("Error reading tables from API:", err);
     } finally {
@@ -645,6 +697,8 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setSettings(defaultSettings);
       setOrganisation(null);
       setOzcluSettings(null);
+      setApiKeys([]);
+      setApiUsage(null);
     }
   }, [isAuthenticated]);
 
@@ -1352,6 +1406,64 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   };
 
+  const generateApiKey = async () => {
+    try {
+      const res = await fetch("/api/portal-data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "generateApiKey",
+          payload: {},
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to generate API key");
+      await fetchAllData();
+      return data.apiKey;
+    } catch (err: any) {
+      console.error("Failed to generate API key:", err);
+      throw err;
+    }
+  };
+
+  const revokeApiKey = async (apiKeyId: string) => {
+    try {
+      const res = await fetch("/api/portal-data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "revokeApiKey",
+          payload: { apiKeyId },
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to revoke API key");
+      await fetchAllData();
+    } catch (err: any) {
+      console.error("Failed to revoke API key:", err);
+      throw err;
+    }
+  };
+
+  const fetchApiUsage = async () => {
+    try {
+      const res = await fetch("/api/portal-data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "getApiUsage",
+          payload: {},
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.apiUsage) {
+        setApiUsage(data.apiUsage);
+      }
+    } catch (err: any) {
+      console.error("Failed to fetch API usage:", err);
+    }
+  };
+
   return (
     <PortalContext.Provider
       value={{
@@ -1362,6 +1474,11 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         organisation,
         ozcluSettings,
         suggestions,
+        apiKeys,
+        apiUsage,
+        generateApiKey,
+        revokeApiKey,
+        fetchApiUsage,
         submitSuggestion,
         addInterpolVerification,
         addRednoticeWorldwideVerification,

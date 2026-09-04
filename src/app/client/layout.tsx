@@ -19,7 +19,8 @@ import {
   Users,
   History,
   FileText,
-  FileCheck
+  FileCheck,
+  Code
 } from "lucide-react";
 import OzcluLogo from "../components/OzcluLogo";
 
@@ -117,6 +118,11 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
             name: "Manage Verifiers",
             path: "/client/verifiers",
             icon: Users,
+          },
+          {
+            name: "API & Integration",
+            path: "/client/api-settings",
+            icon: Code,
           }
         ]
       : []),

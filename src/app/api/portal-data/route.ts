@@ -12,6 +12,7 @@ import {
 import { connectToDatabase } from "src/lib/mongodb";
 import { ObjectId } from "mongodb";
 import { getClientIp, getUserAgent, logAuditEvent } from "shared/audit";
+import { generateApiKey } from "shared/apiKeys";
 
 export async function GET(req: NextRequest) {
   try {
@@ -104,6 +105,65 @@ export async function GET(req: NextRequest) {
     });
     const cleanSuggestions = suggestions.map(s => ({ ...s, _id: s._id.toString() }));
 
+    // API keys belonging to this client's org (hashes omitted)
+    const orgId = organisation?.id || organisation?._id?.toString() || orgName;
+    const apiKeys = await db.collection("api_keys").find(
+      {
+        $or: [{ orgId }, { orgName }],
+        isDeleted: { $ne: true }
+      }
+    ).sort({ createdAt: -1 }).toArray();
+
+    const cleanApiKeys = apiKeys.map(k => ({
+      _id: k._id.toString(),
+      orgId: k.orgId,
+      orgName: k.orgName,
+      keySuffix: k.keySuffix,
+      keyPrefix: k.keyPrefix || "sk_live_",
+      permissions: k.permissions || ["*"],
+      rateLimit: k.rateLimit || 100,
+      status: k.status || "active",
+      createdBy: k.createdBy || "",
+      createdAt: k.createdAt || "",
+      lastUsedAt: k.lastUsedAt || null,
+      revokedAt: k.revokedAt || null,
+    }));
+
+    // Current month API usage summary for this org
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const usageLogs = await db.collection("api_usage_logs").find({
+      $or: [{ orgId }, { orgName }],
+      timestamp: { $gte: startOfMonth }
+    }).sort({ timestamp: -1 }).toArray();
+
+    const totalCalls = usageLogs.length;
+    const totalCost = usageLogs.reduce((sum, l) => sum + (Number(l.cost) || 0), 0);
+    const successfulCalls = usageLogs.filter(l => (l.statusCode || 200) < 400).length;
+    const failedCalls = totalCalls - successfulCalls;
+
+    const breakdownMap: Record<string, { count: number; cost: number }> = {};
+    for (const log of usageLogs) {
+      const ct = log.checkType || "other";
+      if (!breakdownMap[ct]) breakdownMap[ct] = { count: 0, cost: 0 };
+      breakdownMap[ct].count++;
+      breakdownMap[ct].cost += Number(log.cost) || 0;
+    }
+
+    const apiUsage = {
+      totalCalls,
+      successfulCalls,
+      failedCalls,
+      totalCost,
+      currency: organisation?.currency || "USD",
+      breakdown: breakdownMap,
+      recentLogs: usageLogs.slice(0, 50).map(l => ({
+        ...l,
+        _id: l._id.toString(),
+        timestamp: l.timestamp ? (l.timestamp instanceof Date ? l.timestamp.toISOString() : l.timestamp) : null,
+      }))
+    };
+
     return NextResponse.json({
       settings: cleanSettings,
       ozcluSettings: ozcluSettings ? { ...ozcluSettings, _id: ozcluSettings._id.toString() } : null,
@@ -111,7 +171,9 @@ export async function GET(req: NextRequest) {
       invoices: cleanInvoices,
       verifiers: cleanVerifiers,
       organisation: organisation ? { ...organisation, _id: organisation._id.toString() } : null,
-      suggestions: cleanSuggestions
+      suggestions: cleanSuggestions,
+      apiKeys: cleanApiKeys,
+      apiUsage,
     });
   } catch (error: any) {
     console.error("[DATA] Client portal GET error:", error.message);
@@ -255,6 +317,7 @@ export async function POST(req: NextRequest) {
           tempPassword,
           attempts: [initialAttempt],
           setupUrl,
+          source: "portal",
           createdAt: new Date().toISOString()
         });
  
@@ -681,6 +744,7 @@ export async function POST(req: NextRequest) {
           country,
           attempts: [initialAttempt],
           setupUrl,
+          source: "portal",
           createdAt: new Date().toISOString()
         });
 
@@ -825,6 +889,7 @@ export async function POST(req: NextRequest) {
           country,
           attempts: [initialAttempt],
           setupUrl,
+          source: "portal",
           createdAt: new Date().toISOString()
         });
 
@@ -1059,6 +1124,7 @@ export async function POST(req: NextRequest) {
           courtRecordStatus: "pending",
           courtRecordSummary: "Search in progress...",
           attempts: [initialAttempt],
+          source: "portal",
           createdAt: new Date().toISOString()
         });
 
@@ -1224,6 +1290,7 @@ export async function POST(req: NextRequest) {
           idProofFile: payload.idProofFile || null,
           idProofFileName: payload.idProofFileName || "",
           interpolCompletedAt: new Date().toISOString(),
+          source: "portal",
           createdAt: new Date().toISOString()
         });
 
@@ -1373,6 +1440,7 @@ export async function POST(req: NextRequest) {
           idProofFile: payload.idProofFile || null,
           idProofFileName: payload.idProofFileName || "",
           rednoticeWorldwideCompletedAt: new Date().toISOString(),
+          source: "portal",
           createdAt: new Date().toISOString()
         });
 
@@ -1560,6 +1628,7 @@ export async function POST(req: NextRequest) {
           idProofFile: idProofFile || null,
           idProofFileName: idProofFileName || "",
           sapsWantedCompletedAt: hasMatch ? null : new Date().toISOString(),
+          source: "portal",
           createdAt: new Date().toISOString(),
         });
 
@@ -1636,6 +1705,7 @@ export async function POST(req: NextRequest) {
           idProofFile: payload.idProofFile || null,
           idProofFileName: payload.idProofFileName || "",
           safliiCourtCompletedAt: null,
+          source: "portal",
           createdAt: new Date().toISOString()
         });
 
@@ -1725,6 +1795,7 @@ export async function POST(req: NextRequest) {
           idProofFile: payload.idProofFile || null,
           idProofFileName: payload.idProofFileName || "",
           ukCourtCompletedAt: null,
+          source: "portal",
           createdAt: new Date().toISOString()
         });
 
@@ -1834,6 +1905,7 @@ export async function POST(req: NextRequest) {
           idProofFile: payload.idProofFile || null,
           idProofFileName: payload.idProofFileName || "",
           malaysiaCourtCompletedAt: null,
+          source: "portal",
           createdAt: new Date().toISOString()
         });
 
@@ -2059,6 +2131,7 @@ export async function POST(req: NextRequest) {
           idProofFile: payload.idProofFile || null,
           idProofFileName: payload.idProofFileName || "",
           price: 15,
+          source: "portal",
           createdAt: new Date().toISOString()
         });
 
@@ -2168,6 +2241,7 @@ export async function POST(req: NextRequest) {
           attempts: [initialAttempt],
           setupUrl,
           digitalAddressSubmitted: false,
+          source: "portal",
           createdAt: new Date().toISOString()
         });
 
@@ -2193,6 +2267,163 @@ export async function POST(req: NextRequest) {
         });
 
         return NextResponse.json({ success: true, id: finalId, setupUrl });
+      }
+      case "generateApiKey": {
+        if (user.role !== "org_owner") {
+          return NextResponse.json({ error: "Only organisation owners can generate API keys" }, { status: 403 });
+        }
+
+        const org = await db.collection("organisations").findOne({
+          name: { $regex: new RegExp("^" + sessionOrgName.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&") + "$", "i") },
+          isDeleted: { $ne: true }
+        });
+
+        if (!org) {
+          return NextResponse.json({ error: "Organisation record not found" }, { status: 404 });
+        }
+
+        const { fullKey, keyHash, keySuffix, keyPrefix } = generateApiKey();
+
+        const newKeyDoc = {
+          orgId: org.id || org._id.toString(),
+          orgName: org.name,
+          keyHash,
+          keySuffix,
+          keyPrefix,
+          permissions: ["*"],
+          rateLimit: 100,
+          status: "active",
+          createdBy: user.email,
+          createdAt: new Date().toISOString(),
+          lastUsedAt: null,
+          revokedAt: null,
+          isDeleted: false
+        };
+
+        const insertResult = await db.collection("api_keys").insertOne(newKeyDoc);
+
+        await db.collection("organisations").updateOne(
+          { _id: org._id },
+          { $set: { apiEnabled: true, updatedAt: new Date().toISOString() } }
+        );
+
+        await logAuditEvent(db, {
+          actorUserId: user.id,
+          actorEmail: user.email,
+          actorRole: user.role,
+          portal: "client",
+          action: "generate_api_key",
+          targetType: "api_key",
+          targetId: insertResult.insertedId.toString(),
+          metadata: { orgName: org.name, keySuffix },
+          ip,
+          userAgent,
+          outcome: "success"
+        });
+
+        return NextResponse.json({
+          success: true,
+          apiKey: {
+            _id: insertResult.insertedId.toString(),
+            fullKey,
+            keySuffix,
+            keyPrefix,
+            orgId: newKeyDoc.orgId,
+            orgName: newKeyDoc.orgName,
+            permissions: newKeyDoc.permissions,
+            rateLimit: newKeyDoc.rateLimit,
+            status: newKeyDoc.status,
+            createdAt: newKeyDoc.createdAt
+          }
+        });
+      }
+      case "revokeApiKey": {
+        if (user.role !== "org_owner") {
+          return NextResponse.json({ error: "Only organisation owners can revoke API keys" }, { status: 403 });
+        }
+
+        const { apiKeyId } = payload || {};
+        if (!apiKeyId) {
+          return NextResponse.json({ error: "apiKeyId is required" }, { status: 400 });
+        }
+
+        const query = ObjectId.isValid(apiKeyId) ? { _id: new ObjectId(apiKeyId) } : { _id: apiKeyId };
+        const targetKey = await db.collection("api_keys").findOne(query);
+
+        if (!targetKey) {
+          return NextResponse.json({ error: "API key not found" }, { status: 404 });
+        }
+
+        // Tenant isolation check
+        const orgNameRegex = new RegExp("^" + sessionOrgName.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&") + "$", "i");
+        if (!orgNameRegex.test(targetKey.orgName)) {
+          return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+        }
+
+        await db.collection("api_keys").updateOne(
+          query,
+          { $set: { status: "revoked", revokedAt: new Date().toISOString(), revokedBy: user.email } }
+        );
+
+        await logAuditEvent(db, {
+          actorUserId: user.id,
+          actorEmail: user.email,
+          actorRole: user.role,
+          portal: "client",
+          action: "revoke_api_key",
+          targetType: "api_key",
+          targetId: apiKeyId,
+          metadata: { orgName: targetKey.orgName, keySuffix: targetKey.keySuffix },
+          ip,
+          userAgent,
+          outcome: "success"
+        });
+
+        return NextResponse.json({ success: true });
+      }
+      case "getApiUsage": {
+        const org = await db.collection("organisations").findOne({
+          name: { $regex: new RegExp("^" + sessionOrgName.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&") + "$", "i") },
+          isDeleted: { $ne: true }
+        });
+        const orgId = org?.id || org?._id?.toString() || sessionOrgName;
+
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const usageLogs = await db.collection("api_usage_logs").find({
+          $or: [{ orgId }, { orgName: sessionOrgName }],
+          timestamp: { $gte: startOfMonth }
+        }).sort({ timestamp: -1 }).toArray();
+
+        const totalCalls = usageLogs.length;
+        const totalCost = usageLogs.reduce((sum, l) => sum + (Number(l.cost) || 0), 0);
+        const successfulCalls = usageLogs.filter(l => (l.statusCode || 200) < 400).length;
+        const failedCalls = totalCalls - successfulCalls;
+
+        const breakdownMap: Record<string, { count: number; cost: number }> = {};
+        for (const log of usageLogs) {
+          const ct = log.checkType || "other";
+          if (!breakdownMap[ct]) breakdownMap[ct] = { count: 0, cost: 0 };
+          breakdownMap[ct].count++;
+          breakdownMap[ct].cost += Number(log.cost) || 0;
+        }
+
+        return NextResponse.json({
+          success: true,
+          apiUsage: {
+            totalCalls,
+            successfulCalls,
+            failedCalls,
+            totalCost,
+            currency: org?.currency || "USD",
+            breakdown: breakdownMap,
+            recentLogs: usageLogs.slice(0, 50).map(l => ({
+              ...l,
+              _id: l._id.toString(),
+              timestamp: l.timestamp ? (l.timestamp instanceof Date ? l.timestamp.toISOString() : l.timestamp) : null,
+            }))
+          }
+        });
       }
       default:
 
