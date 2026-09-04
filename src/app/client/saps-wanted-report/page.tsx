@@ -163,7 +163,7 @@ function SapsWantedReportContent() {
               <div className="h-10 w-px bg-slate-200 hidden sm:block"></div>
               <div>
                 <span className="text-[10px] font-mono font-extrabold uppercase tracking-widest text-blue-900 block">
-                  Official Verification Certificate
+                  Official Verification Report
                 </span>
                 <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
                   SAPS Wanted Persons Check
@@ -175,6 +175,7 @@ function SapsWantedReportContent() {
             </div>
 
             <div className="flex flex-col sm:items-end text-left sm:text-right">
+              <img src="/sa-judiciary-logo.png" alt="Republic of South Africa" className="h-8 max-w-[160px] object-contain mb-1 hidden sm:block opacity-90" />
               <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
                 Report Number
               </span>
