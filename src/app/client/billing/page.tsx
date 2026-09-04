@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { usePortal, Invoice, InvoiceActivity } from "src/context/PortalContext";
+import { getCurrencySymbol } from "src/lib/currencies";
 import { 
   Download, 
   Receipt, 
@@ -286,15 +287,15 @@ export default function ClientBillingPage() {
         <div className="bg-white/80 border border-[#016e1c]/20 rounded-2xl p-4 min-w-[280px] flex flex-col gap-2 shadow-sm">
           <div className="flex justify-between items-baseline text-xs">
             <span className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">Unpaid Invoices</span>
-            <span className="font-bold text-slate-800 font-mono">${unpaidBalance.toFixed(2)}</span>
+            <span className="font-bold text-slate-800 font-mono">{getCurrencySymbol(organisation?.currency)}{unpaidBalance.toFixed(2)}</span>
           </div>
           <div className="flex justify-between items-baseline text-xs border-b border-slate-200/60 pb-2 mb-1">
             <span className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">{currentMonthName} {currentYear} (Live)</span>
-            <span className="font-bold text-emerald-700 font-mono">${liveTotal.toFixed(2)}</span>
+            <span className="font-bold text-emerald-700 font-mono">{getCurrencySymbol(organisation?.currency)}{liveTotal.toFixed(2)}</span>
           </div>
           <div className="flex justify-between items-baseline">
             <span className="text-[10px] text-[#00450e] uppercase tracking-wider font-extrabold">Current Dues</span>
-            <span className="font-black text-xl text-[#00450e] font-mono">${totalDues.toFixed(2)}</span>
+            <span className="font-black text-xl text-[#00450e] font-mono">{getCurrencySymbol(organisation?.currency)}{totalDues.toFixed(2)}</span>
           </div>
         </div>
       </div>
@@ -304,7 +305,7 @@ export default function ClientBillingPage() {
         <div className="bg-white border border-[#eaf0e4] rounded-3xl p-6 shadow-xs relative overflow-hidden">
           <div className="absolute top-0 left-0 right-0 h-1 bg-red-400"></div>
           <p className="font-label-caps text-[#475569] text-[10px] font-bold tracking-wider uppercase mb-1">Total Outstanding</p>
-          <p className="font-display-lg text-[#181d16] font-bold tracking-tight text-3xl font-mono">${unpaidBalance.toFixed(2)}</p>
+          <p className="font-display-lg text-[#181d16] font-bold tracking-tight text-3xl font-mono">{getCurrencySymbol(organisation?.currency)}{unpaidBalance.toFixed(2)}</p>
           <p className="text-slate-500 text-xs mt-1 font-medium">Due across outstanding statements</p>
         </div>
         <div className="bg-white border border-[#eaf0e4] rounded-3xl p-6 shadow-xs relative overflow-hidden">
@@ -354,7 +355,7 @@ export default function ClientBillingPage() {
                       <td className="py-3.5 px-4 font-bold text-[#181d16] text-xs">{inv.id}</td>
                       <td className="py-3.5 px-4 text-[#475569] text-xs font-semibold">{inv.date}</td>
                       <td className="py-3.5 px-4 text-[#475569] text-xs font-semibold">{inv.dueDate}</td>
-                      <td className="py-3.5 px-4 text-[#181d16] font-bold text-xs font-mono">${inv.amount.toFixed(2)}</td>
+                      <td className="py-3.5 px-4 text-[#181d16] font-bold text-xs font-mono">{getCurrencySymbol(inv.currency || organisation?.currency)}{inv.amount.toFixed(2)}</td>
                       <td className="py-3.5 px-4">
                         <span
                           className={`inline-block font-bold px-2 py-0.5 rounded border text-[9px] uppercase tracking-wider ${
@@ -449,7 +450,7 @@ export default function ClientBillingPage() {
                   <div className="col-span-2 border-t border-[#f0f5ea]/40 pt-2 mt-1 flex justify-between items-baseline">
                     <div className="text-left">
                       <span className="text-[#475569] font-label-caps text-[9px] font-bold tracking-wider block">AMOUNT DUE</span>
-                      <span className="text-xl font-extrabold text-[#181d16] font-mono">${activeInvoice.amount.toFixed(2)}</span>
+                      <span className="text-xl font-extrabold text-[#181d16] font-mono">{getCurrencySymbol(activeInvoice.currency || organisation?.currency)}{activeInvoice.amount.toFixed(2)}</span>
                     </div>
                     <div className="text-right">
                       <span className="text-[#475569] font-label-caps text-[9px] font-bold tracking-wider block">STATUS</span>

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { usePortal } from "src/context/PortalContext";
+import { getCurrencySymbol } from "src/lib/currencies";
 import { 
   Building,
   User,
@@ -427,9 +428,15 @@ export default function SettingsPage() {
               <p className="text-xs text-slate-500 font-medium mt-0.5">Custom rates and SLA Turn Around Times (TAT) agreed with Ozclu Verify.</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 bg-[#f6fbf0] border border-[#eaf0e4] px-3.5 py-1.5 rounded-full text-xs font-bold text-[#00450e]">
-            <ShieldCheck className="w-4 h-4 text-[#016e1c]" />
-            <span>Organisation Plan: {organisation?.paymentPlan || "Standard Enterprise"}</span>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-2 bg-[#f6fbf0] border border-[#eaf0e4] px-3.5 py-1.5 rounded-full text-xs font-bold text-[#00450e]">
+              <ShieldCheck className="w-4 h-4 text-[#016e1c]" />
+              <span>Organisation Plan: {organisation?.paymentPlan || "Standard Enterprise"}</span>
+            </div>
+            <div className="flex items-center gap-1.5 bg-[#f0f5ea] border border-[#eaf0e4] px-3 py-1.5 rounded-full text-xs font-bold text-[#00450e]">
+              <span className="material-symbols-outlined text-sm">currency_exchange</span>
+              <span>Currency: {organisation?.currency || "USD"} ({getCurrencySymbol(organisation?.currency)})</span>
+            </div>
           </div>
         </div>
 
@@ -464,7 +471,7 @@ export default function SettingsPage() {
                         <div className="flex items-center gap-2">
                           <div>
                             <span className="text-sm font-extrabold text-[#00450e]">
-                              ${svc.rate.toFixed(2)}
+                              {getCurrencySymbol(organisation?.currency)}{svc.rate.toFixed(2)}
                             </span>
                             <span className="text-[10px] text-slate-400 font-normal"> / check</span>
                           </div>
@@ -524,7 +531,7 @@ export default function SettingsPage() {
                                 return (
                                   <div key={country} className="bg-[#f6fbf0] border border-[#eaf0e4] rounded-xl p-2 text-center flex flex-col items-center">
                                     <span className="text-[10px] font-bold text-slate-600 block">{country}</span>
-                                    <span className="text-xs font-extrabold text-[#00450e] mt-0.5">${Number(rateVal).toFixed(2)}</span>
+                                    <span className="text-xs font-extrabold text-[#00450e] mt-0.5">{getCurrencySymbol(organisation?.currency)}{Number(rateVal).toFixed(2)}</span>
                                   </div>
                                 );
                               })}
@@ -553,7 +560,7 @@ export default function SettingsPage() {
                                 return (
                                   <div key={country} className="bg-[#f6fbf0] border border-[#eaf0e4] rounded-xl p-2 text-center flex flex-col items-center">
                                     <span className="text-[10px] font-bold text-slate-600 block">{country}</span>
-                                    <span className="text-xs font-extrabold text-[#00450e] mt-0.5">${Number(rateVal).toFixed(2)}</span>
+                                    <span className="text-xs font-extrabold text-[#00450e] mt-0.5">{getCurrencySymbol(organisation?.currency)}{Number(rateVal).toFixed(2)}</span>
                                   </div>
                                 );
                               })}

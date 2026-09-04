@@ -291,6 +291,7 @@ export interface Invoice {
   date: string;
   dueDate: string;
   amount: number;
+  currency?: string;
   status: "Paid" | "Unpaid" | "Overdue" | "Pending";
   month?: string;
   year?: number;
@@ -350,6 +351,7 @@ export interface Organisation {
   orgNumber?: number;
   paymentPlan: string;
   monthlyRate: number;
+  currency?: string;
   billingDay: number;
   bankName?: string;
   accountNumber?: string;

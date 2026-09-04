@@ -481,10 +481,12 @@ export async function POST(req: NextRequest) {
         break;
       }
       case "addInvoice": {
-        const { id, orgName, date, dueDate, amount, status, generationType, activityLog } = payload;
+        const { id, orgName, date, dueDate, amount, currency, status, generationType, activityLog } = payload;
         // Security: force orgName to session org
         await db.collection("invoices").insertOne({
-          id, orgName: sessionOrgName || orgName, date, dueDate, amount, status, generationType: generationType || "Manual", activityLog: activityLog || []
+          id, orgName: sessionOrgName || orgName, date, dueDate, amount,
+          currency: currency || "USD",
+          status, generationType: generationType || "Manual", activityLog: activityLog || []
         });
         await logAuditEvent(db, {
           actorUserId: user.id,

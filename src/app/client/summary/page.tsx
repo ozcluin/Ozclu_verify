@@ -41,6 +41,7 @@ import {
   FileEdit,
 } from "lucide-react";
 import CandidateFillModal from "src/app/components/CandidateFillModal";
+import { getCurrencySymbol } from "src/lib/currencies";
 
 // ─── Helper: format elapsed/remaining seconds into "Xm Ys" ───
 function formatDuration(totalSeconds: number): string {
@@ -1454,7 +1455,7 @@ export default function OrderSummaryPage() {
             
             <div className="relative z-10">
               <p className="font-label-caps text-[#475569] text-[10px] font-bold tracking-wider uppercase mb-1">Total Outstanding</p>
-              <p className="font-display-lg text-[#181d16] font-bold tracking-tight text-3xl">${(unpaidBalance + currentMonthRunningTotal).toFixed(2)}</p>
+              <p className="font-display-lg text-[#181d16] font-bold tracking-tight text-3xl">{getCurrencySymbol(organisation?.currency)}{(unpaidBalance + currentMonthRunningTotal).toFixed(2)}</p>
               <p className="text-slate-500 text-xs mt-1 font-medium">Due by next statement</p>
             </div>
 
@@ -1467,7 +1468,7 @@ export default function OrderSummaryPage() {
                 </div>
                 <div className="flex justify-between items-baseline">
                   <span className="text-xs text-[#475569] font-medium">{currentMonthCompleted} verification{currentMonthCompleted !== 1 ? "s" : ""}</span>
-                  <span className="font-bold text-sm text-[#181d16]">${currentMonthRunningTotal.toFixed(2)}</span>
+                  <span className="font-bold text-sm text-[#181d16]">{getCurrencySymbol(organisation?.currency)}{currentMonthRunningTotal.toFixed(2)}</span>
                 </div>
               </div>
             )}
@@ -1493,7 +1494,7 @@ export default function OrderSummaryPage() {
                         <span className="text-[10px] text-[#475569] font-medium">{displayPeriod} · Due {inv.dueDate}</span>
                       </div>
                       <div className="flex flex-col items-end gap-1">
-                        <span className="font-bold text-xs text-[#181d16]">${inv.amount.toFixed(2)}</span>
+                        <span className="font-bold text-xs text-[#181d16]">{getCurrencySymbol(inv.currency || organisation?.currency)}{inv.amount.toFixed(2)}</span>
                         <span
                           className={`text-[9px] font-bold px-1.5 py-0.5 rounded border uppercase tracking-wider ${
                             inv.status === "Paid"
@@ -2013,7 +2014,7 @@ export default function OrderSummaryPage() {
                   <div className="col-span-2 border-t border-[#f0f5ea]/40 pt-2 mt-1 flex justify-between items-baseline">
                     <div>
                       <span className="text-[#475569] font-label-caps text-[9px] font-bold tracking-wider block">AMOUNT DUE</span>
-                      <span className="text-xl font-extrabold text-[#181d16] font-mono">${activeInvoice.amount.toFixed(2)}</span>
+                      <span className="text-xl font-extrabold text-[#181d16] font-mono">{getCurrencySymbol(activeInvoice.currency || organisation?.currency)}{activeInvoice.amount.toFixed(2)}</span>
                     </div>
                     <div className="text-right">
                       <span className="text-[#475569] font-label-caps text-[9px] font-bold tracking-wider block">STATUS</span>
