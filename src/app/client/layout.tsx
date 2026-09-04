@@ -118,11 +118,6 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
             name: "Manage Verifiers",
             path: "/client/verifiers",
             icon: Users,
-          },
-          {
-            name: "API & Integration",
-            path: "/client/api-settings",
-            icon: Code,
           }
         ]
       : []),

@@ -382,7 +382,7 @@ export default function ApiDocsPage() {
 
         <div className="flex items-center gap-3">
           <Link
-            href="/client/api-settings"
+            href="/client/verifiers?tab=api"
             className="px-4 py-1.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-semibold flex items-center gap-1.5 transition-colors"
           >
             <Key className="w-3.5 h-3.5" />
