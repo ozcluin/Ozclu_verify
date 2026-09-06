@@ -37,8 +37,9 @@ import {
 import { INDIAN_STATES } from "src/lib/courts-mapping";
 import { Country, State, City } from "country-state-city";
 import CandidateFillModal from "src/app/components/CandidateFillModal";
+import CourtPersonalDetailsFields, { CourtAddressItem } from "src/app/components/CourtPersonalDetailsFields";
 
-type ServiceType = "identity" | "court_record" | "employment" | "education" | "interpol" | "passport" | "digital_address" | "rednotice_worldwide" | "saflii_court" | "saps_wanted" | "uk_court" | "malaysia_court";
+type ServiceType = "identity" | "court_record" | "employment" | "education" | "interpol" | "passport" | "digital_address" | "rednotice_worldwide" | "saflii_court" | "saps_wanted" | "uk_court" | "malaysia_court" | "singapore_court" | "philippines_court";
 
 const formatSetupUrl = (url?: string) => {
   if (!url) return "";
@@ -474,24 +475,36 @@ function SafliiCourtSuccessModal({ sacCreatedId, sacCandidateName, onCreateAnoth
 
           <div className="flex items-center gap-1.5 text-[9px] sm:text-[10px] text-[#64748B]">
             <Sparkles className="w-3 h-3 text-[#00450e] shrink-0" />
-            <span>You can check the results in Order Summary once the search completes.</span>
+            <span>You can review the official SA court report immediately or track in Order Summary.</span>
           </div>
 
-          <div className="flex gap-2 sm:gap-3 mt-3 sm:mt-4 w-full">
+          <div className="flex flex-col gap-2.5 w-full mt-1">
             <button
-              type="button"
-              onClick={onCreateAnother}
-              className="flex-1 py-2.5 sm:py-3 border border-[#eaf0e4] rounded-xl font-semibold text-[11px] sm:text-xs text-[#334155] hover:bg-[#f6fbf0] transition-colors cursor-pointer bg-white"
+              onClick={() => {
+                window.open(`/client/saflii-court-report?id=${sacCreatedId}`, "_blank");
+              }}
+              className="w-full py-3 bg-gradient-to-r from-emerald-900 to-slate-900 hover:from-emerald-950 hover:to-slate-950 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-md transition-all"
             >
-              Create Another
+              <span>View Official SA Court Report</span>
+              <ExternalLink className="w-3.5 h-3.5" />
             </button>
-            <button
-              type="button"
-              onClick={onGoToSummary}
-              className="flex-1 py-2.5 sm:py-3 bg-[#181d16] text-white rounded-xl font-semibold text-[11px] sm:text-xs hover:bg-[#1E293B] transition-all cursor-pointer shadow-sm"
-            >
-              Go to Summary
-            </button>
+
+            <div className="grid grid-cols-2 gap-2 sm:gap-3 w-full">
+              <button
+                type="button"
+                onClick={onCreateAnother}
+                className="py-2.5 sm:py-3 border border-[#eaf0e4] rounded-xl font-semibold text-[11px] sm:text-xs text-[#334155] hover:bg-[#f6fbf0] transition-colors cursor-pointer bg-white"
+              >
+                Create Another
+              </button>
+              <button
+                type="button"
+                onClick={onGoToSummary}
+                className="py-2.5 sm:py-3 bg-[#181d16] text-white rounded-xl font-semibold text-[11px] sm:text-xs hover:bg-[#1E293B] transition-all cursor-pointer shadow-sm"
+              >
+                Go to Summary
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -644,6 +657,176 @@ function MalaysiaCourtSuccessModal({
             >
               <span>View Official Malaysia Court Report</span>
               <ExternalLink className="w-4 h-4" />
+            </button>
+
+            <div className="grid grid-cols-2 gap-2 sm:gap-3 w-full">
+              <button
+                type="button"
+                onClick={onCreateAnother}
+                className="py-2.5 sm:py-3 border border-[#eaf0e4] rounded-xl font-semibold text-[11px] sm:text-xs text-[#334155] hover:bg-[#f6fbf0] transition-colors cursor-pointer bg-white"
+              >
+                Check Another
+              </button>
+              <button
+                type="button"
+                onClick={onGoToSummary}
+                className="py-2.5 sm:py-3 border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-xl transition-all cursor-pointer text-xs bg-white"
+              >
+                Go to Summary
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SingaporeCourtSuccessModal({
+  sgcCreatedId,
+  sgcCandidateName,
+  onCreateAnother,
+  onGoToSummary,
+}: {
+  sgcCreatedId: string;
+  sgcCandidateName: string;
+  onCreateAnother: () => void;
+  onGoToSummary: () => void;
+}) {
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, []);
+
+  return (
+    <div className="fixed inset-0 bg-slate-400/10 backdrop-blur-md flex items-center justify-center px-3 sm:px-4 z-[99999] animate-fade-in overflow-y-auto">
+      <div className="bg-white border border-[#eaf0e4] rounded-2xl sm:rounded-3xl p-5 sm:p-8 max-w-lg w-full shadow-2xl relative animate-scale-up">
+        <div className="flex flex-col items-center text-center gap-3 sm:gap-4">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-rose-50 border border-rose-200 rounded-full flex items-center justify-center text-rose-700 mb-1 sm:mb-2 animate-bounce-subtle">
+            <Scale className="w-6 h-6 sm:w-8 sm:h-8 text-rose-700" />
+          </div>
+          <h3 className="font-headline-md text-[#181d16] font-bold text-lg sm:text-xl">Singapore Court Search Initiated!</h3>
+          <p className="font-body-sm text-[#475569] leading-relaxed text-xs sm:text-sm">
+            Singapore judicial hearing registries search has been initiated for <strong className="text-[#181d16] font-bold">{sgcCandidateName || "the candidate"}</strong>.
+            Querying State Courts and Supreme Court registries in the background.
+          </p>
+
+          <div className="w-full mt-1 sm:mt-2 p-3 sm:p-4 bg-[#f0f5ea]/25 border border-[#eaf0e4] rounded-xl sm:rounded-2xl text-left flex flex-col gap-2 shadow-2xs">
+            <div className="flex justify-between items-center text-[11px] sm:text-xs">
+              <span className="text-[#475569] font-semibold">Verification ID</span>
+              <span className="font-mono text-[#181d16] font-bold">{sgcCreatedId}</span>
+            </div>
+            <div className="flex justify-between items-center text-[11px] sm:text-xs">
+              <span className="text-[#475569] font-semibold">Status</span>
+              <span className="text-amber-600 font-bold flex items-center gap-1">
+                <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></div>
+                Processing
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5 text-[9px] sm:text-[10px] text-[#64748B]">
+            <Sparkles className="w-3 h-3 text-[#00450e] shrink-0" />
+            <span>You can review the official Singapore court report certificate immediately or track in Order Summary.</span>
+          </div>
+
+          <div className="flex flex-col gap-2.5 w-full mt-1">
+            <button
+              onClick={() => {
+                window.open(`/client/singapore-court-report?id=${sgcCreatedId}`, "_blank");
+              }}
+              className="w-full py-3 bg-gradient-to-r from-rose-900 to-slate-900 hover:from-rose-950 hover:to-slate-950 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-md transition-all"
+            >
+              <span>View Official Singapore Court Report</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </button>
+
+            <div className="grid grid-cols-2 gap-2 sm:gap-3 w-full">
+              <button
+                type="button"
+                onClick={onCreateAnother}
+                className="py-2.5 sm:py-3 border border-[#eaf0e4] rounded-xl font-semibold text-[11px] sm:text-xs text-[#334155] hover:bg-[#f6fbf0] transition-colors cursor-pointer bg-white"
+              >
+                Check Another
+              </button>
+              <button
+                type="button"
+                onClick={onGoToSummary}
+                className="py-2.5 sm:py-3 border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-xl transition-all cursor-pointer text-xs bg-white"
+              >
+                Go to Summary
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PhilippinesCourtSuccessModal({
+  phcCreatedId,
+  phcCandidateName,
+  onCreateAnother,
+  onGoToSummary,
+}: {
+  phcCreatedId: string;
+  phcCandidateName: string;
+  onCreateAnother: () => void;
+  onGoToSummary: () => void;
+}) {
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, []);
+
+  return (
+    <div className="fixed inset-0 bg-slate-400/10 backdrop-blur-md flex items-center justify-center px-3 sm:px-4 z-[99999] animate-fade-in overflow-y-auto">
+      <div className="bg-white border border-[#eaf0e4] rounded-2xl sm:rounded-3xl p-5 sm:p-8 max-w-lg w-full shadow-2xl relative animate-scale-up">
+        <div className="flex flex-col items-center text-center gap-3 sm:gap-4">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-amber-50 border border-amber-200 rounded-full flex items-center justify-center text-amber-700 mb-1 sm:mb-2 animate-bounce-subtle">
+            <Scale className="w-6 h-6 sm:w-8 sm:h-8 text-amber-700" />
+          </div>
+          <h3 className="font-headline-md text-[#181d16] font-bold text-lg sm:text-xl">Philippines Court Search Initiated!</h3>
+          <p className="font-body-sm text-[#475569] leading-relaxed text-xs sm:text-sm">
+            Philippines judicial case docket check has been initiated for <strong className="text-[#181d16] font-bold">{phcCandidateName || "the candidate"}</strong>.
+            Querying Supreme Court and Regional Trial Court records across target provinces.
+          </p>
+
+          <div className="w-full mt-1 sm:mt-2 p-3 sm:p-4 bg-[#f0f5ea]/25 border border-[#eaf0e4] rounded-xl sm:rounded-2xl text-left flex flex-col gap-2 shadow-2xs">
+            <div className="flex justify-between items-center text-[11px] sm:text-xs">
+              <span className="text-[#475569] font-semibold">Verification ID</span>
+              <span className="font-mono text-[#181d16] font-bold">{phcCreatedId}</span>
+            </div>
+            <div className="flex justify-between items-center text-[11px] sm:text-xs">
+              <span className="text-[#475569] font-semibold">Status</span>
+              <span className="text-amber-600 font-bold flex items-center gap-1">
+                <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></div>
+                Processing
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5 text-[9px] sm:text-[10px] text-[#64748B]">
+            <Sparkles className="w-3 h-3 text-[#00450e] shrink-0" />
+            <span>You can review the official Philippines court report certificate immediately or track in Order Summary.</span>
+          </div>
+
+          <div className="flex flex-col gap-2.5 w-full mt-1">
+            <button
+              onClick={() => {
+                window.open(`/client/philippines-court-report?id=${phcCreatedId}`, "_blank");
+              }}
+              className="w-full py-3 bg-gradient-to-r from-amber-900 to-slate-900 hover:from-amber-950 hover:to-slate-950 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-md transition-all"
+            >
+              <span>View Official Philippines Court Report</span>
+              <ExternalLink className="w-3.5 h-3.5" />
             </button>
 
             <div className="grid grid-cols-2 gap-2 sm:gap-3 w-full">
@@ -945,6 +1128,12 @@ function FlowIllustration({ activeService }: { activeService: ServiceType }) {
     dbLabel = "SAPS Police DB";
     clientLabel = "Initiate Check";
     candidateLabel = "SAPS Crime Registry";
+  } else if (activeService === "saflii_court") {
+    primaryColor = "#047857";
+    secondaryColor = "#10b981";
+    dbLabel = "SAFLII Registry";
+    clientLabel = "Initiate Search";
+    candidateLabel = "Target Provinces";
   } else if (activeService === "uk_court") {
     primaryColor = "#312e81";
     secondaryColor = "#4f46e5";
@@ -957,6 +1146,18 @@ function FlowIllustration({ activeService }: { activeService: ServiceType }) {
     dbLabel = "Portal eJudgment";
     clientLabel = "Initiate Search";
     candidateLabel = "MY Court Records";
+  } else if (activeService === "singapore_court") {
+    primaryColor = "#be123c";
+    secondaryColor = "#fb7185";
+    dbLabel = "SG Courts Hearing";
+    clientLabel = "Initiate Search";
+    candidateLabel = "Hearing & Addresses";
+  } else if (activeService === "philippines_court") {
+    primaryColor = "#b45309";
+    secondaryColor = "#f59e0b";
+    dbLabel = "PH Court Docket";
+    clientLabel = "Initiate Search";
+    candidateLabel = "Station & Provinces";
   }
 
   return (
@@ -1115,8 +1316,11 @@ function FlowDiagram({ title, activeService }: { title: string; activeService: S
   else if (activeService === "passport") colorTheme = "linear-gradient(to right, #4338ca, #6366f1)";
   else if (activeService === "digital_address") colorTheme = "linear-gradient(to right, #0891b2, #06b6d4)";
   else if (activeService === "saps_wanted") colorTheme = "linear-gradient(to right, #1e3a8a, #2563eb)";
+  else if (activeService === "saflii_court") colorTheme = "linear-gradient(to right, #047857, #10b981)";
   else if (activeService === "uk_court") colorTheme = "linear-gradient(to right, #312e81, #4f46e5)";
   else if (activeService === "malaysia_court") colorTheme = "linear-gradient(to right, #065f46, #059669)";
+  else if (activeService === "singapore_court") colorTheme = "linear-gradient(to right, #be123c, #fb7185)";
+  else if (activeService === "philippines_court") colorTheme = "linear-gradient(to right, #b45309, #f59e0b)";
 
   return (
     <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-md w-full">
@@ -1142,7 +1346,7 @@ function FlowDiagram({ title, activeService }: { title: string; activeService: S
 export default function IdentityVerification() {
   const router = useRouter();
   const { user, profile } = useAuth();
-  const { addVerification, addEmploymentVerification, addEducationVerification, addCourtRecordVerification, addInterpolVerification, addRednoticeWorldwideVerification, addSafliiCourtVerification, addSapsWantedVerification, addUkCourtVerification, addMalaysiaCourtVerification, addPassportVerification, addDigitalAddressVerification, settings, removeRecentRequestingOrg, organisation } = usePortal();
+  const { addVerification, addEmploymentVerification, addEducationVerification, addCourtRecordVerification, addInterpolVerification, addRednoticeWorldwideVerification, addSafliiCourtVerification, addSapsWantedVerification, addUkCourtVerification, addMalaysiaCourtVerification, addSingaporeCourtVerification, addPhilippinesCourtVerification, addPassportVerification, addDigitalAddressVerification, settings, removeRecentRequestingOrg, organisation } = usePortal();
 
   const [activeFillModal, setActiveFillModal] = useState<{
     isOpen: boolean;
@@ -1182,6 +1386,16 @@ export default function IdentityVerification() {
   const [sacCandidateName, setSacCandidateName] = useState("");
   const [sacCandidateDob, setSacCandidateDob] = useState("");
   const [sacBirthCity, setSacBirthCity] = useState("");
+  const [sacFatherName, setSacFatherName] = useState("");
+  const [sacMotherName, setSacMotherName] = useState("");
+  const [sacGender, setSacGender] = useState("Not required");
+  const [sacIsMarried, setSacIsMarried] = useState(false);
+  const [sacHusbandName, setSacHusbandName] = useState("");
+  const [sacIdProofType, setSacIdProofType] = useState("");
+  const [sacIdProofNumber, setSacIdProofNumber] = useState("");
+  const [sacAddresses, setSacAddresses] = useState<CourtAddressItem[]>([
+    { address: "", city: "", state: "", stateCode: "", districtCode: "", country: "South Africa", fromYear: new Date().getFullYear() - 2, toYear: new Date().getFullYear() }
+  ]);
   const [sacRequestingOrgName, setSacRequestingOrgName] = useState("");
   const [sacShowOrgDropdown, setSacShowOrgDropdown] = useState(false);
   const [sacSuccessMsg, setSacSuccessMsg] = useState("");
@@ -1213,8 +1427,18 @@ export default function IdentityVerification() {
   const [ukcCandidateName, setUkcCandidateName] = useState("");
   const [ukcCandidateDob, setUkcCandidateDob] = useState("");
   const [ukcBirthCity, setUkcBirthCity] = useState("");
+  const [ukcFatherName, setUkcFatherName] = useState("");
+  const [ukcMotherName, setUkcMotherName] = useState("");
+  const [ukcGender, setUkcGender] = useState("Not required");
+  const [ukcIsMarried, setUkcIsMarried] = useState(false);
+  const [ukcHusbandName, setUkcHusbandName] = useState("");
+  const [ukcIdProofType, setUkcIdProofType] = useState("");
+  const [ukcIdProofNumber, setUkcIdProofNumber] = useState("");
+  const [ukcAddresses, setUkcAddresses] = useState<CourtAddressItem[]>([
+    { address: "", city: "", state: "", stateCode: "", districtCode: "", country: "United Kingdom", fromYear: new Date().getFullYear() - 2, toYear: new Date().getFullYear() }
+  ]);
   const [ukcJudgmentType, setUkcJudgmentType] = useState("");
-  const [ukcJurisdiction, setUkcJurisdiction] = useState("");
+  const [ukcJurisdiction, setUkcJurisdiction] = useState("All UK Jurisdictions");
   const [ukcRequestingOrgName, setUkcRequestingOrgName] = useState("");
   const [ukcShowOrgDropdown, setUkcShowOrgDropdown] = useState(false);
   const [ukcSuccessMsg, setUkcSuccessMsg] = useState("");
@@ -1227,6 +1451,16 @@ export default function IdentityVerification() {
   // ─── Malaysia Court Check States ───
   const [mycCandidateName, setMycCandidateName] = useState("");
   const [mycCandidateDob, setMycCandidateDob] = useState("");
+  const [mycFatherName, setMycFatherName] = useState("");
+  const [mycMotherName, setMycMotherName] = useState("");
+  const [mycGender, setMycGender] = useState("Not required");
+  const [mycIsMarried, setMycIsMarried] = useState(false);
+  const [mycHusbandName, setMycHusbandName] = useState("");
+  const [mycIdProofType, setMycIdProofType] = useState("");
+  const [mycIdProofNumber, setMycIdProofNumber] = useState("");
+  const [mycAddresses, setMycAddresses] = useState<CourtAddressItem[]>([
+    { address: "", city: "", state: "", stateCode: "", districtCode: "", country: "Malaysia", fromYear: new Date().getFullYear() - 2, toYear: new Date().getFullYear() }
+  ]);
   const [mycCourtCategory, setMycCourtCategory] = useState("");
   const [mycCourtLocation, setMycCourtLocation] = useState("");
   const [mycCaseType, setMycCaseType] = useState("");
@@ -1243,6 +1477,59 @@ export default function IdentityVerification() {
   const [mycCreatedId, setMycCreatedId] = useState<string | null>(null);
   const [mycIdProofFile, setMycIdProofFile] = useState<string | null>(null);
   const [mycIdProofFileName, setMycIdProofFileName] = useState("");
+
+  // ─── Singapore Court Check States ───
+  const [sgcCandidateName, setSgcCandidateName] = useState("");
+  const [sgcCandidateDob, setSgcCandidateDob] = useState("");
+  const [sgcFatherName, setSgcFatherName] = useState("");
+  const [sgcMotherName, setSgcMotherName] = useState("");
+  const [sgcGender, setSgcGender] = useState("Not required");
+  const [sgcIsMarried, setSgcIsMarried] = useState(false);
+  const [sgcHusbandName, setSgcHusbandName] = useState("");
+  const [sgcIdProofType, setSgcIdProofType] = useState("");
+  const [sgcIdProofNumber, setSgcIdProofNumber] = useState("");
+  const [sgcAddresses, setSgcAddresses] = useState<CourtAddressItem[]>([
+    { address: "", city: "", state: "", stateCode: "", districtCode: "", country: "Singapore", fromYear: new Date().getFullYear() - 2, toYear: new Date().getFullYear() }
+  ]);
+  const [sgcCourt, setSgcCourt] = useState("");
+  const [sgcHearingType, setSgcHearingType] = useState("");
+  const [sgcStartDate, setSgcStartDate] = useState("");
+  const [sgcEndDate, setSgcEndDate] = useState("");
+  const [sgcJudgeName, setSgcJudgeName] = useState("");
+  const [sgcLawFirm, setSgcLawFirm] = useState("");
+  const [sgcRequestingOrgName, setSgcRequestingOrgName] = useState("");
+  const [sgcShowOrgDropdown, setSgcShowOrgDropdown] = useState(false);
+  const [sgcSuccessMsg, setSgcSuccessMsg] = useState("");
+  const [sgcErrorMsg, setSgcErrorMsg] = useState("");
+  const [sgcSubmitting, setSgcSubmitting] = useState(false);
+  const [sgcCreatedId, setSgcCreatedId] = useState<string | null>(null);
+  const [sgcIdProofFile, setSgcIdProofFile] = useState<string | null>(null);
+  const [sgcIdProofFileName, setSgcIdProofFileName] = useState("");
+
+  // ─── Philippines Court Check States ───
+  const [phcCandidateName, setPhcCandidateName] = useState("");
+  const [phcCandidateDob, setPhcCandidateDob] = useState("");
+  const [phcFatherName, setPhcFatherName] = useState("");
+  const [phcMotherName, setPhcMotherName] = useState("");
+  const [phcGender, setPhcGender] = useState("Not required");
+  const [phcIsMarried, setPhcIsMarried] = useState(false);
+  const [phcHusbandName, setPhcHusbandName] = useState("");
+  const [phcIdProofType, setPhcIdProofType] = useState("");
+  const [phcIdProofNumber, setPhcIdProofNumber] = useState("");
+  const [phcAddresses, setPhcAddresses] = useState<CourtAddressItem[]>([
+    { address: "", city: "", state: "", stateCode: "", districtCode: "", country: "Philippines", fromYear: new Date().getFullYear() - 2, toYear: new Date().getFullYear() }
+  ]);
+  const [phcPartyName, setPhcPartyName] = useState("");
+  const [phcCaseNo, setPhcCaseNo] = useState("");
+  const [phcStation, setPhcStation] = useState("");
+  const [phcRequestingOrgName, setPhcRequestingOrgName] = useState("");
+  const [phcShowOrgDropdown, setPhcShowOrgDropdown] = useState(false);
+  const [phcSuccessMsg, setPhcSuccessMsg] = useState("");
+  const [phcErrorMsg, setPhcErrorMsg] = useState("");
+  const [phcSubmitting, setPhcSubmitting] = useState(false);
+  const [phcCreatedId, setPhcCreatedId] = useState<string | null>(null);
+  const [phcIdProofFile, setPhcIdProofFile] = useState<string | null>(null);
+  const [phcIdProofFileName, setPhcIdProofFileName] = useState("");
 
   // ─── Interpol 59-Second Loading Screen States ───
   const [interpolLoadingProgress, setInterpolLoadingProgress] = useState(0);
@@ -1300,7 +1587,7 @@ export default function IdentityVerification() {
     if (serviceParam && [
       "identity", "court_record", "employment", "education", "interpol",
       "passport", "digital_address", "rednotice_worldwide", "saflii_court",
-      "saps_wanted", "uk_court", "malaysia_court"
+      "saps_wanted", "uk_court", "malaysia_court", "singapore_court", "philippines_court"
     ].includes(serviceParam)) {
       setActiveService(serviceParam as ServiceType);
     }
@@ -1445,6 +1732,14 @@ export default function IdentityVerification() {
 
   const mycFilteredOrgs = recentOrgs.filter(org =>
     org.toLowerCase().includes(mycRequestingOrgName.toLowerCase())
+  );
+
+  const sgcFilteredOrgs = recentOrgs.filter(org =>
+    org.toLowerCase().includes(sgcRequestingOrgName.toLowerCase())
+  );
+
+  const phcFilteredOrgs = recentOrgs.filter(org =>
+    org.toLowerCase().includes(phcRequestingOrgName.toLowerCase())
   );
 
   // ─── Identity Check States (existing) ───
@@ -2090,6 +2385,36 @@ export default function IdentityVerification() {
       setSacErrorMsg("Candidate Full Name is required");
       return;
     }
+
+    if (sacGender === "Female" && sacIsMarried && !sacHusbandName.trim()) {
+      setSacErrorMsg("Husband's Name is required when the candidate is married");
+      return;
+    }
+
+    if (!sacAddresses || sacAddresses.length === 0) {
+      setSacErrorMsg("Please provide at least one address / target province");
+      return;
+    }
+
+    for (let i = 0; i < sacAddresses.length; i++) {
+      if (!sacAddresses[i].state) {
+        setSacErrorMsg(`Address ${i + 1}: State / Province is required`);
+        return;
+      }
+      if (!sacAddresses[i].city.trim()) {
+        setSacErrorMsg(`Address ${i + 1}: District / City is required`);
+        return;
+      }
+      if (sacAddresses[i].fromYear > sacAddresses[i].toYear) {
+        setSacErrorMsg(`Address ${i + 1}: "From Year" must be before or equal to "To Year"`);
+        return;
+      }
+      if (sacAddresses[i].toYear - sacAddresses[i].fromYear + 1 > 3) {
+        setSacErrorMsg(`Address ${i + 1}: Maximum 3-year search span allowed per address`);
+        return;
+      }
+    }
+
     if (!sacRequestingOrgName.trim()) {
       setSacErrorMsg("Requesting ORG Name is required");
       return;
@@ -2102,6 +2427,21 @@ export default function IdentityVerification() {
         candidateName: sacCandidateName.trim(),
         candidateDob: sacCandidateDob.trim(),
         birthCity: sacBirthCity.trim(),
+        province: sacAddresses[0]?.state || "South Africa",
+        candidateFatherName: sacFatherName.trim(),
+        candidateMotherName: sacMotherName.trim(),
+        candidateIsMarried: sacIsMarried,
+        candidateHusbandName: (sacGender === "Female" && sacIsMarried) ? sacHusbandName.trim() : undefined,
+        gender: sacGender !== "Not required" ? sacGender : undefined,
+        idProofType: sacIdProofType || undefined,
+        idProofNumber: sacIdProofNumber.trim() || undefined,
+        addresses: sacAddresses.map(addr => ({
+          ...addr,
+          state: addr.stateCode.startsWith("Other:") ? addr.stateCode.substring(6) : addr.state,
+          stateCode: addr.stateCode.startsWith("Other:") ? addr.stateCode.substring(6) : addr.stateCode,
+          city: addr.districtCode.startsWith("Other:") ? addr.districtCode.substring(6) : addr.city,
+          districtCode: addr.districtCode.startsWith("Other:") ? addr.districtCode.substring(6) : addr.districtCode
+        })),
         orgName: effectiveOrgName,
         requestingOrgName: sacRequestingOrgName.trim(),
         idProofFile: sacIdProofFile,
@@ -2110,10 +2450,18 @@ export default function IdentityVerification() {
 
       if (res && res.success) {
         setSacSuccessMsg("SA court record search initiated! Search is running in the background.");
-    setSacCreatedId(res.id);
+        setSacCreatedId(res.id);
         setSacCandidateName("");
         setSacCandidateDob("");
         setSacBirthCity("");
+        setSacFatherName("");
+        setSacMotherName("");
+        setSacGender("Not required");
+        setSacIsMarried(false);
+        setSacHusbandName("");
+        setSacIdProofType("");
+        setSacIdProofNumber("");
+        setSacAddresses([{ address: "", city: "", state: "", stateCode: "", districtCode: "", country: "South Africa", fromYear: new Date().getFullYear() - 2, toYear: new Date().getFullYear() }]);
         setSacRequestingOrgName("");
         setSacIdProofFile(null);
         setSacIdProofFileName("");
@@ -2131,6 +2479,14 @@ export default function IdentityVerification() {
     setSacCandidateName("");
     setSacCandidateDob("");
     setSacBirthCity("");
+    setSacFatherName("");
+    setSacMotherName("");
+    setSacGender("Not required");
+    setSacIsMarried(false);
+    setSacHusbandName("");
+    setSacIdProofType("");
+    setSacIdProofNumber("");
+    setSacAddresses([{ address: "", city: "", state: "", stateCode: "", districtCode: "", country: "South Africa", fromYear: new Date().getFullYear() - 2, toYear: new Date().getFullYear() }]);
     setSacRequestingOrgName("");
     setSacErrorMsg("");
     setSacSuccessMsg("");
@@ -2247,6 +2603,36 @@ export default function IdentityVerification() {
       setUkcErrorMsg("Candidate Full Name is required.");
       return;
     }
+
+    if (ukcGender === "Female" && ukcIsMarried && !ukcHusbandName.trim()) {
+      setUkcErrorMsg("Husband's Name is required when the candidate is married");
+      return;
+    }
+
+    if (!ukcAddresses || ukcAddresses.length === 0) {
+      setUkcErrorMsg("Please provide at least one address / target province");
+      return;
+    }
+
+    for (let i = 0; i < ukcAddresses.length; i++) {
+      if (!ukcAddresses[i].state) {
+        setUkcErrorMsg(`Address ${i + 1}: State / Jurisdiction is required`);
+        return;
+      }
+      if (!ukcAddresses[i].city.trim()) {
+        setUkcErrorMsg(`Address ${i + 1}: City / District is required`);
+        return;
+      }
+      if (ukcAddresses[i].fromYear > ukcAddresses[i].toYear) {
+        setUkcErrorMsg(`Address ${i + 1}: "From Year" must be before or equal to "To Year"`);
+        return;
+      }
+      if (ukcAddresses[i].toYear - ukcAddresses[i].fromYear + 1 > 3) {
+        setUkcErrorMsg(`Address ${i + 1}: Maximum 3-year search span allowed per address`);
+        return;
+      }
+    }
+
     if (!ukcRequestingOrgName.trim()) {
       setUkcErrorMsg("Requesting ORG Name is required.");
       return;
@@ -2259,8 +2645,22 @@ export default function IdentityVerification() {
         candidateName: ukcCandidateName.trim(),
         candidateDob: ukcCandidateDob.trim(),
         birthCity: ukcBirthCity.trim(),
+        candidateFatherName: ukcFatherName.trim(),
+        candidateMotherName: ukcMotherName.trim(),
+        candidateIsMarried: ukcIsMarried,
+        candidateHusbandName: (ukcGender === "Female" && ukcIsMarried) ? ukcHusbandName.trim() : undefined,
+        gender: ukcGender !== "Not required" ? ukcGender : undefined,
+        idProofType: ukcIdProofType || undefined,
+        idProofNumber: ukcIdProofNumber.trim() || undefined,
         judgmentType: ukcJudgmentType.trim(),
-        jurisdiction: ukcJurisdiction.trim(),
+        jurisdiction: ukcJurisdiction.trim() || "All UK Jurisdictions",
+        addresses: ukcAddresses.map(addr => ({
+          ...addr,
+          state: addr.stateCode.startsWith("Other:") ? addr.stateCode.substring(6) : addr.state,
+          stateCode: addr.stateCode.startsWith("Other:") ? addr.stateCode.substring(6) : addr.stateCode,
+          city: addr.districtCode.startsWith("Other:") ? addr.districtCode.substring(6) : addr.city,
+          districtCode: addr.districtCode.startsWith("Other:") ? addr.districtCode.substring(6) : addr.districtCode
+        })),
         orgName: effectiveOrgName,
         requestingOrgName: ukcRequestingOrgName.trim(),
         idProofFile: ukcIdProofFile,
@@ -2273,8 +2673,16 @@ export default function IdentityVerification() {
         setUkcCandidateName("");
         setUkcCandidateDob("");
         setUkcBirthCity("");
+        setUkcFatherName("");
+        setUkcMotherName("");
+        setUkcGender("Not required");
+        setUkcIsMarried(false);
+        setUkcHusbandName("");
+        setUkcIdProofType("");
+        setUkcIdProofNumber("");
+        setUkcAddresses([{ address: "", city: "", state: "", stateCode: "", districtCode: "", country: "United Kingdom", fromYear: new Date().getFullYear() - 2, toYear: new Date().getFullYear() }]);
         setUkcJudgmentType("");
-        setUkcJurisdiction("");
+        setUkcJurisdiction("All UK Jurisdictions");
         setUkcRequestingOrgName("");
         setUkcIdProofFile(null);
         setUkcIdProofFileName("");
@@ -2292,8 +2700,16 @@ export default function IdentityVerification() {
     setUkcCandidateName("");
     setUkcCandidateDob("");
     setUkcBirthCity("");
+    setUkcFatherName("");
+    setUkcMotherName("");
+    setUkcGender("Not required");
+    setUkcIsMarried(false);
+    setUkcHusbandName("");
+    setUkcIdProofType("");
+    setUkcIdProofNumber("");
+    setUkcAddresses([{ address: "", city: "", state: "", stateCode: "", districtCode: "", country: "United Kingdom", fromYear: new Date().getFullYear() - 2, toYear: new Date().getFullYear() }]);
     setUkcJudgmentType("");
-    setUkcJurisdiction("");
+    setUkcJurisdiction("All UK Jurisdictions");
     setUkcRequestingOrgName("");
     setUkcIdProofFile(null);
     setUkcIdProofFileName("");
@@ -2323,6 +2739,36 @@ export default function IdentityVerification() {
       setMycErrorMsg("General Search query (Candidate Name / Parties / Case No) is required.");
       return;
     }
+
+    if (mycGender === "Female" && mycIsMarried && !mycHusbandName.trim()) {
+      setMycErrorMsg("Husband's Name is required when the candidate is married");
+      return;
+    }
+
+    if (!mycAddresses || mycAddresses.length === 0) {
+      setMycErrorMsg("Please provide at least one address / target state");
+      return;
+    }
+
+    for (let i = 0; i < mycAddresses.length; i++) {
+      if (!mycAddresses[i].state) {
+        setMycErrorMsg(`Address ${i + 1}: State / Territory is required`);
+        return;
+      }
+      if (!mycAddresses[i].city.trim()) {
+        setMycErrorMsg(`Address ${i + 1}: District / City is required`);
+        return;
+      }
+      if (mycAddresses[i].fromYear > mycAddresses[i].toYear) {
+        setMycErrorMsg(`Address ${i + 1}: "From Year" must be before or equal to "To Year"`);
+        return;
+      }
+      if (mycAddresses[i].toYear - mycAddresses[i].fromYear + 1 > 3) {
+        setMycErrorMsg(`Address ${i + 1}: Maximum 3-year search span allowed per address`);
+        return;
+      }
+    }
+
     if (!mycRequestingOrgName.trim()) {
       setMycErrorMsg("Requesting ORG Name is required.");
       return;
@@ -2334,6 +2780,13 @@ export default function IdentityVerification() {
       const res = await addMalaysiaCourtVerification({
         candidateName: mycCandidateName.trim(),
         candidateDob: mycCandidateDob.trim(),
+        candidateFatherName: mycFatherName.trim(),
+        candidateMotherName: mycMotherName.trim(),
+        candidateIsMarried: mycIsMarried,
+        candidateHusbandName: (mycGender === "Female" && mycIsMarried) ? mycHusbandName.trim() : undefined,
+        gender: mycGender !== "Not required" ? mycGender : undefined,
+        idProofType: mycIdProofType || undefined,
+        idProofNumber: mycIdProofNumber.trim() || undefined,
         courtCategory: mycCourtCategory.trim(),
         courtLocation: mycCourtLocation.trim(),
         caseType: mycCaseType.trim(),
@@ -2342,6 +2795,13 @@ export default function IdentityVerification() {
         dateOfAPFrom: mycDateOfAPFrom.trim(),
         dateOfAPTo: mycDateOfAPTo.trim(),
         judgeName: mycJudgeName.trim(),
+        addresses: mycAddresses.map(addr => ({
+          ...addr,
+          state: addr.stateCode.startsWith("Other:") ? addr.stateCode.substring(6) : addr.state,
+          stateCode: addr.stateCode.startsWith("Other:") ? addr.stateCode.substring(6) : addr.stateCode,
+          city: addr.districtCode.startsWith("Other:") ? addr.districtCode.substring(6) : addr.city,
+          districtCode: addr.districtCode.startsWith("Other:") ? addr.districtCode.substring(6) : addr.districtCode
+        })),
         orgName: effectiveOrgName,
         requestingOrgName: mycRequestingOrgName.trim(),
         idProofFile: mycIdProofFile,
@@ -2353,6 +2813,14 @@ export default function IdentityVerification() {
         setMycCreatedId(res.id);
         setMycCandidateName("");
         setMycCandidateDob("");
+        setMycFatherName("");
+        setMycMotherName("");
+        setMycGender("Not required");
+        setMycIsMarried(false);
+        setMycHusbandName("");
+        setMycIdProofType("");
+        setMycIdProofNumber("");
+        setMycAddresses([{ address: "", city: "", state: "", stateCode: "", districtCode: "", country: "Malaysia", fromYear: new Date().getFullYear() - 2, toYear: new Date().getFullYear() }]);
         setMycCourtCategory("");
         setMycCourtLocation("");
         setMycCaseType("");
@@ -2377,6 +2845,14 @@ export default function IdentityVerification() {
   const handleMalaysiaCourtCancel = () => {
     setMycCandidateName("");
     setMycCandidateDob("");
+    setMycFatherName("");
+    setMycMotherName("");
+    setMycGender("Not required");
+    setMycIsMarried(false);
+    setMycHusbandName("");
+    setMycIdProofType("");
+    setMycIdProofNumber("");
+    setMycAddresses([{ address: "", city: "", state: "", stateCode: "", districtCode: "", country: "Malaysia", fromYear: new Date().getFullYear() - 2, toYear: new Date().getFullYear() }]);
     setMycCourtCategory("");
     setMycCourtLocation("");
     setMycCaseType("");
@@ -2390,6 +2866,287 @@ export default function IdentityVerification() {
     setMycIdProofFileName("");
     setMycErrorMsg("");
     setMycSuccessMsg("");
+  };
+
+  // ─── Singapore Court Check Handlers ───
+  const handleSingaporeCourtSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSgcErrorMsg("");
+    setSgcSuccessMsg("");
+
+    const isSettingsIncomplete = !settings ||
+      !settings.contactFirstName?.trim() ||
+      !settings.contactLastName?.trim() ||
+      !settings.address?.trim() ||
+      !settings.city?.trim() ||
+      !settings.postalCode?.trim();
+
+    if (isSettingsIncomplete) {
+      setSgcErrorMsg("Please complete your profile settings before creating requests.");
+      return;
+    }
+
+    if (!sgcCandidateName.trim()) {
+      setSgcErrorMsg("Candidate Full Name is required.");
+      return;
+    }
+
+    if (sgcGender === "Female" && sgcIsMarried && !sgcHusbandName.trim()) {
+      setSgcErrorMsg("Husband's Name is required when the candidate is married");
+      return;
+    }
+
+    if (!sgcAddresses || sgcAddresses.length === 0) {
+      setSgcErrorMsg("Please provide at least one address / target district");
+      return;
+    }
+
+    for (let i = 0; i < sgcAddresses.length; i++) {
+      if (!sgcAddresses[i].state) {
+        setSgcErrorMsg(`Address ${i + 1}: Region / Division is required`);
+        return;
+      }
+      if (!sgcAddresses[i].city.trim()) {
+        setSgcErrorMsg(`Address ${i + 1}: District / Town is required`);
+        return;
+      }
+      if (sgcAddresses[i].fromYear > sgcAddresses[i].toYear) {
+        setSgcErrorMsg(`Address ${i + 1}: "From Year" must be before or equal to "To Year"`);
+        return;
+      }
+      if (sgcAddresses[i].toYear - sgcAddresses[i].fromYear + 1 > 3) {
+        setSgcErrorMsg(`Address ${i + 1}: Maximum 3-year search span allowed per address`);
+        return;
+      }
+    }
+
+    if (!sgcRequestingOrgName.trim()) {
+      setSgcErrorMsg("Requesting ORG Name is required.");
+      return;
+    }
+
+    setSgcSubmitting(true);
+    try {
+      const effectiveOrgName = isAdmin ? (orgName || profile?.org_name || "Ozclu") : (profile?.org_name || orgName);
+      const res = await addSingaporeCourtVerification({
+        candidateName: sgcCandidateName.trim(),
+        candidateDob: sgcCandidateDob.trim(),
+        candidateFatherName: sgcFatherName.trim(),
+        candidateMotherName: sgcMotherName.trim(),
+        candidateIsMarried: sgcIsMarried,
+        candidateHusbandName: (sgcGender === "Female" && sgcIsMarried) ? sgcHusbandName.trim() : undefined,
+        gender: sgcGender !== "Not required" ? sgcGender : undefined,
+        idProofType: sgcIdProofType || undefined,
+        idProofNumber: sgcIdProofNumber.trim() || undefined,
+        court: sgcCourt.trim(),
+        hearingType: sgcHearingType.trim(),
+        startDate: sgcStartDate.trim(),
+        endDate: sgcEndDate.trim(),
+        judgeName: sgcJudgeName.trim(),
+        lawFirm: sgcLawFirm.trim(),
+        addresses: sgcAddresses.map(addr => ({
+          ...addr,
+          state: addr.stateCode.startsWith("Other:") ? addr.stateCode.substring(6) : addr.state,
+          stateCode: addr.stateCode.startsWith("Other:") ? addr.stateCode.substring(6) : addr.stateCode,
+          city: addr.districtCode.startsWith("Other:") ? addr.districtCode.substring(6) : addr.city,
+          districtCode: addr.districtCode.startsWith("Other:") ? addr.districtCode.substring(6) : addr.districtCode
+        })),
+        orgName: effectiveOrgName,
+        requestingOrgName: sgcRequestingOrgName.trim(),
+        idProofFile: sgcIdProofFile,
+        idProofFileName: sgcIdProofFileName,
+      });
+
+      if (res && res.success) {
+        setSgcSuccessMsg("Singapore Court check initiated! Querying Singapore Court hearing lists...");
+        setSgcCreatedId(res.id);
+        setSgcCandidateName("");
+        setSgcCandidateDob("");
+        setSgcFatherName("");
+        setSgcMotherName("");
+        setSgcGender("Not required");
+        setSgcIsMarried(false);
+        setSgcHusbandName("");
+        setSgcIdProofType("");
+        setSgcIdProofNumber("");
+        setSgcAddresses([{ address: "", city: "", state: "", stateCode: "", districtCode: "", country: "Singapore", fromYear: new Date().getFullYear() - 2, toYear: new Date().getFullYear() }]);
+        setSgcCourt("");
+        setSgcHearingType("");
+        setSgcStartDate("");
+        setSgcEndDate("");
+        setSgcJudgeName("");
+        setSgcLawFirm("");
+        setSgcRequestingOrgName("");
+        setSgcIdProofFile(null);
+        setSgcIdProofFileName("");
+      } else {
+        setSgcErrorMsg(res?.error || "Failed to submit Singapore Court check");
+      }
+    } catch (err: any) {
+      setSgcErrorMsg(err?.message || "Failed to submit Singapore Court check");
+    } finally {
+      setSgcSubmitting(false);
+    }
+  };
+
+  const handleSingaporeCourtCancel = () => {
+    setSgcCandidateName("");
+    setSgcCandidateDob("");
+    setSgcFatherName("");
+    setSgcMotherName("");
+    setSgcGender("Not required");
+    setSgcIsMarried(false);
+    setSgcHusbandName("");
+    setSgcIdProofType("");
+    setSgcIdProofNumber("");
+    setSgcAddresses([{ address: "", city: "", state: "", stateCode: "", districtCode: "", country: "Singapore", fromYear: new Date().getFullYear() - 2, toYear: new Date().getFullYear() }]);
+    setSgcCourt("");
+    setSgcHearingType("");
+    setSgcStartDate("");
+    setSgcEndDate("");
+    setSgcJudgeName("");
+    setSgcLawFirm("");
+    setSgcRequestingOrgName("");
+    setSgcIdProofFile(null);
+    setSgcIdProofFileName("");
+    setSgcErrorMsg("");
+    setSgcSuccessMsg("");
+  };
+
+  // ─── Philippines Court Check Handlers ───
+  const handlePhilippinesCourtSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPhcErrorMsg("");
+    setPhcSuccessMsg("");
+
+    const isSettingsIncomplete = !settings ||
+      !settings.contactFirstName?.trim() ||
+      !settings.contactLastName?.trim() ||
+      !settings.address?.trim() ||
+      !settings.city?.trim() ||
+      !settings.postalCode?.trim();
+
+    if (isSettingsIncomplete) {
+      setPhcErrorMsg("Please complete your profile settings before creating requests.");
+      return;
+    }
+
+    if (!phcCandidateName.trim()) {
+      setPhcErrorMsg("Candidate / Party Full Name is required.");
+      return;
+    }
+
+    if (phcGender === "Female" && phcIsMarried && !phcHusbandName.trim()) {
+      setPhcErrorMsg("Husband's Name is required when the candidate is married");
+      return;
+    }
+
+    if (!phcAddresses || phcAddresses.length === 0) {
+      setPhcErrorMsg("Please provide at least one address / target province");
+      return;
+    }
+
+    for (let i = 0; i < phcAddresses.length; i++) {
+      if (!phcAddresses[i].state) {
+        setPhcErrorMsg(`Address ${i + 1}: State / Province is required`);
+        return;
+      }
+      if (!phcAddresses[i].city.trim()) {
+        setPhcErrorMsg(`Address ${i + 1}: District / City is required`);
+        return;
+      }
+      if (phcAddresses[i].fromYear > phcAddresses[i].toYear) {
+        setPhcErrorMsg(`Address ${i + 1}: "From Year" must be before or equal to "To Year"`);
+        return;
+      }
+      if (phcAddresses[i].toYear - phcAddresses[i].fromYear + 1 > 3) {
+        setPhcErrorMsg(`Address ${i + 1}: Maximum 3-year search span allowed per address`);
+        return;
+      }
+    }
+
+    if (!phcRequestingOrgName.trim()) {
+      setPhcErrorMsg("Requesting ORG Name is required.");
+      return;
+    }
+
+    setPhcSubmitting(true);
+    try {
+      const effectiveOrgName = isAdmin ? (orgName || profile?.org_name || "Ozclu") : (profile?.org_name || orgName);
+      const res = await addPhilippinesCourtVerification({
+        candidateName: phcCandidateName.trim(),
+        candidateDob: phcCandidateDob.trim(),
+        candidateFatherName: phcFatherName.trim(),
+        candidateMotherName: phcMotherName.trim(),
+        candidateIsMarried: phcIsMarried,
+        candidateHusbandName: (phcGender === "Female" && phcIsMarried) ? phcHusbandName.trim() : undefined,
+        gender: phcGender !== "Not required" ? phcGender : undefined,
+        idProofType: phcIdProofType || undefined,
+        idProofNumber: phcIdProofNumber.trim() || undefined,
+        partyName: phcPartyName.trim() || phcCandidateName.trim(),
+        caseNo: phcCaseNo.trim(),
+        station: phcStation.trim(),
+        addresses: phcAddresses.map(addr => ({
+          ...addr,
+          state: addr.stateCode.startsWith("Other:") ? addr.stateCode.substring(6) : addr.state,
+          stateCode: addr.stateCode.startsWith("Other:") ? addr.stateCode.substring(6) : addr.stateCode,
+          city: addr.districtCode.startsWith("Other:") ? addr.districtCode.substring(6) : addr.city,
+          districtCode: addr.districtCode.startsWith("Other:") ? addr.districtCode.substring(6) : addr.districtCode
+        })),
+        orgName: effectiveOrgName,
+        requestingOrgName: phcRequestingOrgName.trim(),
+        idProofFile: phcIdProofFile,
+        idProofFileName: phcIdProofFileName,
+      });
+
+      if (res && res.success) {
+        setPhcSuccessMsg("Philippines Court check initiated! Querying Philippine judicial case dockets...");
+        setPhcCreatedId(res.id);
+        setPhcCandidateName("");
+        setPhcCandidateDob("");
+        setPhcFatherName("");
+        setPhcMotherName("");
+        setPhcGender("Not required");
+        setPhcIsMarried(false);
+        setPhcHusbandName("");
+        setPhcIdProofType("");
+        setPhcIdProofNumber("");
+        setPhcAddresses([{ address: "", city: "", state: "", stateCode: "", districtCode: "", country: "Philippines", fromYear: new Date().getFullYear() - 2, toYear: new Date().getFullYear() }]);
+        setPhcPartyName("");
+        setPhcCaseNo("");
+        setPhcStation("");
+        setPhcRequestingOrgName("");
+        setPhcIdProofFile(null);
+        setPhcIdProofFileName("");
+      } else {
+        setPhcErrorMsg(res?.error || "Failed to submit Philippines Court check");
+      }
+    } catch (err: any) {
+      setPhcErrorMsg(err?.message || "Failed to submit Philippines Court check");
+    } finally {
+      setPhcSubmitting(false);
+    }
+  };
+
+  const handlePhilippinesCourtCancel = () => {
+    setPhcCandidateName("");
+    setPhcCandidateDob("");
+    setPhcFatherName("");
+    setPhcMotherName("");
+    setPhcGender("Not required");
+    setPhcIsMarried(false);
+    setPhcHusbandName("");
+    setPhcIdProofType("");
+    setPhcIdProofNumber("");
+    setPhcAddresses([{ address: "", city: "", state: "", stateCode: "", districtCode: "", country: "Philippines", fromYear: new Date().getFullYear() - 2, toYear: new Date().getFullYear() }]);
+    setPhcPartyName("");
+    setPhcCaseNo("");
+    setPhcStation("");
+    setPhcRequestingOrgName("");
+    setPhcIdProofFile(null);
+    setPhcIdProofFileName("");
+    setPhcErrorMsg("");
+    setPhcSuccessMsg("");
   };
 
   // ─── Passport Check Handlers ───
@@ -2841,6 +3598,56 @@ export default function IdentityVerification() {
               Malaysia Court Check
             </div>
             <div className="text-[11px] text-[#64748B] mt-0.5">Portal eJudgment Kehakiman</div>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          id="tab-singapore-court"
+          onClick={() => setActiveService("singapore_court")}
+          className={`flex-1 flex items-center gap-3 p-4 rounded-2xl border-2 transition-all duration-300 cursor-pointer group ${
+            activeService === "singapore_court"
+              ? "border-[#181d16] bg-white shadow-md"
+              : "border-[#eaf0e4] bg-[#f6fbf0]/50 hover:border-[#d0dbc6] hover:bg-white/80"
+          }`}
+        >
+          <div className={`p-2.5 rounded-xl transition-all ${
+            activeService === "singapore_court"
+              ? "bg-[#181d16] text-white"
+              : "bg-rose-50 text-rose-800 group-hover:bg-rose-100"
+          }`}>
+            <Scale className="w-5 h-5 text-rose-600" />
+          </div>
+          <div className="text-left">
+            <div className={`font-semibold text-sm ${activeService === "singapore_court" ? "text-[#181d16]" : "text-[#475569]"}`}>
+              Singapore Court Check
+            </div>
+            <div className="text-[11px] text-[#64748B] mt-0.5">State & Supreme Courts</div>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          id="tab-philippines-court"
+          onClick={() => setActiveService("philippines_court")}
+          className={`flex-1 flex items-center gap-3 p-4 rounded-2xl border-2 transition-all duration-300 cursor-pointer group ${
+            activeService === "philippines_court"
+              ? "border-[#181d16] bg-white shadow-md"
+              : "border-[#eaf0e4] bg-[#f6fbf0]/50 hover:border-[#d0dbc6] hover:bg-white/80"
+          }`}
+        >
+          <div className={`p-2.5 rounded-xl transition-all ${
+            activeService === "philippines_court"
+              ? "bg-[#181d16] text-white"
+              : "bg-amber-50 text-amber-800 group-hover:bg-amber-100"
+          }`}>
+            <Scale className="w-5 h-5 text-amber-600" />
+          </div>
+          <div className="text-left">
+            <div className={`font-semibold text-sm ${activeService === "philippines_court" ? "text-[#181d16]" : "text-[#475569]"}`}>
+              Philippines Court Check
+            </div>
+            <div className="text-[11px] text-[#64748B] mt-0.5">Supreme & Regional Trial Courts</div>
           </div>
         </button>
 
@@ -3894,13 +4701,6 @@ export default function IdentityVerification() {
                 </div>
               </div>
 
-              {/* Info Note */}
-              <div className="bg-emerald-50/40 border border-emerald-100 rounded-xl p-4 flex items-start gap-3 shadow-2xs">
-                <Scale className="w-4.5 h-4.5 text-emerald-800 shrink-0 mt-0.5" />
-                <div className="text-[11px] text-slate-650 leading-relaxed font-semibold">
-                  <strong className="text-slate-800">How it works:</strong> The system searches eCourts India for court records matching the candidate&apos;s name across all court complexes in each specified district. This process runs in the background and typically takes 1-3 minutes.
-                </div>
-              </div>
 
               {/* Action Buttons */}
               <div className="flex items-center gap-3 mt-6 justify-end border-t border-slate-100 pt-5">
@@ -4137,16 +4937,6 @@ export default function IdentityVerification() {
                 </label>
               </div>
 
-              {/* Info Note */}
-              <div className="bg-blue-50/40 border border-blue-100 rounded-xl p-4 flex items-start gap-3 shadow-2xs">
-                <Briefcase className="w-4 h-4 text-blue-700 shrink-0 mt-0.5" />
-                <div className="text-[11px] text-slate-600 leading-relaxed font-semibold">
-                  <strong className="text-slate-800">How it works:</strong>{" "}
-                  {empSkipCandidateLogin
-                    ? "No candidate login will be created. You can fill and submit the employment details directly."
-                    : "A link will be generated for the candidate to fill their employment details. Once submitted, the admin team will verify the information with the previous employer."}
-                </div>
-              </div>
 
               {/* Action Buttons */}
               <div className="flex items-center gap-3 mt-6 justify-end">
@@ -4517,16 +5307,6 @@ export default function IdentityVerification() {
                 </label>
               </div>
 
-              {/* Info Note */}
-              <div className="bg-[#eaf0e4]/30 border border-[#eaf0e4] rounded-xl p-4 flex items-start gap-3 shadow-2xs">
-                <GraduationCap className="w-4 h-4 text-emerald-800 shrink-0 mt-0.5" />
-                <div className="text-[11px] text-slate-650 leading-relaxed font-semibold">
-                  <strong className="text-slate-800">How it works:</strong>{" "}
-                  {eduSkipCandidateLogin
-                    ? "No candidate login will be created. You can fill and submit the education details directly."
-                    : "A link will be generated for the candidate to fill their education details. Once submitted, the admin team will verify the information with their Board / University."}
-                </div>
-              </div>
 
               {/* Action Buttons */}
               <div className="flex items-center gap-3 mt-6 justify-end">
@@ -5265,64 +6045,42 @@ export default function IdentityVerification() {
                   <div>
                     <h3 className="font-bold text-slate-800 text-lg leading-tight">South African Court Check</h3>
                     <p className="text-xs text-slate-500 font-medium mt-0.5">
-                      Search court judgments across all South African jurisdictions
+                      Search court judgments across all South African provinces & judicial divisions
                     </p>
                   </div>
                 </div>
 
-                {/* Candidate Full Name */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
-                    <span>Candidate Full Name</span>
-                    <span className="text-rose-500 font-bold">*</span>
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={sacCandidateName}
-                      onChange={(e) => setSacCandidateName(e.target.value)}
-                      placeholder="Enter candidate's full name"
-                      disabled={sacSubmitting}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all outline-hidden disabled:opacity-60"
-                      required
-                    />
-                  </div>
-                </div>
-
-                {/* Date of Birth */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
-                    <span>Date of Birth</span>
-                    <span className="text-slate-400 font-bold">(Optional)</span>
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="date"
-                      value={sacCandidateDob}
-                      onChange={(e) => setSacCandidateDob(e.target.value)}
-                      disabled={sacSubmitting}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all outline-hidden disabled:opacity-60"
-                    />
-                  </div>
-                </div>
-
-                {/* Place of Birth City/Country (Optional) */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
-                    <span>Place / Country of Birth</span>
-                    <span className="text-slate-400 font-bold">(Optional)</span>
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={sacBirthCity}
-                      onChange={(e) => setSacBirthCity(e.target.value)}
-                      placeholder="e.g. Johannesburg, Cape Town, Durban"
-                      disabled={sacSubmitting}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all outline-hidden disabled:opacity-60"
-                    />
-                  </div>
-                </div>
+                {/* Candidate & Address Details (Matching India / International standard) */}
+                <CourtPersonalDetailsFields
+                  candidateName={sacCandidateName}
+                  setCandidateName={setSacCandidateName}
+                  candidateDob={sacCandidateDob}
+                  setCandidateDob={setSacCandidateDob}
+                  idProofType={sacIdProofType}
+                  setIdProofType={setSacIdProofType}
+                  idProofNumber={sacIdProofNumber}
+                  setIdProofNumber={setSacIdProofNumber}
+                  idProofFile={sacIdProofFile}
+                  setIdProofFile={setSacIdProofFile}
+                  idProofFileName={sacIdProofFileName}
+                  setIdProofFileName={setSacIdProofFileName}
+                  fatherName={sacFatherName}
+                  setFatherName={setSacFatherName}
+                  motherName={sacMotherName}
+                  setMotherName={setSacMotherName}
+                  gender={sacGender}
+                  setGender={setSacGender}
+                  isMarried={sacIsMarried}
+                  setIsMarried={setSacIsMarried}
+                  husbandName={sacHusbandName}
+                  setHusbandName={setSacHusbandName}
+                  addresses={sacAddresses}
+                  setAddresses={setSacAddresses}
+                  defaultCountry="South Africa"
+                  disabled={sacSubmitting}
+                  onError={(msg) => setSacErrorMsg(msg)}
+                  colorTheme="emerald"
+                />
 
                 {/* Requesting ORG Name */}
                 <div className="flex flex-col gap-1.5 relative">
@@ -5339,7 +6097,7 @@ export default function IdentityVerification() {
                     }}
                     onFocus={() => setSacShowOrgDropdown(true)}
                     onBlur={() => setTimeout(() => setSacShowOrgDropdown(false), 200)}
-                    placeholder="Type or select organization name"
+                    placeholder="Enter the organization name requiring the verification"
                     disabled={sacSubmitting}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all outline-hidden disabled:opacity-60"
                     required
@@ -5370,58 +6128,9 @@ export default function IdentityVerification() {
                   )}
                 </div>
 
-                {/* ID Attachment (Optional, Max 1MB) */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center justify-between">
-                    <span>ID Attachment (Optional)</span>
-                    <span className="text-slate-400 font-semibold">(Max 1MB)</span>
-                  </label>
-                  {sacIdProofFile ? (
-                    <div className="border border-emerald-200 rounded-xl p-3 bg-emerald-50/50 flex items-center justify-between">
-                      <div className="flex items-center gap-2 overflow-hidden">
-                        <FileText className="w-4 h-4 text-emerald-700 shrink-0" />
-                        <span className="text-xs font-bold text-slate-800 truncate">{sacIdProofFileName || "ID_Proof.pdf"}</span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSacIdProofFile(null);
-                          setSacIdProofFileName("");
-                        }}
-                        className="text-slate-400 hover:text-red-500 transition-colors p-1 rounded-lg hover:bg-red-50 cursor-pointer"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  ) : (
-                    <label className="border border-dashed border-slate-300 hover:border-emerald-500 rounded-xl p-3 bg-slate-50/50 hover:bg-white transition-all flex items-center justify-center gap-2 cursor-pointer">
-                      <UploadCloud className="w-4 h-4 text-slate-400" />
-                      <span className="text-xs font-bold text-slate-700">Upload ID Attachment (Optional, Max 1MB)</span>
-                      <input
-                        type="file"
-                        accept=".pdf,.jpg,.jpeg,.png"
-                        className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (!file) return;
-                          if (file.size > 2 * 1024 * 1024) {
-                            setSacErrorMsg("File size exceeds 1MB limit.");
-                            return;
-                          }
-                          setSacIdProofFileName(file.name);
-                          const reader = new FileReader();
-                          reader.onloadend = () => {
-                            setSacIdProofFile(reader.result as string);
-                          };
-                          reader.readAsDataURL(file);
-                        }}
-                      />
-                    </label>
-                  )}
-                </div>
 
                 {/* Action Buttons */}
-                <div className="flex gap-4 mt-4">
+                <div className="flex gap-4 mt-2">
                   <button
                     type="button"
                     onClick={handleSafliiCourtCancel}
@@ -5442,7 +6151,7 @@ export default function IdentityVerification() {
                       </>
                     ) : (
                       <>
-                        <span>Check SA Court Records</span>
+                        <span>Start Verification</span>
                         <Send className="w-4 h-4" />
                       </>
                     )}
@@ -5813,113 +6522,38 @@ export default function IdentityVerification() {
                   </div>
                 </div>
 
-                {/* Candidate Full Name */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
-                    <span>Candidate Full Name / Keyword</span>
-                    <span className="text-rose-500 font-bold">*</span>
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={ukcCandidateName}
-                      onChange={(e) => setUkcCandidateName(e.target.value)}
-                      placeholder="e.g. Clive or Full Candidate Name"
-                      disabled={ukcSubmitting}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all outline-hidden disabled:opacity-60"
-                      required
-                    />
-                  </div>
-                </div>
+                {/* Candidate & Address Details (Matching India / International standard) */}
+                <CourtPersonalDetailsFields
+                  candidateName={ukcCandidateName}
+                  setCandidateName={setUkcCandidateName}
+                  candidateDob={ukcCandidateDob}
+                  setCandidateDob={setUkcCandidateDob}
+                  idProofType={ukcIdProofType}
+                  setIdProofType={setUkcIdProofType}
+                  idProofNumber={ukcIdProofNumber}
+                  setIdProofNumber={setUkcIdProofNumber}
+                  idProofFile={ukcIdProofFile}
+                  setIdProofFile={setUkcIdProofFile}
+                  idProofFileName={ukcIdProofFileName}
+                  setIdProofFileName={setUkcIdProofFileName}
+                  fatherName={ukcFatherName}
+                  setFatherName={setUkcFatherName}
+                  motherName={ukcMotherName}
+                  setMotherName={setUkcMotherName}
+                  gender={ukcGender}
+                  setGender={setUkcGender}
+                  isMarried={ukcIsMarried}
+                  setIsMarried={setUkcIsMarried}
+                  husbandName={ukcHusbandName}
+                  setHusbandName={setUkcHusbandName}
+                  addresses={ukcAddresses}
+                  setAddresses={setUkcAddresses}
+                  defaultCountry="United Kingdom"
+                  disabled={ukcSubmitting}
+                  onError={(msg) => setUkcErrorMsg(msg)}
+                  colorTheme="indigo"
+                />
 
-                {/* Date of Birth & Place / Country */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
-                      <span>Date of Birth</span>
-                      <span className="text-slate-400 font-bold">(Optional)</span>
-                    </label>
-                    <input
-                      type="date"
-                      value={ukcCandidateDob}
-                      onChange={(e) => setUkcCandidateDob(e.target.value)}
-                      disabled={ukcSubmitting}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all outline-hidden disabled:opacity-60"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
-                      <span>Place / Country of Birth</span>
-                      <span className="text-slate-400 font-bold">(Optional)</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={ukcBirthCity}
-                      onChange={(e) => setUkcBirthCity(e.target.value)}
-                      placeholder="e.g. London, Manchester, UK"
-                      disabled={ukcSubmitting}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all outline-hidden disabled:opacity-60"
-                    />
-                  </div>
-                </div>
-
-                {/* Judgment Type & Subject / Jurisdiction Filters */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
-                      <span>Judgment Type</span>
-                      <span className="text-slate-400 font-bold">(Optional)</span>
-                    </label>
-                    <select
-                      value={ukcJudgmentType}
-                      onChange={(e) => setUkcJudgmentType(e.target.value)}
-                      disabled={ukcSubmitting}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all outline-hidden disabled:opacity-60 cursor-pointer"
-                    >
-                      <option value="">All Judgment Types</option>
-                      <option value="judgment">Judgment</option>
-                      <option value="sentencing-remarks">Sentencing Remarks</option>
-                      <option value="committal-for-contempt-of-court">Committal for Contempt of Court</option>
-                      <option value="order">Order</option>
-                      <option value="anonymity-order">Anonymity Order</option>
-                      <option value="privacy-order">Privacy Order</option>
-                      <option value="tribunal-decision">Tribunal Decision</option>
-                      <option value="transmission-direction-order">Transmission Direction Order</option>
-                      <option value="transparency-order">Transparency Order</option>
-                    </select>
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
-                      <span>Subject / Jurisdiction</span>
-                      <span className="text-slate-400 font-bold">(Optional)</span>
-                    </label>
-                    <select
-                      value={ukcJurisdiction}
-                      onChange={(e) => setUkcJurisdiction(e.target.value)}
-                      disabled={ukcSubmitting}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all outline-hidden disabled:opacity-60 cursor-pointer"
-                    >
-                      <option value="">All UK Jurisdictions / Courts</option>
-                      <option value="high-court">High Court</option>
-                      <option value="court-of-appeal-civil-division">Court of Appeal Civil Division</option>
-                      <option value="court-of-appeal-criminal-division">Court of Appeal Criminal Division</option>
-                      <option value="crown-court">Crown Court</option>
-                      <option value="kings-bench-division">King's Bench Division</option>
-                      <option value="chancery-division">Chancery Division</option>
-                      <option value="administrative-court">Administrative Court</option>
-                      <option value="commercial-court">Commercial Court</option>
-                      <option value="the-business-and-property-courts">Business and Property Courts</option>
-                      <option value="central-criminal-court-old-bailey">Central Criminal Court (Old Bailey)</option>
-                      <option value="family-court">Family Court</option>
-                      <option value="magistrates-court">Magistrates' Court</option>
-                      <option value="employment-appeal-tribunal">Employment Appeal Tribunal</option>
-                      <option value="employment-tribunal">Employment Tribunal</option>
-                      <option value="tribunals">Tribunals</option>
-                    </select>
-                  </div>
-                </div>
 
                 {/* Requesting Organization Name */}
                 <div className="flex flex-col gap-1.5 relative">
@@ -5937,7 +6571,7 @@ export default function IdentityVerification() {
                       }}
                       onFocus={() => setUkcShowOrgDropdown(true)}
                       onBlur={() => setTimeout(() => setUkcShowOrgDropdown(false), 200)}
-                      placeholder="e.g. Barclays UK / London Tech Labs"
+                      placeholder="Enter the organization name requiring the verification"
                       disabled={ukcSubmitting}
                       className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all outline-hidden disabled:opacity-60"
                       required
@@ -5972,39 +6606,6 @@ export default function IdentityVerification() {
                   )}
                 </div>
 
-                {/* ID Proof / Verification Document Upload (Optional) */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center justify-between">
-                    <span>Candidate Identity Document / Slip</span>
-                    <span className="text-slate-400 font-bold">(Optional)</span>
-                  </label>
-                  <div className="border border-dashed border-slate-300 rounded-xl p-4 text-center bg-slate-50 hover:bg-white transition-all">
-                    <input
-                      type="file"
-                      id="ukcIdProofInput"
-                      className="hidden"
-                      accept=".pdf,.png,.jpg,.jpeg"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          setUkcIdProofFileName(file.name);
-                          const reader = new FileReader();
-                          reader.onload = (event) => {
-                            setUkcIdProofFile(event.target?.result as string);
-                          };
-                          reader.readAsDataURL(file);
-                        }
-                      }}
-                    />
-                    <label htmlFor="ukcIdProofInput" className="cursor-pointer flex flex-col items-center gap-1.5">
-                      <UploadCloud className="w-5 h-5 text-indigo-600" />
-                      <span className="text-xs font-bold text-slate-700">
-                        {ukcIdProofFileName || "Upload Candidate ID / Passport Slip (PDF or Image)"}
-                      </span>
-                      <span className="text-[10px] text-slate-400">Max size: 5MB</span>
-                    </label>
-                  </div>
-                </div>
 
                 {/* Action Buttons */}
                 <div className="pt-2 border-t border-slate-100 flex flex-col gap-3">
@@ -6103,196 +6704,38 @@ export default function IdentityVerification() {
                   </div>
                 </div>
 
-                {/* General Search (Candidate Name / Case No / Parties / Keyword) */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
-                    <span>General Search (Candidate Name / Parties / Case No / Keyword)</span>
-                    <span className="text-rose-500 font-bold">*</span>
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      id="myc-candidate-name"
-                      value={mycCandidateName}
-                      onChange={(e) => setMycCandidateName(e.target.value)}
-                      placeholder="e.g. Mohamad or Company / Case Number"
-                      disabled={mycSubmitting}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition-all outline-hidden disabled:opacity-60"
-                      required
-                    />
-                  </div>
-                  <span className="text-[10px] text-slate-400">
-                    Searches are performed directly against official case numbers, parties, and keywords.
-                  </span>
-                </div>
+                {/* Candidate & Addresses Details */}
+                <CourtPersonalDetailsFields
+                  candidateName={mycCandidateName}
+                  setCandidateName={setMycCandidateName}
+                  candidateDob={mycCandidateDob}
+                  setCandidateDob={setMycCandidateDob}
+                  fatherName={mycFatherName}
+                  setFatherName={setMycFatherName}
+                  motherName={mycMotherName}
+                  setMotherName={setMycMotherName}
+                  idProofType={mycIdProofType}
+                  setIdProofType={setMycIdProofType}
+                  idProofNumber={mycIdProofNumber}
+                  setIdProofNumber={setMycIdProofNumber}
+                  idProofFileName={mycIdProofFileName}
+                  setIdProofFileName={setMycIdProofFileName}
+                  idProofFile={mycIdProofFile}
+                  setIdProofFile={setMycIdProofFile}
+                  gender={mycGender}
+                  setGender={setMycGender}
+                  isMarried={mycIsMarried}
+                  setIsMarried={setMycIsMarried}
+                  husbandName={mycHusbandName}
+                  setHusbandName={setMycHusbandName}
+                  addresses={mycAddresses}
+                  setAddresses={setMycAddresses}
+                  defaultCountry="Malaysia"
+                  disabled={mycSubmitting}
+                  onError={(msg) => setMycErrorMsg(msg)}
+                  colorTheme="teal"
+                />
 
-                {/* Court Category & Court Location */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
-                      <span>Court Category</span>
-                      <span className="text-slate-400 font-bold">(Optional)</span>
-                    </label>
-                    <select
-                      id="myc-court-category"
-                      value={mycCourtCategory}
-                      onChange={(e) => setMycCourtCategory(e.target.value)}
-                      disabled={mycSubmitting}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition-all outline-hidden disabled:opacity-60 cursor-pointer"
-                    >
-                      <option value="">All Categories (Semua Kategori)</option>
-                      <option value="11">Federal Court (Mahkamah Persekutuan)</option>
-                      <option value="3">Court of Appeal (Mahkamah Rayuan)</option>
-                      <option value="2">High Court (Mahkamah Tinggi)</option>
-                      <option value="10">Sessions Court (Mahkamah Sesyen)</option>
-                      <option value="5">Magistrate Court (Mahkamah Majistret)</option>
-                    </select>
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
-                      <span>Court Location</span>
-                      <span className="text-slate-400 font-bold">(Optional)</span>
-                    </label>
-                    <select
-                      id="myc-court-location"
-                      value={mycCourtLocation}
-                      onChange={(e) => setMycCourtLocation(e.target.value)}
-                      disabled={mycSubmitting}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition-all outline-hidden disabled:opacity-60 cursor-pointer"
-                    >
-                      <option value="">All Locations (Semua Lokasi)</option>
-                      <option value="Istana Kehakiman">Istana Kehakiman Putrajaya</option>
-                      <option value="Kompleks Mahkamah Kuala Lumpur">Kompleks Mahkamah Kuala Lumpur</option>
-                      <option value="Kompleks Mahkamah Shah Alam">Kompleks Mahkamah Shah Alam</option>
-                      <option value="Kompleks Mahkamah Pulau Pinang">Kompleks Mahkamah Pulau Pinang</option>
-                      <option value="Kompleks Mahkamah Johor Bahru">Kompleks Mahkamah Johor Bahru</option>
-                      <option value="Kompleks Mahkamah Ipoh">Kompleks Mahkamah Ipoh</option>
-                      <option value="Kompleks Mahkamah Alor Setar">Kompleks Mahkamah Alor Setar</option>
-                      <option value="Kompleks Mahkamah Kuantan">Kompleks Mahkamah Kuantan</option>
-                      <option value="Kompleks Mahkamah Melaka">Kompleks Mahkamah Melaka</option>
-                      <option value="Kompleks Mahkamah Seremban">Kompleks Mahkamah Seremban</option>
-                      <option value="Kompleks Mahkamah Kota Bharu">Kompleks Mahkamah Kota Bharu</option>
-                      <option value="Kompleks Mahkamah Kuala Terengganu">Kompleks Mahkamah Kuala Terengganu</option>
-                      <option value="Kompleks Mahkamah Kuching">Kompleks Mahkamah Kuching</option>
-                      <option value="Kompleks Mahkamah Kota Kinabalu">Kompleks Mahkamah Kota Kinabalu</option>
-                      <option value="Kompleks Mahkamah Petaling Jaya">Kompleks Mahkamah Petaling Jaya</option>
-                      <option value="Kompleks Mahkamah Klang">Kompleks Mahkamah Klang</option>
-                      <option value="Kompleks Mahkamah Selayang">Kompleks Mahkamah Selayang</option>
-                      <option value="Kompleks Mahkamah Kajang">Kompleks Mahkamah Kajang</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Case Type & Judge Name */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
-                      <span>Case Type / Division</span>
-                      <span className="text-slate-400 font-bold">(Optional)</span>
-                    </label>
-                    <select
-                      id="myc-case-type"
-                      value={mycCaseType}
-                      onChange={(e) => setMycCaseType(e.target.value)}
-                      disabled={mycSubmitting}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition-all outline-hidden disabled:opacity-60 cursor-pointer"
-                    >
-                      <option value="">All Case Types</option>
-                      <option value="2">Criminal (Jenayah)</option>
-                      <option value="3">Civil (Sivil)</option>
-                      <option value="8">Commercial (Dagang)</option>
-                      <option value="1">Bankruptcy (Kebankrapan)</option>
-                      <option value="7">Appellate & Special Powers (Rayuan & Kuasa Khas)</option>
-                      <option value="6">Family (Keluarga)</option>
-                      <option value="9">Caveat (Kaveat)</option>
-                      <option value="4">Execution (Pelaksanaan)</option>
-                      <option value="10">Muamalat</option>
-                      <option value="11">Admiralty (Maritim)</option>
-                      <option value="12">Intellectual Property (Harta Intelek)</option>
-                      <option value="14">Special Cyber Court (Mahkamah Siber)</option>
-                      <option value="15">Environmental Court (Mahkamah Alam Sekitar)</option>
-                    </select>
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
-                      <span>Judge / Magistrate Name</span>
-                      <span className="text-slate-400 font-bold">(Optional)</span>
-                    </label>
-                    <input
-                      type="text"
-                      id="myc-judge-name"
-                      value={mycJudgeName}
-                      onChange={(e) => setMycJudgeName(e.target.value)}
-                      placeholder="e.g. YA Azhar or Judge Name"
-                      disabled={mycSubmitting}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition-all outline-hidden disabled:opacity-60"
-                    />
-                  </div>
-                </div>
-
-                {/* Date of Decision (From / To) */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
-                      <span>Date of Decision (From)</span>
-                      <span className="text-slate-400 font-bold">(Optional)</span>
-                    </label>
-                    <input
-                      type="date"
-                      value={mycDateOfDecisionFrom}
-                      onChange={(e) => setMycDateOfDecisionFrom(e.target.value)}
-                      disabled={mycSubmitting}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition-all outline-hidden disabled:opacity-60"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
-                      <span>Date of Decision (To)</span>
-                      <span className="text-slate-400 font-bold">(Optional)</span>
-                    </label>
-                    <input
-                      type="date"
-                      value={mycDateOfDecisionTo}
-                      onChange={(e) => setMycDateOfDecisionTo(e.target.value)}
-                      disabled={mycSubmitting}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition-all outline-hidden disabled:opacity-60"
-                    />
-                  </div>
-                </div>
-
-                {/* Date of GOJ Filing (From / To) */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
-                      <span>Date of GOJ Filing (From)</span>
-                      <span className="text-slate-400 font-bold">(Optional)</span>
-                    </label>
-                    <input
-                      type="date"
-                      value={mycDateOfAPFrom}
-                      onChange={(e) => setMycDateOfAPFrom(e.target.value)}
-                      disabled={mycSubmitting}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition-all outline-hidden disabled:opacity-60"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
-                      <span>Date of GOJ Filing (To)</span>
-                      <span className="text-slate-400 font-bold">(Optional)</span>
-                    </label>
-                    <input
-                      type="date"
-                      value={mycDateOfAPTo}
-                      onChange={(e) => setMycDateOfAPTo(e.target.value)}
-                      disabled={mycSubmitting}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition-all outline-hidden disabled:opacity-60"
-                    />
-                  </div>
-                </div>
 
                 {/* Requesting Organization Name */}
                 <div className="flex flex-col gap-1.5 relative">
@@ -6346,39 +6789,7 @@ export default function IdentityVerification() {
                   )}
                 </div>
 
-                {/* ID Proof / Verification Document Upload (Optional) */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center justify-between">
-                    <span>Candidate Identity Document / Slip</span>
-                    <span className="text-slate-400 font-bold">(Optional)</span>
-                  </label>
-                  <div className="border border-dashed border-slate-300 rounded-xl p-4 text-center bg-slate-50 hover:bg-white transition-all">
-                    <input
-                      type="file"
-                      id="mycIdProofInput"
-                      className="hidden"
-                      accept=".pdf,.png,.jpg,.jpeg"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          setMycIdProofFileName(file.name);
-                          const reader = new FileReader();
-                          reader.onload = (event) => {
-                            setMycIdProofFile(event.target?.result as string);
-                          };
-                          reader.readAsDataURL(file);
-                        }
-                      }}
-                    />
-                    <label htmlFor="mycIdProofInput" className="cursor-pointer flex flex-col items-center gap-1.5">
-                      <UploadCloud className="w-5 h-5 text-emerald-600" />
-                      <span className="text-xs font-bold text-slate-700">
-                        {mycIdProofFileName || "Upload Candidate MyKad / Passport Slip (PDF or Image)"}
-                      </span>
-                      <span className="text-[10px] text-slate-400">Max size: 5MB</span>
-                    </label>
-                  </div>
-                </div>
+
 
                 {/* Action Buttons */}
                 <div className="pt-2 border-t border-slate-100 flex flex-col gap-3">
@@ -6429,6 +6840,370 @@ export default function IdentityVerification() {
               mycCandidateName={mycCandidateName || "Candidate"}
               onCreateAnother={() => { setMycCreatedId(null); setMycSuccessMsg(""); }}
               onGoToSummary={() => { setMycCreatedId(null); router.push("/client/summary"); }}
+            />,
+            document.body
+          )}
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════════ */}
+      {/* SINGAPORE COURT CHECK FORM                         */}
+      {/* ═══════════════════════════════════════════════════ */}
+      {activeService === "singapore_court" && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start max-w-6xl w-full">
+          <div className="lg:col-span-6 flex flex-col gap-6 w-full">
+            {/* Form Alerts */}
+            {sgcSuccessMsg && !sgcCreatedId && (
+              <div className="bg-[#E6F8F3] text-[#00684A] border border-[#A3EAD6] rounded-xl p-4 font-body-sm flex items-center gap-3 max-w-2xl animate-fade-in shadow-2xs">
+                <CheckCircle className="w-5 h-5 text-[#00a877] shrink-0" />
+                <span className="font-semibold">{sgcSuccessMsg}</span>
+              </div>
+            )}
+
+            {sgcErrorMsg && (
+              <div className="bg-red-50 text-red-800 border border-red-200 rounded-xl p-4 font-body-sm flex items-center gap-3 max-w-2xl animate-fade-in shadow-2xs">
+                <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
+                <span className="font-semibold">{sgcErrorMsg}</span>
+              </div>
+            )}
+
+            {/* Singapore Court Check Form Card */}
+            <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-lg relative overflow-hidden transition-all duration-300 hover:shadow-xl w-full">
+              {/* Top gradient line */}
+              <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-rose-900 via-rose-700 to-amber-600"></div>
+
+              {/* Decorative background shapes */}
+              <div className="absolute -right-12 -bottom-12 w-32 h-32 bg-rose-50/30 rounded-full blur-2xl pointer-events-none"></div>
+              <div className="absolute -left-12 -top-12 w-32 h-32 bg-rose-500/5 rounded-full blur-2xl pointer-events-none"></div>
+
+              <form onSubmit={handleSingaporeCourtSubmit} className="flex flex-col gap-6 mt-2 relative z-10">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2.5 bg-gradient-to-br from-rose-900 to-slate-900 rounded-xl shadow-md text-white">
+                    <Scale className="w-5 h-5 text-rose-300" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-slate-800 text-lg leading-tight">Singapore Court Check</h3>
+                    <p className="text-xs text-slate-500 font-medium mt-0.5">
+                      Singapore Judicial System • Supreme Court, State Courts & Family Justice Courts
+                    </p>
+                  </div>
+                </div>
+
+                {/* Candidate & Addresses */}
+                <CourtPersonalDetailsFields
+                  candidateName={sgcCandidateName}
+                  setCandidateName={setSgcCandidateName}
+                  candidateDob={sgcCandidateDob}
+                  setCandidateDob={setSgcCandidateDob}
+                  fatherName={sgcFatherName}
+                  setFatherName={setSgcFatherName}
+                  motherName={sgcMotherName}
+                  setMotherName={setSgcMotherName}
+                  idProofType={sgcIdProofType}
+                  setIdProofType={setSgcIdProofType}
+                  idProofNumber={sgcIdProofNumber}
+                  setIdProofNumber={setSgcIdProofNumber}
+                  idProofFileName={sgcIdProofFileName}
+                  setIdProofFileName={setSgcIdProofFileName}
+                  idProofFile={sgcIdProofFile}
+                  setIdProofFile={setSgcIdProofFile}
+                  gender={sgcGender}
+                  setGender={setSgcGender}
+                  isMarried={sgcIsMarried}
+                  setIsMarried={setSgcIsMarried}
+                  husbandName={sgcHusbandName}
+                  setHusbandName={setSgcHusbandName}
+                  addresses={sgcAddresses}
+                  setAddresses={setSgcAddresses}
+                  defaultCountry="Singapore"
+                  disabled={sgcSubmitting}
+                  onError={(msg) => setSgcErrorMsg(msg)}
+                  colorTheme="rose"
+                />
+
+
+                {/* Requesting Organization Name */}
+                <div className="flex flex-col gap-1.5 relative">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
+                    <span>Requesting Organization Name</span>
+                    <span className="text-rose-500 font-bold">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={sgcRequestingOrgName}
+                      onChange={(e) => {
+                        setSgcRequestingOrgName(e.target.value);
+                        setSgcShowOrgDropdown(true);
+                      }}
+                      onFocus={() => setSgcShowOrgDropdown(true)}
+                      onBlur={() => setTimeout(() => setSgcShowOrgDropdown(false), 200)}
+                      placeholder="Enter the organization name requiring the verification"
+                      disabled={sgcSubmitting}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-rose-600 focus:ring-1 focus:ring-rose-600 transition-all outline-hidden disabled:opacity-60"
+                      required
+                    />
+                    {settings?.recentRequestingOrgs && settings.recentRequestingOrgs.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setSgcShowOrgDropdown(!sgcShowOrgDropdown)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      >
+                        <ChevronDown className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+
+                  {sgcShowOrgDropdown && sgcFilteredOrgs.length > 0 && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-50 overflow-hidden max-h-48 overflow-y-auto">
+                      {sgcFilteredOrgs.map((org: string, idx: number) => (
+                        <div
+                          key={idx}
+                          onMouseDown={() => {
+                            setSgcRequestingOrgName(org);
+                            setSgcShowOrgDropdown(false);
+                          }}
+                          className="px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 cursor-pointer font-medium flex items-center justify-between border-b border-slate-100 last:border-0"
+                        >
+                          <span>{org}</span>
+                          <span className="text-[10px] text-slate-400">Recent</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+
+                {/* Action Buttons */}
+                <div className="pt-2 border-t border-slate-100 flex flex-col gap-3">
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={handleSingaporeCourtCancel}
+                      disabled={sgcSubmitting}
+                      className="flex-1 py-3 border border-slate-200 text-slate-600 rounded-xl font-bold text-xs hover:bg-slate-50 transition-all cursor-pointer"
+                    >
+                      Clear
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={sgcSubmitting}
+                      className="flex-2 py-3 bg-gradient-to-r from-rose-950 via-rose-900 to-slate-900 hover:from-black hover:to-rose-950 text-white rounded-xl font-bold text-xs shadow-md hover:shadow-lg transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-60"
+                    >
+                      {sgcSubmitting ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Searching Singapore Registries...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Scale className="w-4 h-4 text-rose-300" />
+                          <span>Run Singapore Court Check</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <div className="lg:col-span-6 w-full lg:sticky lg:top-24">
+            <FlowDiagram 
+              title="Singapore Court Check Data Flow" 
+              activeService="singapore_court" 
+            />
+          </div>
+
+          {/* Success Modal for Singapore Court Check — rendered via Portal */}
+          {sgcCreatedId && typeof document !== "undefined" && createPortal(
+            <SingaporeCourtSuccessModal
+              sgcCreatedId={sgcCreatedId}
+              sgcCandidateName={sgcCandidateName || "Candidate"}
+              onCreateAnother={() => { setSgcCreatedId(null); setSgcSuccessMsg(""); }}
+              onGoToSummary={() => { setSgcCreatedId(null); router.push("/client/summary"); }}
+            />,
+            document.body
+          )}
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════════ */}
+      {/* PHILIPPINES COURT CHECK FORM                       */}
+      {/* ═══════════════════════════════════════════════════ */}
+      {activeService === "philippines_court" && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start max-w-6xl w-full">
+          <div className="lg:col-span-6 flex flex-col gap-6 w-full">
+            {/* Form Alerts */}
+            {phcSuccessMsg && !phcCreatedId && (
+              <div className="bg-[#E6F8F3] text-[#00684A] border border-[#A3EAD6] rounded-xl p-4 font-body-sm flex items-center gap-3 max-w-2xl animate-fade-in shadow-2xs">
+                <CheckCircle className="w-5 h-5 text-[#00a877] shrink-0" />
+                <span className="font-semibold">{phcSuccessMsg}</span>
+              </div>
+            )}
+
+            {phcErrorMsg && (
+              <div className="bg-red-50 text-red-800 border border-red-200 rounded-xl p-4 font-body-sm flex items-center gap-3 max-w-2xl animate-fade-in shadow-2xs">
+                <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
+                <span className="font-semibold">{phcErrorMsg}</span>
+              </div>
+            )}
+
+            {/* Philippines Court Check Form Card */}
+            <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-lg relative overflow-hidden transition-all duration-300 hover:shadow-xl w-full">
+              {/* Top gradient line */}
+              <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-amber-800 via-amber-600 to-orange-500"></div>
+
+              {/* Decorative background shapes */}
+              <div className="absolute -right-12 -bottom-12 w-32 h-32 bg-amber-50/30 rounded-full blur-2xl pointer-events-none"></div>
+              <div className="absolute -left-12 -top-12 w-32 h-32 bg-amber-500/5 rounded-full blur-2xl pointer-events-none"></div>
+
+              <form onSubmit={handlePhilippinesCourtSubmit} className="flex flex-col gap-6 mt-2 relative z-10">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2.5 bg-gradient-to-br from-amber-900 to-slate-900 rounded-xl shadow-md text-white">
+                    <Scale className="w-5 h-5 text-amber-300" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-slate-800 text-lg leading-tight">Philippines Court Check</h3>
+                    <p className="text-xs text-slate-500 font-medium mt-0.5">
+                      Judicial System of the Philippines • Supreme Court, Court of Appeals & Regional Trial Courts (RTC)
+                    </p>
+                  </div>
+                </div>
+
+                {/* Candidate & Addresses */}
+                <CourtPersonalDetailsFields
+                  candidateName={phcCandidateName}
+                  setCandidateName={setPhcCandidateName}
+                  candidateDob={phcCandidateDob}
+                  setCandidateDob={setPhcCandidateDob}
+                  fatherName={phcFatherName}
+                  setFatherName={setPhcFatherName}
+                  motherName={phcMotherName}
+                  setMotherName={setPhcMotherName}
+                  idProofType={phcIdProofType}
+                  setIdProofType={setPhcIdProofType}
+                  idProofNumber={phcIdProofNumber}
+                  setIdProofNumber={setPhcIdProofNumber}
+                  idProofFileName={phcIdProofFileName}
+                  setIdProofFileName={setPhcIdProofFileName}
+                  idProofFile={phcIdProofFile}
+                  setIdProofFile={setPhcIdProofFile}
+                  gender={phcGender}
+                  setGender={setPhcGender}
+                  isMarried={phcIsMarried}
+                  setIsMarried={setPhcIsMarried}
+                  husbandName={phcHusbandName}
+                  setHusbandName={setPhcHusbandName}
+                  addresses={phcAddresses}
+                  setAddresses={setPhcAddresses}
+                  defaultCountry="Philippines"
+                  disabled={phcSubmitting}
+                  onError={(msg) => setPhcErrorMsg(msg)}
+                  colorTheme="amber"
+                />
+
+
+                {/* Requesting Organization Name */}
+                <div className="flex flex-col gap-1.5 relative">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-label-caps flex items-center gap-1">
+                    <span>Requesting Organization Name</span>
+                    <span className="text-rose-500 font-bold">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={phcRequestingOrgName}
+                      onChange={(e) => {
+                        setPhcRequestingOrgName(e.target.value);
+                        setPhcShowOrgDropdown(true);
+                      }}
+                      onFocus={() => setPhcShowOrgDropdown(true)}
+                      onBlur={() => setTimeout(() => setPhcShowOrgDropdown(false), 200)}
+                      placeholder="Enter the organization name requiring the verification"
+                      disabled={phcSubmitting}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 focus:bg-white focus:border-amber-600 focus:ring-1 focus:ring-amber-600 transition-all outline-hidden disabled:opacity-60"
+                      required
+                    />
+                    {settings?.recentRequestingOrgs && settings.recentRequestingOrgs.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setPhcShowOrgDropdown(!phcShowOrgDropdown)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      >
+                        <ChevronDown className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+
+                  {phcShowOrgDropdown && phcFilteredOrgs.length > 0 && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-50 overflow-hidden max-h-48 overflow-y-auto">
+                      {phcFilteredOrgs.map((org: string, idx: number) => (
+                        <div
+                          key={idx}
+                          onMouseDown={() => {
+                            setPhcRequestingOrgName(org);
+                            setPhcShowOrgDropdown(false);
+                          }}
+                          className="px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 cursor-pointer font-medium flex items-center justify-between border-b border-slate-100 last:border-0"
+                        >
+                          <span>{org}</span>
+                          <span className="text-[10px] text-slate-400">Recent</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+
+                {/* Action Buttons */}
+                <div className="pt-2 border-t border-slate-100 flex flex-col gap-3">
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={handlePhilippinesCourtCancel}
+                      disabled={phcSubmitting}
+                      className="flex-1 py-3 border border-slate-200 text-slate-600 rounded-xl font-bold text-xs hover:bg-slate-50 transition-all cursor-pointer"
+                    >
+                      Clear
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={phcSubmitting}
+                      className="flex-2 py-3 bg-gradient-to-r from-amber-950 via-amber-900 to-slate-900 hover:from-black hover:to-amber-950 text-white rounded-xl font-bold text-xs shadow-md hover:shadow-lg transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-60"
+                    >
+                      {phcSubmitting ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Searching Philippines Registries...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Scale className="w-4 h-4 text-amber-300" />
+                          <span>Run Philippines Court Check</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <div className="lg:col-span-6 w-full lg:sticky lg:top-24">
+            <FlowDiagram 
+              title="Philippines Court Check Data Flow" 
+              activeService="philippines_court" 
+            />
+          </div>
+
+          {/* Success Modal for Philippines Court Check — rendered via Portal */}
+          {phcCreatedId && typeof document !== "undefined" && createPortal(
+            <PhilippinesCourtSuccessModal
+              phcCreatedId={phcCreatedId}
+              phcCandidateName={phcCandidateName || "Candidate"}
+              onCreateAnother={() => { setPhcCreatedId(null); setPhcSuccessMsg(""); }}
+              onGoToSummary={() => { setPhcCreatedId(null); router.push("/client/summary"); }}
             />,
             document.body
           )}

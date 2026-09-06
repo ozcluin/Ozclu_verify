@@ -20,6 +20,14 @@ export async function POST(req: NextRequest) {
       dateOfAPTo,
       judgeName,
       requestingOrgName,
+      candidateFatherName,
+      candidateMotherName,
+      candidateIsMarried,
+      candidateHusbandName,
+      gender,
+      idProofType,
+      idProofNumber,
+      addresses
     } = body;
 
     if (!candidateName?.trim()) {
@@ -49,6 +57,14 @@ export async function POST(req: NextRequest) {
       dateOfAPFrom: dateOfAPFrom || "",
       dateOfAPTo: dateOfAPTo || "",
       judgeName: judgeName?.trim() || "",
+      candidateFatherName: candidateFatherName?.trim() || "",
+      candidateMotherName: candidateMotherName?.trim() || "",
+      candidateIsMarried: !!candidateIsMarried,
+      candidateHusbandName: candidateIsMarried ? (candidateHusbandName?.trim() || "") : "",
+      gender: gender || "",
+      idProofType: idProofType || "",
+      idProofNumber: idProofNumber?.trim() || "",
+      addresses: addresses || [],
       malaysiaCourtStatus: "searching",
       malaysiaCourtHasRecords: false,
       malaysiaCourtResults: [],

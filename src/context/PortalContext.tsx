@@ -16,6 +16,7 @@ export interface Verification {
   candidateSurname?: string;
   candidateIdNumber?: string;
   provinceCity?: string;
+  province?: string;
   verifier: string | null;
   reportDetails?: string;
   notes?: string;
@@ -46,7 +47,7 @@ export interface Verification {
   employments?: Array<{ companyName: string; position: string; joiningYear?: string; leavingYear?: string; employeeCode?: string }>;
   educationList?: Array<{ boardUniversity: string; courseName: string; passingYear?: string; rollNumber?: string }>;
   // Court Record Verification & Watchlist fields
-  type?: "identity" | "court_record" | "employment" | "education" | "interpol" | "passport" | "digital_address" | "rednotice_worldwide" | "saflii_court" | "saps_wanted" | "uk_court" | "malaysia_court";
+  type?: "identity" | "court_record" | "employment" | "education" | "interpol" | "passport" | "digital_address" | "rednotice_worldwide" | "saflii_court" | "saps_wanted" | "uk_court" | "malaysia_court" | "singapore_court" | "philippines_court";
   source?: "portal" | "api";
   candidateDob?: string;
   birthCity?: string;
@@ -124,6 +125,49 @@ export interface Verification {
   malaysiaCourtStatus?: string;
   malaysiaCourtTotalResults?: number;
   malaysiaCourtTotalAvailable?: number;
+  singaporeCourtHasRecords?: boolean;
+  singaporeCourtResults?: Array<{
+    no: number | string;
+    caseNo: string;
+    hearingDate: string;
+    hearingDateIso?: string;
+    hearingType: string;
+    title: string;
+    venue: string;
+    judge: string;
+    detailUrl?: string;
+    natureOfCase?: string;
+    partiesSummary?: string;
+    lastUpdated?: string;
+  }>;
+  singaporeCourtCompletedAt?: string;
+  singaporeCourtSummary?: string;
+  singaporeCourtStatus?: string;
+  singaporeCourtTotalResults?: number;
+  singaporeCourtTotalAvailable?: number;
+  singaporeCourtSelectedCourt?: string;
+  singaporeCourtSelectedHearingType?: string;
+  singaporeCourtStartDate?: string;
+  singaporeCourtEndDate?: string;
+  philippinesCourtPartyName?: string;
+  philippinesCourtCaseNo?: string;
+  philippinesCourtStation?: string;
+  philippinesCourtHasRecords?: boolean;
+  philippinesCourtResults?: Array<{
+    no: number;
+    caseNo: string;
+    station: string;
+    stationCode?: string;
+    caseTitle: string;
+    parties: string[];
+    decisionStatus: string;
+    hasDecision: boolean;
+    statusCategory: string;
+  }>;
+  philippinesCourtCompletedAt?: string;
+  philippinesCourtSummary?: string;
+  philippinesCourtStatus?: string;
+  philippinesCourtTotalResults?: number;
   courtCategory?: string;
   courtLocation?: string;
   caseType?: string;
@@ -344,6 +388,10 @@ export interface CompanySettings {
   ukCourtRate?: number;
   malaysiaCourtEnabled?: boolean;
   malaysiaCourtRate?: number;
+  singaporeCourtEnabled?: boolean;
+  singaporeCourtRate?: number;
+  philippinesCourtEnabled?: boolean;
+  philippinesCourtRate?: number;
 }
 
 export interface Organisation {
@@ -385,6 +433,10 @@ export interface Organisation {
   ukCourtRate?: number;
   malaysiaCourtEnabled?: boolean;
   malaysiaCourtRate?: number;
+  singaporeCourtEnabled?: boolean;
+  singaporeCourtRate?: number;
+  philippinesCourtEnabled?: boolean;
+  philippinesCourtRate?: number;
   employmentRates?: Record<string, number>;
   educationRates?: Record<string, number>;
   serviceTats?: Record<string, string>;
@@ -477,10 +529,19 @@ interface PortalContextType {
     candidateName: string;
     candidateDob: string;
     birthCity?: string;
+    province: string;
     orgName: string;
     requestingOrgName: string;
     idProofFile?: string | null;
     idProofFileName?: string;
+    candidateFatherName?: string;
+    candidateMotherName?: string;
+    candidateIsMarried?: boolean;
+    candidateHusbandName?: string;
+    gender?: string;
+    idProofType?: string;
+    idProofNumber?: string;
+    addresses?: Array<{ address: string; city: string; state: string; country: string; fromYear?: number; toYear?: number }>;
   }) => Promise<any>;
   addSapsWantedVerification: (params: {
     candidateName: string;
@@ -504,6 +565,14 @@ interface PortalContextType {
     requestingOrgName: string;
     idProofFile?: string | null;
     idProofFileName?: string;
+    candidateFatherName?: string;
+    candidateMotherName?: string;
+    candidateIsMarried?: boolean;
+    candidateHusbandName?: string;
+    gender?: string;
+    idProofType?: string;
+    idProofNumber?: string;
+    addresses?: Array<{ address: string; city: string; state: string; country: string; fromYear?: number; toYear?: number }>;
   }) => Promise<any>;
   addMalaysiaCourtVerification: (params: {
     candidateName: string;
@@ -520,6 +589,55 @@ interface PortalContextType {
     requestingOrgName: string;
     idProofFile?: string | null;
     idProofFileName?: string;
+    candidateFatherName?: string;
+    candidateMotherName?: string;
+    candidateIsMarried?: boolean;
+    candidateHusbandName?: string;
+    gender?: string;
+    idProofType?: string;
+    idProofNumber?: string;
+    addresses?: Array<{ address: string; city: string; state: string; country: string; fromYear?: number; toYear?: number }>;
+  }) => Promise<any>;
+  addSingaporeCourtVerification: (params: {
+    candidateName: string;
+    candidateDob?: string;
+    court?: string;
+    hearingType?: string;
+    startDate?: string;
+    endDate?: string;
+    judgeName?: string;
+    lawFirm?: string;
+    orgName: string;
+    requestingOrgName: string;
+    idProofFile?: string | null;
+    idProofFileName?: string;
+    candidateFatherName?: string;
+    candidateMotherName?: string;
+    candidateIsMarried?: boolean;
+    candidateHusbandName?: string;
+    gender?: string;
+    idProofType?: string;
+    idProofNumber?: string;
+    addresses?: Array<{ address: string; city: string; state: string; country: string; fromYear?: number; toYear?: number }>;
+  }) => Promise<any>;
+  addPhilippinesCourtVerification: (params: {
+    candidateName: string;
+    candidateDob?: string;
+    partyName?: string;
+    caseNo?: string;
+    station?: string;
+    orgName: string;
+    requestingOrgName: string;
+    idProofFile?: string | null;
+    idProofFileName?: string;
+    candidateFatherName?: string;
+    candidateMotherName?: string;
+    candidateIsMarried?: boolean;
+    candidateHusbandName?: string;
+    gender?: string;
+    idProofType?: string;
+    idProofNumber?: string;
+    addresses?: Array<{ address: string; city: string; state: string; country: string; fromYear?: number; toYear?: number }>;
   }) => Promise<any>;
   addPassportVerification: (params: {
     fileNumber: string;
@@ -1086,10 +1204,19 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     candidateName: string;
     candidateDob: string;
     birthCity?: string;
+    province: string;
     orgName: string;
     requestingOrgName: string;
     idProofFile?: string | null;
     idProofFileName?: string;
+    candidateFatherName?: string;
+    candidateMotherName?: string;
+    candidateIsMarried?: boolean;
+    candidateHusbandName?: string;
+    gender?: string;
+    idProofType?: string;
+    idProofNumber?: string;
+    addresses?: Array<{ address: string; city: string; state: string; country: string; fromYear?: number; toYear?: number }>;
   }) => {
     try {
       const res = await fetch("/api/portal-data", {
@@ -1153,6 +1280,14 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     requestingOrgName: string;
     idProofFile?: string | null;
     idProofFileName?: string;
+    candidateFatherName?: string;
+    candidateMotherName?: string;
+    candidateIsMarried?: boolean;
+    candidateHusbandName?: string;
+    gender?: string;
+    idProofType?: string;
+    idProofNumber?: string;
+    addresses?: Array<{ address: string; city: string; state: string; country: string; fromYear?: number; toYear?: number }>;
   }) => {
     try {
       const res = await fetch("/api/portal-data", {
@@ -1188,6 +1323,14 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     requestingOrgName: string;
     idProofFile?: string | null;
     idProofFileName?: string;
+    candidateFatherName?: string;
+    candidateMotherName?: string;
+    candidateIsMarried?: boolean;
+    candidateHusbandName?: string;
+    gender?: string;
+    idProofType?: string;
+    idProofNumber?: string;
+    addresses?: Array<{ address: string; city: string; state: string; country: string; fromYear?: number; toYear?: number }>;
   }) => {
     try {
       const res = await fetch("/api/portal-data", {
@@ -1204,6 +1347,85 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       return data;
     } catch (err: any) {
       console.error("Failed creating Malaysia Court verification:", err);
+      throw err;
+    }
+  };
+
+  const addSingaporeCourtVerification = async (params: {
+    candidateName: string;
+    candidateDob?: string;
+    court?: string;
+    hearingType?: string;
+    startDate?: string;
+    endDate?: string;
+    judgeName?: string;
+    lawFirm?: string;
+    orgName: string;
+    requestingOrgName: string;
+    idProofFile?: string | null;
+    idProofFileName?: string;
+    candidateFatherName?: string;
+    candidateMotherName?: string;
+    candidateIsMarried?: boolean;
+    candidateHusbandName?: string;
+    gender?: string;
+    idProofType?: string;
+    idProofNumber?: string;
+    addresses?: Array<{ address: string; city: string; state: string; country: string; fromYear?: number; toYear?: number }>;
+  }) => {
+    try {
+      const res = await fetch("/api/portal-data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "addSingaporeCourtVerification",
+          payload: params,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed creating Singapore Court verification");
+      await fetchAllData();
+      return data;
+    } catch (err: any) {
+      console.error("Failed creating Singapore Court verification:", err);
+      throw err;
+    }
+  };
+
+  const addPhilippinesCourtVerification = async (params: {
+    candidateName: string;
+    candidateDob?: string;
+    partyName?: string;
+    caseNo?: string;
+    station?: string;
+    orgName: string;
+    requestingOrgName: string;
+    idProofFile?: string | null;
+    idProofFileName?: string;
+    candidateFatherName?: string;
+    candidateMotherName?: string;
+    candidateIsMarried?: boolean;
+    candidateHusbandName?: string;
+    gender?: string;
+    idProofType?: string;
+    idProofNumber?: string;
+    addresses?: Array<{ address: string; city: string; state: string; country: string; fromYear?: number; toYear?: number }>;
+  }) => {
+    try {
+      const res = await fetch("/api/portal-data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "addPhilippinesCourtVerification",
+          payload: params,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed creating Philippines Court verification");
+      await fetchAllData();
+      return data;
+    } catch (err: any) {
+      console.error("Failed creating Philippines Court verification:", err);
       throw err;
     }
   };
@@ -1486,6 +1708,8 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         addSapsWantedVerification,
         addUkCourtVerification,
         addMalaysiaCourtVerification,
+        addSingaporeCourtVerification,
+        addPhilippinesCourtVerification,
         addPassportVerification,
         addDigitalAddressVerification,
         addVerification,

@@ -8,10 +8,29 @@ import { processExternalApiRequest, generateVerificationId, formatDateForVerific
 
 export async function POST(req: NextRequest) {
   return processExternalApiRequest(req, "saflii_court", async (db, auth, body) => {
-    const { candidateName, candidateDob, birthCity, requestingOrgName } = body;
+    const {
+      candidateName,
+      candidateDob,
+      birthCity,
+      province,
+      provinceCity,
+      requestingOrgName,
+      candidateFatherName,
+      candidateMotherName,
+      candidateIsMarried,
+      candidateHusbandName,
+      gender,
+      idProofType,
+      idProofNumber,
+      addresses
+    } = body;
+    const selectedProvince = province?.trim() || provinceCity?.trim();
 
     if (!candidateName?.trim()) {
       return { data: { error: "candidateName is required" }, statusCode: 400 };
+    }
+    if (!selectedProvince) {
+      return { data: { error: "province is required for South African Court Check" }, statusCode: 400 };
     }
 
     const orgName = auth.org.name;
@@ -26,10 +45,20 @@ export async function POST(req: NextRequest) {
       date: formatDateForVerification(),
       status: "Processing",
       verifier: "System",
-      notes: "SAFLII Court Check initiated via API. Search in progress...",
+      notes: `SAFLII Court Check initiated for ${selectedProvince} via API. Search in progress...`,
       type: "saflii_court",
       candidateDob: candidateDob || "",
       birthCity: birthCity?.trim() || "",
+      province: selectedProvince,
+      provinceCity: selectedProvince,
+      candidateFatherName: candidateFatherName?.trim() || "",
+      candidateMotherName: candidateMotherName?.trim() || "",
+      candidateIsMarried: !!candidateIsMarried,
+      candidateHusbandName: candidateIsMarried ? (candidateHusbandName?.trim() || "") : "",
+      gender: gender || "",
+      idProofType: idProofType || "",
+      idProofNumber: idProofNumber?.trim() || "",
+      addresses: addresses || [],
       safliiCourtStatus: "searching",
       safliiCourtHasRecords: false,
       safliiCourtResults: [],
@@ -42,7 +71,11 @@ export async function POST(req: NextRequest) {
     fetch(`${baseUrl}/api/saflii-search`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-internal-api-key": process.env.NEXTAUTH_SECRET || "" },
-      body: JSON.stringify({ verificationId: finalId, candidateName: candidateName.trim() }),
+      body: JSON.stringify({
+        verificationId: finalId,
+        candidateName: candidateName.trim(),
+        province: selectedProvince,
+      }),
     }).catch((err) => console.error(`[SAFLII_API] Failed to trigger for ${finalId}:`, err.message));
 
     return {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth, requireRole, isErrorResponse } from "src/lib/apiAuth";
 import { connectToDatabase } from "src/lib/mongodb";
+import { isRecordFullNameMatch } from "src/lib/nameMatching";
 import * as cheerio from "cheerio";
 
 /**
@@ -166,7 +167,7 @@ export async function POST(req: NextRequest) {
         if (judgmentType && judgmentType.trim()) {
           queryParams.set("judgment_type", judgmentType.trim());
         }
-        if (jurisdiction && jurisdiction.trim()) {
+        if (jurisdiction && jurisdiction.trim() && !jurisdiction.toLowerCase().includes("all")) {
           queryParams.set("jurisdiction", jurisdiction.trim());
         }
 
@@ -231,18 +232,29 @@ export async function POST(req: NextRequest) {
           }
         }
 
-        const hasRecords = allRecords.length > 0;
+        // Strictly filter raw results: only include records where candidate full name matches title, snippet, or summary
+        const matchedRecords = allRecords.filter((rec) =>
+          isRecordFullNameMatch(String(candidateName).trim(), [
+            rec.caseTitle,
+            rec.snippet,
+            ...(rec.pills || []),
+          ])
+        );
+
+        // Re-number matched records
+        const finalRecords = matchedRecords.map((r, i) => ({ ...r, no: i + 1 }));
+        const hasRecords = finalRecords.length > 0;
         const ukCourtSummary = hasRecords
-          ? `${totalCount || allRecords.length} court judgment(s) and legal order(s) found in UK Judiciary database for "${candidateName}"`
-          : `No court judgments or records found in UK Judiciary database for "${candidateName}"`;
+          ? `${finalRecords.length} court judgment(s) matching candidate name "${candidateName}" found in UK Judiciary database`
+          : `Verified Clear: Zero court judgments or records found in UK Judiciary database for "${candidateName}"`;
 
         const updateDoc: Record<string, any> = {
-          ukCourtResults: allRecords,
+          ukCourtResults: finalRecords,
           ukCourtSummary,
           ukCourtStatus: "completed",
           ukCourtHasRecords: hasRecords,
-          ukCourtTotalResults: allRecords.length,
-          ukCourtTotalAvailable: totalCount || allRecords.length,
+          ukCourtTotalResults: finalRecords.length,
+          ukCourtTotalAvailable: finalRecords.length,
           ukCourtCompletedAt: new Date().toISOString(),
           status: hasRecords ? "Needs Attention" : "Completed",
           notes: ukCourtSummary,
@@ -264,10 +276,10 @@ export async function POST(req: NextRequest) {
           success: true,
           verificationId,
           summary: ukCourtSummary,
-          totalResults: allRecords.length,
-          totalAvailable: totalCount,
+          totalResults: finalRecords.length,
+          totalAvailable: finalRecords.length,
           hasRecords,
-          results: allRecords,
+          results: finalRecords,
         });
       } catch (err: any) {
         lastError = err;

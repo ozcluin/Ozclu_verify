@@ -1,15 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth, requireRole, isErrorResponse } from "src/lib/apiAuth";
 import { connectToDatabase } from "src/lib/mongodb";
+import { isRecordFullNameMatch, isRecordProvinceMatch } from "src/lib/nameMatching";
 import * as cheerio from "cheerio";
 
 /**
  * POST /api/saflii-search
  *
  * Searches the South African Court Judgments and Legal Information Institute database
- * (LawLibrary / SAFLII / Laws.Africa) for court case records matching a candidate's name.
+ * (LawLibrary / SAFLII / Laws.Africa) for court case records matching a candidate's name
+ * strictly segregated by the required Province.
  *
- * Body: { verificationId, candidateName }
+ * Body: { verificationId, candidateName, province }
  *
  * Filters by doc_type: "judgment" to return actual court records and judgments.
  * AUTO-RETRY: On failure, silently retries up to 3 times with 3-second delays.
@@ -126,7 +128,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { verificationId, candidateName } = body;
+    const { verificationId, candidateName, province, provinceCity, targetProvince: bodyTargetProvince, provinces: bodyProvinces, addresses } = body;
 
     if (!verificationId || !candidateName) {
       return NextResponse.json(
@@ -137,11 +139,48 @@ export async function POST(req: NextRequest) {
 
     const { db } = await connectToDatabase();
 
+    // Lookup verification document if needed
+    const existingVer = await db.collection("verifications").findOne({ id: verificationId });
+
+    // Determine target addresses
+    const targetAddresses: any[] = (addresses && Array.isArray(addresses) && addresses.length > 0)
+      ? addresses
+      : (existingVer?.addresses && Array.isArray(existingVer.addresses) && existingVer.addresses.length > 0)
+        ? existingVer.addresses
+        : [];
+
+    // Extract all unique provinces from addresses and body
+    const extractedProvinces: string[] = targetAddresses
+      .map((a: any) => (a.stateCode?.startsWith("Other:") ? a.stateCode.substring(6) : (a.state || a.stateCode || "")).trim())
+      .filter(Boolean);
+
+    const extraProvinces: string[] = [
+      ...(Array.isArray(bodyProvinces) ? bodyProvinces : []),
+      ...(Array.isArray(existingVer?.provinces) ? existingVer.provinces : []),
+      ...(province ? String(province).split(",").map((p: string) => p.trim()) : []),
+      ...(provinceCity ? String(provinceCity).split(",").map((p: string) => p.trim()) : []),
+      ...(bodyTargetProvince ? String(bodyTargetProvince).split(",").map((p: string) => p.trim()) : []),
+      ...(existingVer?.province ? String(existingVer.province).split(",").map((p: string) => p.trim()) : []),
+    ].filter(Boolean);
+
+    const uniqueProvinces = Array.from(new Set([...extractedProvinces, ...extraProvinces]));
+    const targetProvince = uniqueProvinces.join(", ");
+
+    if (!targetProvince) {
+      return NextResponse.json(
+        { error: "Target Province is required for South African Court check" },
+        { status: 400 }
+      );
+    }
+
     // Update verification to show search is in progress
     await db.collection("verifications").updateOne(
       { id: verificationId },
       {
         $set: {
+          province: targetProvince,
+          provinceCity: targetProvince,
+          provinces: uniqueProvinces,
           safliiCourtStatus: "searching",
           safliiCourtSearchStartedAt: new Date().toISOString(),
         },
@@ -166,7 +205,7 @@ export async function POST(req: NextRequest) {
 
         const searchUrl = `${SOUTH_AFRICA_SEARCH_API}?${params.toString()}`;
 
-        console.log(`[SA-COURT] Querying South African Court API: ${searchUrl}`);
+        console.log(`[SA-COURT] Querying South African Court API for ${candidateName} in ${targetProvince}: ${searchUrl}`);
 
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
@@ -189,24 +228,81 @@ export async function POST(req: NextRequest) {
 
         const data = await response.json();
         const resultsHtml = data.results_html || "";
-        const totalCount = data.count || 0;
-
         const parsedRecords = parseSearchResultsHtml(resultsHtml);
 
-        const hasRecords = parsedRecords.length > 0;
+        // Perform search per-address if addresses were provided
+        const addressSearches: any[] = [];
+        if (targetAddresses.length > 0) {
+          targetAddresses.forEach((addr: any, idx: number) => {
+            const addrProvince = (addr.stateCode?.startsWith("Other:") ? addr.stateCode.substring(6) : (addr.state || addr.stateCode || "")).trim();
+            const matchedForAddr = parsedRecords.filter((rec) =>
+              isRecordFullNameMatch(String(candidateName).trim(), [
+                rec.caseTitle,
+                rec.snippet,
+                rec.summary,
+              ]) &&
+              (addrProvince ? isRecordProvinceMatch(rec, addrProvince) : true)
+            );
+
+            addressSearches.push({
+              addressIndex: idx,
+              address: addr.address || "",
+              city: addr.city || "",
+              province: addrProvince || targetProvince,
+              state: addrProvince || targetProvince,
+              country: addr.country || "South Africa",
+              fromYear: addr.fromYear,
+              toYear: addr.toYear,
+              casesFound: matchedForAddr.length,
+              cases: matchedForAddr.map((r, i) => ({ ...r, no: i + 1, matchedProvince: addrProvince })),
+            });
+          });
+        }
+
+        // Deduplicate all final records across all addresses
+        const seenUrls = new Set<string>();
+        const finalRecords: any[] = [];
+
+        if (addressSearches.length > 0) {
+          for (const as of addressSearches) {
+            for (const c of as.cases) {
+              if (!seenUrls.has(c.url)) {
+                seenUrls.add(c.url);
+                finalRecords.push({ ...c, no: finalRecords.length + 1 });
+              }
+            }
+          }
+        } else {
+          // Fallback: match against all unique provinces
+          const matchedRecords = parsedRecords.filter((rec) =>
+            isRecordFullNameMatch(String(candidateName).trim(), [
+              rec.caseTitle,
+              rec.snippet,
+              rec.summary,
+            ]) &&
+            isRecordProvinceMatch(rec, uniqueProvinces)
+          );
+          finalRecords.push(...matchedRecords.map((r, i) => ({ ...r, no: i + 1 })));
+        }
+
+        const hasRecords = finalRecords.length > 0;
 
         const safliiCourtSummary = hasRecords
-          ? `${totalCount || parsedRecords.length} court record(s) found in South African Court database for "${candidateName}"`
-          : `No court records found in South African Court database for "${candidateName}"`;
+          ? `${finalRecords.length} court record(s) matching candidate name "${candidateName}" found in South African Court database across ${targetProvince}`
+          : `Verified Clear: Zero court records found in South African Court database (${targetProvince}) for "${candidateName}"`;
 
         // Update verification with results
         const updateDoc: Record<string, any> = {
-          safliiCourtResults: parsedRecords,
+          province: targetProvince,
+          provinceCity: targetProvince,
+          provinces: uniqueProvinces,
+          safliiCourtAddressResults: addressSearches,
+          safliiCourtResults: finalRecords,
           safliiCourtSummary,
           safliiCourtStatus: "completed",
           safliiCourtHasRecords: hasRecords,
-          safliiCourtTotalResults: parsedRecords.length,
-          safliiCourtTotalAvailable: totalCount || parsedRecords.length,
+          safliiCourtTotalResults: finalRecords.length,
+          safliiCourtTotalAvailable: finalRecords.length,
           safliiCourtCompletedAt: new Date().toISOString(),
           status: hasRecords ? "Needs Attention" : "Completed",
           notes: safliiCourtSummary,
@@ -222,16 +318,16 @@ export async function POST(req: NextRequest) {
           { $set: updateDoc }
         );
 
-        console.log(`[SA-COURT] Search complete for ${verificationId}: ${parsedRecords.length} results found (${totalCount} total)`);
+        console.log(`[SA-COURT] Search complete for ${verificationId}: ${parsedRecords.length} raw matches (${finalRecords.length} filtered)`);
 
         return NextResponse.json({
           success: true,
           verificationId,
           summary: safliiCourtSummary,
-          totalResults: parsedRecords.length,
-          totalAvailable: totalCount,
+          totalResults: finalRecords.length,
+          totalAvailable: finalRecords.length,
           hasRecords,
-          results: parsedRecords,
+          results: finalRecords,
         });
       } catch (err: any) {
         lastError = err;

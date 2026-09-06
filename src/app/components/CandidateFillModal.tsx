@@ -552,10 +552,10 @@ export default function CandidateFillModal({
                     </div>
                   </div>
 
-                  {/* Reporting Manager (Optional) */}
+                  {/* Reporting Manager */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-[#eaf0e4]/80">
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-bold text-slate-500 uppercase">Reporting Manager Name (Optional)</label>
+                      <label className="text-[10px] font-bold text-slate-500 uppercase">Reporting Manager Name</label>
                       <input
                         type="text"
                         value={emp.reportingManagerName}
@@ -566,7 +566,7 @@ export default function CandidateFillModal({
                     </div>
 
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-bold text-slate-500 uppercase">Manager Email (Optional)</label>
+                      <label className="text-[10px] font-bold text-slate-500 uppercase">Manager Email</label>
                       <input
                         type="email"
                         value={emp.reportingManagerEmail}
@@ -634,7 +634,7 @@ export default function CandidateFillModal({
                     {/* Relieving / Experience Letter Attachment (Max 1MB UI label, 2MB hard limit) */}
                     <div className="flex flex-col gap-1.5 md:col-span-2 pt-2 border-t border-[#eaf0e4]/80">
                       <label className="text-[10px] font-bold text-[#00450e] uppercase tracking-wider">
-                        Relieving / Experience Letter Attachment (PDF / Image, Max 1MB)
+                        Relieving / Experience Letter Attachment (PDF / Image)
                       </label>
                       {emp.experienceLetterFile ? (
                         <div className="border border-emerald-200 rounded-xl p-3 bg-emerald-50/50 flex items-center justify-between">
@@ -824,7 +824,7 @@ export default function CandidateFillModal({
                     {/* Certificate Attachment */}
                     <div className="flex flex-col gap-1.5 md:col-span-2 pt-2 border-t border-[#eaf0e4]/80">
                       <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center justify-between">
-                        <span>Degree / Marksheet / Certificate Copy (Optional)</span>
+                        <span>Degree / Marksheet / Certificate Copy</span>
                         <span className="text-slate-400 font-semibold">(Max 1MB)</span>
                       </label>
                       {edu.certificateFile ? (
@@ -849,7 +849,7 @@ export default function CandidateFillModal({
                       ) : (
                         <label className="border border-dashed border-[#eaf0e4] hover:border-purple-500 rounded-xl p-3 bg-[#f6fbf0]/50 hover:bg-white transition-all flex items-center justify-center gap-2 cursor-pointer">
                           <UploadCloud className="w-4 h-4 text-slate-400" />
-                          <span className="text-xs font-bold text-slate-700">Upload Degree / Marksheet / Certificate (Optional, Max 1MB)</span>
+                          <span className="text-xs font-bold text-slate-700">Upload Degree / Marksheet / Certificate (Optional)</span>
                           <input
                             type="file"
                             accept=".pdf,.jpg,.jpeg,.png"

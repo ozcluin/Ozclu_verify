@@ -1601,7 +1601,7 @@ export async function POST(req: NextRequest) {
 
         const notes = hasMatch
           ? `Potential match identified on SAPS Wanted registry: ${sanitizedMatches.length} record(s). Verification halted pending attorney review.`
-          : "No similarity matches found in South African Police Service (SAPS) Wanted Persons registry. Clean record verified.";
+          : "No similarity matches found in South African Police Service (SAPS) Registry. Clean record verified.";
 
         const dateFormatted = new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
 
@@ -1663,10 +1663,34 @@ export async function POST(req: NextRequest) {
         });
       }
       case "addSafliiCourtVerification": {
-        const { candidateName, candidateDob, birthCity, orgName, requestingOrgName: reqOrgName } = payload;
+        const {
+          candidateName,
+          candidateDob,
+          birthCity,
+          province,
+          orgName,
+          requestingOrgName: reqOrgName,
+          candidateFatherName,
+          candidateMotherName,
+          candidateIsMarried,
+          candidateHusbandName,
+          gender,
+          idProofType,
+          idProofNumber,
+          addresses
+        } = payload;
+
+        const extractedProvinces = Array.isArray(addresses)
+          ? addresses.map((a: any) => (a.stateCode?.startsWith("Other:") ? a.stateCode.substring(6) : (a.state || a.stateCode || "")).trim()).filter(Boolean)
+          : [];
+        const uniqueProvinces = Array.from(new Set(extractedProvinces));
+        const resolvedProvince = province?.trim() || uniqueProvinces.join(", ");
 
         if (!candidateName?.trim()) {
           return NextResponse.json({ error: "Candidate name is required" }, { status: 400 });
+        }
+        if (!resolvedProvince) {
+          return NextResponse.json({ error: "State / Province is required in candidate address" }, { status: 400 });
         }
 
         const isAdminSession = sessionOrgName?.toLowerCase() === "ozclu" || sessionOrgName?.toLowerCase() === "admin";
@@ -1695,10 +1719,21 @@ export async function POST(req: NextRequest) {
           date: dateFormatted,
           status: "Processing",
           verifier: "System",
-          notes: "SAFLII South African Court Check initiated. Search in progress...",
+          notes: `SAFLII South African Court Check initiated for ${resolvedProvince}. Search in progress...`,
           type: "saflii_court",
           candidateDob: candidateDob || "",
           birthCity: birthCity?.trim() || "",
+          province: resolvedProvince,
+          provinceCity: resolvedProvince,
+          provinces: uniqueProvinces,
+          candidateFatherName: candidateFatherName?.trim() || "",
+          candidateMotherName: candidateMotherName?.trim() || "",
+          candidateIsMarried: !!candidateIsMarried,
+          candidateHusbandName: candidateIsMarried ? (candidateHusbandName?.trim() || "") : "",
+          gender: gender || "",
+          idProofType: idProofType || "",
+          idProofNumber: idProofNumber?.trim() || "",
+          addresses: addresses || [],
           safliiCourtStatus: "searching",
           safliiCourtHasRecords: false,
           safliiCourtResults: [],
@@ -1741,6 +1776,9 @@ export async function POST(req: NextRequest) {
           body: JSON.stringify({
             verificationId: finalId,
             candidateName: candidateName.trim(),
+            province: resolvedProvince,
+            provinces: uniqueProvinces,
+            addresses: addresses || [],
           }),
         }).catch((err) => {
           console.error(`[SAFLII] Failed to trigger search for ${finalId}:`, err.message);
@@ -1749,7 +1787,23 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: true, id: finalId });
       }
       case "addUkCourtVerification": {
-        const { candidateName, candidateDob, birthCity, judgmentType, jurisdiction, orgName, requestingOrgName: reqOrgName } = payload;
+        const {
+          candidateName,
+          candidateDob,
+          birthCity,
+          judgmentType,
+          jurisdiction,
+          orgName,
+          requestingOrgName: reqOrgName,
+          candidateFatherName,
+          candidateMotherName,
+          candidateIsMarried,
+          candidateHusbandName,
+          gender,
+          idProofType,
+          idProofNumber,
+          addresses
+        } = payload;
 
         if (!candidateName?.trim()) {
           return NextResponse.json({ error: "Candidate name is required" }, { status: 400 });
@@ -1786,7 +1840,15 @@ export async function POST(req: NextRequest) {
           candidateDob: candidateDob || "",
           birthCity: birthCity?.trim() || "",
           judgmentType: judgmentType || "",
-          jurisdiction: jurisdiction || "",
+          jurisdiction: jurisdiction?.trim() || "All UK Jurisdictions",
+          candidateFatherName: candidateFatherName?.trim() || "",
+          candidateMotherName: candidateMotherName?.trim() || "",
+          candidateIsMarried: !!candidateIsMarried,
+          candidateHusbandName: candidateIsMarried ? (candidateHusbandName?.trim() || "") : "",
+          gender: gender || "",
+          idProofType: idProofType || "",
+          idProofNumber: idProofNumber?.trim() || "",
+          addresses: addresses || [],
           ukCourtStatus: "searching",
           ukCourtHasRecords: false,
           ukCourtResults: [],
@@ -1832,7 +1894,7 @@ export async function POST(req: NextRequest) {
             verificationId: finalId,
             candidateName: candidateName.trim(),
             judgmentType: judgmentType || "",
-            jurisdiction: jurisdiction || "",
+            jurisdiction: jurisdiction?.trim() || "All UK Jurisdictions",
           }),
         }).catch((err) => {
           console.error(`[UK-COURT] Failed to trigger search for ${finalId}:`, err.message);
@@ -1854,6 +1916,14 @@ export async function POST(req: NextRequest) {
           judgeName,
           orgName,
           requestingOrgName: reqOrgName,
+          candidateFatherName,
+          candidateMotherName,
+          candidateIsMarried,
+          candidateHusbandName,
+          gender,
+          idProofType,
+          idProofNumber,
+          addresses
         } = payload;
 
         if (!candidateName?.trim()) {
@@ -1889,6 +1959,14 @@ export async function POST(req: NextRequest) {
           notes: "Malaysia Court Check initiated. Searching Portal eJudgment Mahkamah Persekutuan Malaysia...",
           type: "malaysia_court",
           candidateDob: candidateDob || "",
+          candidateFatherName: candidateFatherName?.trim() || "",
+          candidateMotherName: candidateMotherName?.trim() || "",
+          candidateIsMarried: !!candidateIsMarried,
+          candidateHusbandName: candidateIsMarried ? (candidateHusbandName?.trim() || "") : "",
+          gender: gender || "",
+          idProofType: idProofType || "",
+          idProofNumber: idProofNumber?.trim() || "",
+          addresses: addresses || [],
           courtCategory: courtCategory || "",
           courtLocation: courtLocation || "",
           caseType: caseType || "",
@@ -1952,6 +2030,247 @@ export async function POST(req: NextRequest) {
           }),
         }).catch((err) => {
           console.error(`[MY-COURT] Failed to trigger search for ${finalId}:`, err.message);
+        });
+
+        return NextResponse.json({ success: true, id: finalId });
+      }
+      case "addSingaporeCourtVerification": {
+        const {
+          candidateName,
+          candidateDob,
+          court,
+          hearingType,
+          startDate,
+          endDate,
+          judgeName,
+          lawFirm,
+          orgName,
+          requestingOrgName: reqOrgName,
+          candidateFatherName,
+          candidateMotherName,
+          candidateIsMarried,
+          candidateHusbandName,
+          gender,
+          idProofType,
+          idProofNumber,
+          addresses
+        } = payload;
+
+        if (!candidateName?.trim()) {
+          return NextResponse.json({ error: "Candidate / Search keyword is required" }, { status: 400 });
+        }
+
+        const isAdminSession = sessionOrgName?.toLowerCase() === "ozclu" || sessionOrgName?.toLowerCase() === "admin";
+        const safeOrgName = isAdminSession ? (orgName || sessionOrgName) : (sessionOrgName || orgName);
+
+        const nowTime = new Date();
+        const dd = String(nowTime.getDate()).padStart(2, "0");
+        const mm = String(nowTime.getMonth() + 1).padStart(2, "0");
+        const yy = String(nowTime.getFullYear()).slice(-2);
+        const dateStr = `${dd}${mm}${yy}`;
+        const prefix = `SGC${dateStr}-`;
+
+        const count = await db.collection("verifications").countDocuments({
+          id: { $regex: `^${prefix}` }
+        });
+        const finalId = `${prefix}${String(count + 1).padStart(4, "0")}`;
+
+        const dateFormatted = new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
+
+        await db.collection("verifications").insertOne({
+          id: finalId,
+          name: candidateName.trim(),
+          email: "",
+          orgName: safeOrgName,
+          requestingOrgName: reqOrgName || safeOrgName,
+          date: dateFormatted,
+          status: "Processing",
+          verifier: "System",
+          notes: "Singapore Court Check initiated. Searching Singapore Judiciary hearing list gateway...",
+          type: "singapore_court",
+          candidateDob: candidateDob || "",
+          candidateFatherName: candidateFatherName?.trim() || "",
+          candidateMotherName: candidateMotherName?.trim() || "",
+          candidateIsMarried: !!candidateIsMarried,
+          candidateHusbandName: candidateIsMarried ? (candidateHusbandName?.trim() || "") : "",
+          gender: gender || "",
+          idProofType: idProofType || "",
+          idProofNumber: idProofNumber?.trim() || "",
+          addresses: addresses || [],
+          singaporeCourtSelectedCourt: court || "All Courts",
+          singaporeCourtSelectedHearingType: hearingType || "All Types",
+          singaporeCourtStartDate: startDate || "",
+          singaporeCourtEndDate: endDate || "",
+          judgeName: judgeName?.trim() || "",
+          singaporeCourtStatus: "searching",
+          singaporeCourtHasRecords: false,
+          singaporeCourtResults: [],
+          singaporeCourtTotalResults: 0,
+          singaporeCourtTotalAvailable: 0,
+          idProofFile: payload.idProofFile || null,
+          idProofFileName: payload.idProofFileName || "",
+          singaporeCourtCompletedAt: null,
+          source: "portal",
+          createdAt: new Date().toISOString()
+        });
+
+        if (reqOrgName && reqOrgName.trim()) {
+          await db.collection("settings").updateOne(
+            { companyName: safeOrgName },
+            { $addToSet: { recentRequestingOrgs: reqOrgName.trim() } },
+            { upsert: true }
+          );
+        }
+
+        await logAuditEvent(db, {
+          actorUserId: user.id,
+          actorEmail: user.email,
+          actorRole: user.role,
+          portal: "client",
+          action: "singapore_court_verification_created",
+          targetType: "verification",
+          targetId: finalId,
+          ip,
+          userAgent,
+          outcome: "success"
+        });
+
+        // Fire-and-forget: trigger Singapore Court search in background
+        const baseUrl = req.nextUrl.origin || process.env.NEXTAUTH_URL || "http://localhost:3000";
+        fetch(`${baseUrl}/api/singapore-court-search`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-internal-api-key": process.env.NEXTAUTH_SECRET || "",
+          },
+          body: JSON.stringify({
+            verificationId: finalId,
+            candidateName: candidateName.trim(),
+            court: court || "",
+            hearingType: hearingType || "",
+            startDate: startDate || "",
+            endDate: endDate || "",
+            judgeName: judgeName || "",
+            lawFirm: lawFirm || "",
+          }),
+        }).catch((err) => {
+          console.error(`[SG-COURT] Failed to trigger search for ${finalId}:`, err.message);
+        });
+
+        return NextResponse.json({ success: true, id: finalId });
+      }
+      case "addPhilippinesCourtVerification": {
+        const {
+          candidateName,
+          candidateDob,
+          partyName,
+          caseNo,
+          station,
+          orgName,
+          requestingOrgName: reqOrgName,
+          candidateFatherName,
+          candidateMotherName,
+          candidateIsMarried,
+          candidateHusbandName,
+          gender,
+          idProofType,
+          idProofNumber,
+          addresses
+        } = payload;
+
+        if (!candidateName?.trim() && !partyName?.trim() && !caseNo?.trim()) {
+          return NextResponse.json({ error: "Candidate name, party name, or case number is required" }, { status: 400 });
+        }
+
+        const effectiveName = (partyName || candidateName || caseNo || "").trim();
+        const isAdminSession = sessionOrgName?.toLowerCase() === "ozclu" || sessionOrgName?.toLowerCase() === "admin";
+        const safeOrgName = isAdminSession ? (orgName || sessionOrgName) : (sessionOrgName || orgName);
+
+        const nowTime = new Date();
+        const dd = String(nowTime.getDate()).padStart(2, "0");
+        const mm = String(nowTime.getMonth() + 1).padStart(2, "0");
+        const yy = String(nowTime.getFullYear()).slice(-2);
+        const dateStr = `${dd}${mm}${yy}`;
+        const prefix = `PHC${dateStr}-`;
+
+        const count = await db.collection("verifications").countDocuments({
+          id: { $regex: `^${prefix}` }
+        });
+        const finalId = `${prefix}${String(count + 1).padStart(4, "0")}`;
+
+        const dateFormatted = new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
+
+        await db.collection("verifications").insertOne({
+          id: finalId,
+          name: effectiveName,
+          email: "",
+          orgName: safeOrgName,
+          requestingOrgName: reqOrgName || safeOrgName,
+          date: dateFormatted,
+          status: "Processing",
+          verifier: "System",
+          notes: "Philippines Court Check initiated. Searching Court of Appeals case status inquiry gateway...",
+          type: "philippines_court",
+          candidateDob: candidateDob || "",
+          candidateFatherName: candidateFatherName?.trim() || "",
+          candidateMotherName: candidateMotherName?.trim() || "",
+          candidateIsMarried: !!candidateIsMarried,
+          candidateHusbandName: candidateIsMarried ? (candidateHusbandName?.trim() || "") : "",
+          gender: gender || "",
+          idProofType: idProofType || "",
+          idProofNumber: idProofNumber?.trim() || "",
+          addresses: addresses || [],
+          philippinesCourtStation: station || "all",
+          philippinesCourtPartyName: effectiveName,
+          philippinesCourtCaseNo: caseNo?.trim() || "",
+          philippinesCourtStatus: "searching",
+          philippinesCourtHasRecords: false,
+          philippinesCourtResults: [],
+          philippinesCourtTotalResults: 0,
+          idProofFile: payload.idProofFile || null,
+          idProofFileName: payload.idProofFileName || "",
+          philippinesCourtCompletedAt: null,
+          source: "portal",
+          createdAt: new Date().toISOString()
+        });
+
+        if (reqOrgName && reqOrgName.trim()) {
+          await db.collection("settings").updateOne(
+            { companyName: safeOrgName },
+            { $addToSet: { recentRequestingOrgs: reqOrgName.trim() } },
+            { upsert: true }
+          );
+        }
+
+        await logAuditEvent(db, {
+          actorUserId: user.id,
+          actorEmail: user.email,
+          actorRole: user.role,
+          portal: "client",
+          action: "philippines_court_verification_created",
+          targetType: "verification",
+          targetId: finalId,
+          ip,
+          userAgent,
+          outcome: "success"
+        });
+
+        // Fire-and-forget: trigger Philippines Court search in background
+        const baseUrl = req.nextUrl.origin || process.env.NEXTAUTH_URL || "http://localhost:3000";
+        fetch(`${baseUrl}/api/philippines-court-search`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-internal-api-key": process.env.NEXTAUTH_SECRET || "",
+          },
+          body: JSON.stringify({
+            verificationId: finalId,
+            candidateName: effectiveName,
+            caseNo: caseNo || "",
+            station: station || "all",
+          }),
+        }).catch((err) => {
+          console.error(`[PH-COURT] Failed to trigger search for ${finalId}:`, err.message);
         });
 
         return NextResponse.json({ success: true, id: finalId });

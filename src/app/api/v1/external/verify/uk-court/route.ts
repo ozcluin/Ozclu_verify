@@ -8,7 +8,22 @@ import { processExternalApiRequest, generateVerificationId, formatDateForVerific
 
 export async function POST(req: NextRequest) {
   return processExternalApiRequest(req, "uk_court", async (db, auth, body) => {
-    const { candidateName, candidateDob, birthCity, judgmentType, jurisdiction, requestingOrgName } = body;
+    const {
+      candidateName,
+      candidateDob,
+      birthCity,
+      judgmentType,
+      jurisdiction,
+      requestingOrgName,
+      candidateFatherName,
+      candidateMotherName,
+      candidateIsMarried,
+      candidateHusbandName,
+      gender,
+      idProofType,
+      idProofNumber,
+      addresses
+    } = body;
 
     if (!candidateName?.trim()) {
       return { data: { error: "candidateName is required" }, statusCode: 400 };
@@ -32,6 +47,14 @@ export async function POST(req: NextRequest) {
       birthCity: birthCity?.trim() || "",
       judgmentType: judgmentType || "",
       jurisdiction: jurisdiction || "",
+      candidateFatherName: candidateFatherName?.trim() || "",
+      candidateMotherName: candidateMotherName?.trim() || "",
+      candidateIsMarried: !!candidateIsMarried,
+      candidateHusbandName: candidateIsMarried ? (candidateHusbandName?.trim() || "") : "",
+      gender: gender || "",
+      idProofType: idProofType || "",
+      idProofNumber: idProofNumber?.trim() || "",
+      addresses: addresses || [],
       ukCourtStatus: "searching",
       ukCourtHasRecords: false,
       ukCourtResults: [],

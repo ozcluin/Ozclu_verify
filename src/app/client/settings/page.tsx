@@ -372,6 +372,24 @@ export default function SettingsPage() {
       enabled: (organisation as any)?.malaysiaCourtEnabled !== false,
       tat: organisation?.serviceTats?.malaysia_court || "24 Hours",
       icon: "gavel"
+    },
+    {
+      key: "singapore_court",
+      title: "Singapore Court Check",
+      desc: "Official Singapore Judiciary (Supreme Court, State Courts & Family Justice Courts) hearing & case search",
+      rate: (organisation as any)?.singaporeCourtRate ?? 20,
+      enabled: (organisation as any)?.singaporeCourtEnabled !== false,
+      tat: organisation?.serviceTats?.singapore_court || "24 Hours",
+      icon: "gavel"
+    },
+    {
+      key: "philippines_court",
+      title: "Philippines Court Check",
+      desc: "Official Court of Appeals of the Philippines (Case Status Inquiry System CSIS 3.0) case & decision search",
+      rate: (organisation as any)?.philippinesCourtRate ?? 20,
+      enabled: (organisation as any)?.philippinesCourtEnabled !== false,
+      tat: organisation?.serviceTats?.philippines_court || "24 Hours",
+      icon: "gavel"
     }
   ];
 
@@ -971,6 +989,8 @@ export default function SettingsPage() {
                 <option value="saps_wanted">SAPS Wanted Check</option>
                 <option value="uk_court">UK Court Check</option>
                 <option value="malaysia_court">Malaysia Court Check</option>
+                <option value="singapore_court">Singapore Court Check</option>
+                <option value="philippines_court">Philippines Court Check</option>
               </select>
             </div>
 

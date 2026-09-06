@@ -227,7 +227,7 @@ function SapsWantedReportContent() {
                 </h3>
                 <p className="text-xs font-medium mt-1 opacity-90 max-w-xl">
                   {hasRecords
-                    ? "Candidate details match an active wanted suspect record listed on the South African Police Service Wanted Persons Registry."
+                    ? "Candidate details match an active wanted suspect record listed on the South African Police Service Registry."
                     : attorneyResolution?.verdict === "cleared"
                     ? "Similarity match reviewed by legal counsel and cleared as a false positive. Candidate verified free of active warrants."
                     : "Automated screening against South African Police Service (SAPS) crime stop databases returned zero adverse arrest warrant records."}
@@ -403,7 +403,7 @@ function SapsWantedReportContent() {
               Methodology &amp; Legal Compliance Statement
             </h5>
             <p className="text-[11px] text-slate-500 leading-relaxed">
-              This report certifies that the subject candidate was verified against the South African Police Service (SAPS) Wanted Persons Registry pursuant to statutory crime-stop and screening guidelines. A clean record indicates that no active arrest warrants or published wanted profiles match the provided surname, forename, and identifying criteria at the time of inquiry.
+              This report certifies that the subject candidate was verified against the South African Police Service (SAPS) Registry pursuant to statutory crime-stop and screening guidelines. A clean record indicates that no active arrest warrants or published wanted profiles match the provided surname, forename, and identifying criteria at the time of inquiry.
             </p>
           </div>
 

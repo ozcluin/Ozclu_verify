@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
       verifier: "System",
       notes: hasMatch
         ? `Potential match on SAPS Wanted registry: ${sanitized.length} record(s). Verification halted pending attorney review.`
-        : "No matches found in SAPS Wanted Persons registry. Clean record verified.",
+        : "No matches found in SAPS Registry. Clean record verified.",
       type: "saps_wanted", sendToCustomer: !hasMatch,
       sapsWantedHasRecords: hasMatch, sapsWantedMatches: sanitized,
       sapsWantedCompletedAt: hasMatch ? null : new Date().toISOString(),

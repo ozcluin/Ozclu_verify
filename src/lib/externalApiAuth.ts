@@ -73,6 +73,8 @@ const CHECK_TYPE_RATE_MAP: Record<string, string> = {
   saps_wanted: "sapsWantedRate",
   uk_court: "ukCourtRate",
   malaysia_court: "malaysiaCourtRate",
+  singapore_court: "singaporeCourtRate",
+  philippines_court: "philippinesCourtRate",
 };
 
 /** Map check type to the org field that holds its enabled flag */
@@ -89,6 +91,8 @@ const CHECK_TYPE_ENABLED_MAP: Record<string, string> = {
   saps_wanted: "sapsWantedEnabled",
   uk_court: "ukCourtEnabled",
   malaysia_court: "malaysiaCourtEnabled",
+  singapore_court: "singaporeCourtEnabled",
+  philippines_court: "philippinesCourtEnabled",
 };
 
 // ─── Auth Functions ──────────────────────────────────────────────
