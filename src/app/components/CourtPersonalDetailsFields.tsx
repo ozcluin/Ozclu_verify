@@ -92,27 +92,21 @@ const getCuratedStatesForCountry = (
   }
 
   if (countryName === "United Kingdom") {
-    const primaryUk = [
+    return [
       { name: "England & Wales (All Divisions)", code: "EW" },
       { name: "Greater London", code: "GL" },
-      { name: "Greater Manchester", code: "GM" },
-      { name: "West Midlands", code: "WM" },
-      { name: "West Yorkshire", code: "WY" },
       { name: "South East England", code: "SE" },
       { name: "South West England", code: "SW" },
+      { name: "West Midlands", code: "WM" },
       { name: "East Midlands", code: "EM" },
       { name: "North West England", code: "NW" },
       { name: "North East England", code: "NE" },
+      { name: "Yorkshire & the Humber", code: "YH" },
       { name: "East of England", code: "EE" },
+      { name: "Wales (Cymru)", code: "WLS" },
       { name: "Scotland", code: "SCT" },
       { name: "Northern Ireland", code: "NIR" },
-      { name: "Wales", code: "WLS" },
     ];
-    const gbStates = State.getStatesOfCountry("GB") || [];
-    const restGb = gbStates
-      .filter((s) => !primaryUk.some((p) => p.name.toLowerCase() === s.name.toLowerCase()))
-      .map((s) => ({ name: s.name, code: s.isoCode }));
-    return [...primaryUk, ...restGb];
   }
 
   if (countryName === "Malaysia") {
@@ -196,23 +190,43 @@ const getCuratedCitiesForState = (
   }
 
   if (countryName === "Singapore") {
-    return [
-      "Singapore",
-      "Bedok",
-      "Jurong East",
-      "Tampines",
-      "Woodlands",
-      "Yishun",
-      "Ang Mo Kio",
-      "Choa Chu Kang",
-      "Hougang",
-      "Sengkang",
-      "Novena",
-      "Bukit Batok",
-      "Clementi",
-      "Kallang",
-      "Marine Parade",
-    ].map((name) => ({ name, value: name }));
+    const cleanCode = stateNameOrCode.startsWith("Other:") ? stateNameOrCode.substring(6) : stateNameOrCode;
+    const sgRegionTowns: Record<string, string[]> = {
+      "SG-01": [
+        "Toa Payoh", "Novena", "Bishan", "Ang Mo Kio", "Kallang",
+        "Whampoa", "Queenstown", "Bukit Merah", "Tiong Bahru", "Orchard",
+        "River Valley", "Tanglin", "Bukit Timah", "Rochor", "Outram",
+        "Marina Bay", "Downtown Core", "Museum", "Newton", "Geylang",
+      ],
+      "SG-02": [
+        "Hougang", "Sengkang", "Punggol", "Serangoon", "Pasir Ris",
+        "Tampines", "Paya Lebar", "Kovan", "Lorong Ah Soo", "Upper Serangoon",
+      ],
+      "SG-03": [
+        "Woodlands", "Yishun", "Sembawang", "Admiralty", "Marsiling",
+        "Choa Chu Kang", "Bukit Panjang", "Bukit Batok", "Lim Chu Kang", "Mandai",
+        "Kranji", "Sungei Kadut",
+      ],
+      "SG-04": [
+        "Bedok", "Marine Parade", "Changi", "East Coast", "Katong",
+        "Siglap", "Tanjong Katong", "Chai Chee", "Simei", "Tanah Merah",
+        "Upper East Coast", "Kembangan",
+      ],
+      "SG-05": [
+        "Jurong East", "Jurong West", "Clementi", "Buona Vista", "Dover",
+        "Boon Lay", "Pioneer", "Tuas", "Kent Ridge", "West Coast",
+        "Ayer Rajah", "Telok Blangah", "Harbourfront",
+      ],
+      "SG-ALL": [
+        "Singapore (Central)", "Singapore (North East)", "Singapore (North West)",
+        "Singapore (South East)", "Singapore (South West)",
+      ],
+    };
+    const regionTowns = sgRegionTowns[cleanCode.toUpperCase()];
+    if (regionTowns) {
+      return regionTowns.map((name) => ({ name, value: name }));
+    }
+    return sgRegionTowns["SG-01"].map((name) => ({ name, value: name }));
   }
 
   if (countryName === "South Africa") {
@@ -233,22 +247,141 @@ const getCuratedCitiesForState = (
 
   if (countryName === "Malaysia") {
     const cleanCode = stateNameOrCode.startsWith("Other:") ? stateNameOrCode.substring(6) : stateNameOrCode;
-    const myStates = State.getStatesOfCountry("MY");
-    const stateObj = myStates.find(
-      (s) =>
-        s.isoCode.toLowerCase() === cleanCode.toLowerCase() ||
-        s.name.toLowerCase() === cleanCode.toLowerCase()
-    );
-    if (stateObj) {
-      const cities = City.getCitiesOfState("MY", stateObj.isoCode);
-      if (cities && cities.length > 0) {
-        return cities.map((c) => ({ name: c.name, value: c.name })).sort((a, b) => a.name.localeCompare(b.name));
-      }
+    const myStateCities: Record<string, string[]> = {
+      "MY-14": [
+        "Kuala Lumpur City Centre", "Bukit Bintang", "Cheras", "Wangsa Maju", "Setapak",
+        "Kepong", "Segambut", "Titiwangsa", "Batu", "Lembah Pantai",
+        "Setiawangsa", "Bandar Tun Razak", "Sentul", "Dang Wangi", "Pudu",
+      ],
+      "MY-10": [
+        "Petaling Jaya", "Shah Alam", "Subang Jaya", "Klang", "Ampang",
+        "Kajang", "Puchong", "Rawang", "Sepang", "Cyberjaya",
+        "Banting", "Kuala Selangor", "Sungai Buloh", "Gombak", "Hulu Langat",
+        "Bangi", "Semenyih", "Seri Kembangan", "Dengkil", "Batang Berjuntai",
+      ],
+      "MY-01": [
+        "Johor Bahru", "Iskandar Puteri", "Pasir Gudang", "Kulai", "Kluang",
+        "Muar", "Batu Pahat", "Pontian", "Segamat", "Kota Tinggi",
+        "Mersing", "Tangkak", "Simpang Renggam", "Yong Peng", "Chaah",
+      ],
+      "MY-07": [
+        "George Town", "Butterworth", "Bukit Mertajam", "Nibong Tebal", "Bayan Lepas",
+        "Tanjung Bungah", "Air Itam", "Jelutong", "Seberang Perai", "Balik Pulau",
+        "Kepala Batas", "Tasek Gelugor", "Batu Ferringhi", "Sungai Jawi", "Permatang Pauh",
+      ],
+      "MY-08": [
+        "Ipoh", "Taiping", "Teluk Intan", "Sitiawan", "Manjung",
+        "Kampar", "Kuala Kangsar", "Batu Gajah", "Sungai Siput", "Tapah",
+        "Gopeng", "Lumut", "Tanjung Malim", "Lenggong", "Gerik",
+      ],
+      "MY-12": [
+        "Kota Kinabalu", "Sandakan", "Tawau", "Lahad Datu", "Keningau",
+        "Beaufort", "Semporna", "Kudat", "Papar", "Ranau",
+        "Kinarut", "Penampang", "Tuaran", "Kunak", "Beluran",
+      ],
+      "MY-13": [
+        "Kuching", "Miri", "Sibu", "Bintulu", "Limbang",
+        "Sarikei", "Sri Aman", "Kapit", "Lawas", "Mukah",
+        "Betong", "Saratok", "Lundu", "Serian", "Marudi",
+      ],
+      "MY-02": [
+        "Alor Setar", "Sungai Petani", "Kulim", "Langkawi", "Jitra",
+        "Changlun", "Yan", "Baling", "Pendang", "Gurun",
+        "Pokok Sena", "Kuala Kedah", "Bedong", "Padang Serai", "Bandar Baharu",
+      ],
+      "MY-03": [
+        "Kota Bharu", "Pasir Mas", "Tanah Merah", "Machang", "Kuala Krai",
+        "Tumpat", "Bachok", "Gua Musang", "Pasir Puteh", "Jeli",
+      ],
+      "MY-04": [
+        "Melaka City", "Ayer Keroh", "Alor Gajah", "Jasin", "Masjid Tanah",
+        "Bemban", "Batu Berendam", "Durian Tunggal", "Selandar", "Merlimau",
+      ],
+      "MY-05": [
+        "Seremban", "Port Dickson", "Nilai", "Bahau", "Kuala Pilah",
+        "Tampin", "Jelebu", "Rembau", "Gemencheh", "Mantin",
+      ],
+      "MY-06": [
+        "Kuantan", "Temerloh", "Bentong", "Raub", "Jerantut",
+        "Pekan", "Rompin", "Kuala Lipis", "Bera", "Cameron Highlands",
+        "Maran", "Chenor", "Gambang", "Bukit Tinggi", "Triang",
+      ],
+      "MY-09": [
+        "Kangar", "Arau", "Padang Besar", "Kuala Perlis", "Beseri",
+      ],
+      "MY-11": [
+        "Kuala Terengganu", "Kemaman", "Dungun", "Marang", "Besut",
+        "Hulu Terengganu", "Setiu", "Kuala Besut", "Chukai", "Kerteh",
+      ],
+      "MY-16": [
+        "Putrajaya", "Precinct 1", "Precinct 2", "Precinct 15", "Precinct 16",
+      ],
+      "MY-15": [
+        "Labuan Town (Victoria)", "Labuan Financial Park", "Rancha-Rancha",
+      ],
+    };
+    const stateCities = myStateCities[cleanCode.toUpperCase()];
+    if (stateCities) {
+      return stateCities.map((name) => ({ name, value: name }));
     }
+    return [];
   }
 
   if (countryName === "Philippines") {
     const cleanCode = stateNameOrCode.startsWith("Other:") ? stateNameOrCode.substring(6) : stateNameOrCode;
+    // Curated cities for the primary provinces (custom codes that don't match library)
+    const phPrimaryCities: Record<string, string[]> = {
+      "PH-00": [
+        "Quezon City", "Manila", "Makati", "Pasig", "Taguig",
+        "Mandaluyong", "San Juan", "Pasay", "Parañaque", "Las Piñas",
+        "Muntinlupa", "Marikina", "Caloocan", "Valenzuela", "Malabon",
+        "Navotas", "Pateros",
+      ],
+      "PH-CEB": [
+        "Cebu City", "Mandaue", "Lapu-Lapu", "Talisay", "Danao",
+        "Naga", "Carcar", "Toledo", "Bogo", "Consolacion",
+        "Liloan", "Minglanilla", "Compostela", "Moalboal", "Argao",
+      ],
+      "PH-DAV": [
+        "Davao City", "Digos", "Santa Cruz", "Bansalan", "Hagonoy",
+        "Sulop", "Padada", "Malalag", "Matanao", "Kiblawan",
+      ],
+      "PH-PAM": [
+        "San Fernando", "Angeles City", "Mabalacat", "Porac", "Arayat",
+        "Guagua", "Lubao", "Mexico", "Apalit", "Macabebe",
+        "Bacolor", "Magalang", "Sasmuan", "Floridablanca", "Candaba",
+      ],
+      "PH-CAV": [
+        "Bacoor", "Imus", "Dasmariñas", "General Trias", "Cavite City",
+        "Trece Martires", "Tagaytay", "Silang", "Kawit", "Rosario",
+        "Noveleta", "Tanza", "Naic", "Maragondon", "Amadeo",
+      ],
+      "PH-LAG": [
+        "San Pedro", "Biñan", "Santa Rosa", "Cabuyao", "Calamba",
+        "Los Baños", "Bay", "San Pablo", "Pagsanjan", "Pakil",
+        "Nagcarlan", "Liliw", "Majayjay", "Siniloan", "Pangil",
+      ],
+      "PH-BAT": [
+        "Batangas City", "Lipa", "Tanauan", "Santo Tomas", "Nasugbu",
+        "Balayan", "Rosario", "San Jose", "Calaca", "Lemery",
+        "Bauan", "Mabini", "Calatagan", "Laurel", "Malvar",
+      ],
+      "PH-ILO": [
+        "Iloilo City", "Oton", "Pavia", "Santa Barbara", "Cabatuan",
+        "Molo", "Jaro", "La Paz", "Mandurriao", "Arevalo",
+        "Leganes", "Zarraga", "Dumangas", "Passi", "San Miguel",
+      ],
+      "PH-CDO": [
+        "Cagayan de Oro", "Gingoog", "Villanueva", "Tagoloan", "Jasaan",
+        "El Salvador", "Opol", "Alubijid", "Laguindingan", "Initao",
+        "Manticao", "Lugait", "Naawan", "Libertad", "Balingasag",
+      ],
+    };
+    const primaryCities = phPrimaryCities[cleanCode.toUpperCase()];
+    if (primaryCities) {
+      return primaryCities.map((name) => ({ name, value: name }));
+    }
+    // Fallback to library for the rest of the provinces (whose codes match)
     const phStates = State.getStatesOfCountry("PH");
     const stateObj = phStates.find(
       (s) =>
@@ -261,44 +394,107 @@ const getCuratedCitiesForState = (
         return cities.map((c) => ({ name: c.name, value: c.name })).sort((a, b) => a.name.localeCompare(b.name));
       }
     }
+    return [];
   }
 
   if (countryName === "United Kingdom") {
     const cleanCode = stateNameOrCode.startsWith("Other:") ? stateNameOrCode.substring(6) : stateNameOrCode;
-    const gbStates = State.getStatesOfCountry("GB");
-    const stateObj = gbStates.find(
-      (s) =>
-        s.isoCode.toLowerCase() === cleanCode.toLowerCase() ||
-        s.name.toLowerCase() === cleanCode.toLowerCase()
-    );
-    if (stateObj) {
-      const cities = City.getCitiesOfState("GB", stateObj.isoCode);
-      if (cities && cities.length > 0) {
-        return cities.map((c) => ({ name: c.name, value: c.name })).sort((a, b) => a.name.localeCompare(b.name));
-      }
+    const ukRegionCities: Record<string, string[]> = {
+      EW: [
+        "London", "Birmingham", "Manchester", "Leeds", "Liverpool", "Sheffield",
+        "Bristol", "Newcastle upon Tyne", "Nottingham", "Cardiff", "Edinburgh",
+        "Glasgow", "Belfast", "Southampton", "Leicester", "Coventry", "Bradford",
+        "Reading", "Cambridge", "Oxford", "Swansea", "Aberdeen", "Derby",
+        "Plymouth", "Wolverhampton", "Sunderland", "Preston", "Exeter",
+      ],
+      GL: [
+        "City of London", "Westminster", "Camden", "Southwark", "Greenwich",
+        "Croydon", "Kensington & Chelsea", "Islington", "Hackney", "Lambeth",
+        "Ealing", "Barnet", "Wandsworth", "Tower Hamlets", "Hammersmith & Fulham",
+        "Lewisham", "Brent", "Newham", "Haringey", "Enfield", "Hounslow",
+        "Redbridge", "Hillingdon", "Bromley", "Harrow", "Merton", "Sutton",
+        "Richmond upon Thames", "Kingston upon Thames", "Havering", "Barking & Dagenham",
+        "Bexley", "Waltham Forest",
+      ],
+      SE: [
+        "Oxford", "Reading", "Brighton & Hove", "Southampton", "Portsmouth",
+        "Canterbury", "Guildford", "Milton Keynes", "Slough", "Maidstone",
+        "Winchester", "Luton", "Aylesbury", "Basingstoke", "Woking",
+        "Crawley", "Hastings", "Chatham", "High Wycombe", "Tunbridge Wells",
+        "Chichester", "Margate", "Folkestone", "Ashford", "Dover",
+      ],
+      SW: [
+        "Bristol", "Bath", "Exeter", "Plymouth", "Bournemouth", "Gloucester",
+        "Swindon", "Cheltenham", "Salisbury", "Torquay", "Truro",
+        "Taunton", "Poole", "Yeovil", "Barnstaple", "Dorchester",
+        "Weymouth", "Weston-super-Mare", "Bridgwater", "Falmouth",
+      ],
+      WM: [
+        "Birmingham", "Coventry", "Wolverhampton", "Solihull", "Dudley",
+        "Walsall", "Stoke-on-Trent", "West Bromwich", "Telford", "Worcester",
+        "Hereford", "Shrewsbury", "Warwick", "Nuneaton", "Stafford",
+        "Leamington Spa", "Cannock", "Tamworth", "Lichfield", "Redditch",
+      ],
+      EM: [
+        "Nottingham", "Leicester", "Derby", "Northampton", "Lincoln",
+        "Mansfield", "Chesterfield", "Loughborough", "Kettering", "Corby",
+        "Wellingborough", "Boston", "Grantham", "Newark-on-Trent", "Hinckley",
+        "Worksop", "Ilkeston", "Melton Mowbray", "Buxton", "Matlock",
+      ],
+      NW: [
+        "Manchester", "Liverpool", "Salford", "Preston", "Bolton",
+        "Warrington", "Chester", "Blackpool", "Blackburn", "Lancaster",
+        "Burnley", "Stockport", "Wigan", "Rochdale", "Oldham",
+        "Bury", "Crewe", "Macclesfield", "St Helens", "Carlisle",
+        "Barrow-in-Furness", "Kendal", "Birkenhead", "Widnes", "Runcorn",
+      ],
+      NE: [
+        "Newcastle upon Tyne", "Sunderland", "Durham", "Middlesbrough",
+        "Darlington", "Gateshead", "Hartlepool", "South Shields",
+        "Stockton-on-Tees", "Redcar", "Washington", "Blyth",
+        "Cramlington", "Berwick-upon-Tweed", "Consett", "Bishop Auckland",
+        "Morpeth", "Hexham", "Whitley Bay", "Alnwick",
+      ],
+      YH: [
+        "Leeds", "Sheffield", "Bradford", "York", "Kingston upon Hull",
+        "Huddersfield", "Wakefield", "Doncaster", "Rotherham", "Harrogate",
+        "Halifax", "Barnsley", "Scunthorpe", "Grimsby", "Dewsbury",
+        "Scarborough", "Pontefract", "Keighley", "Bridlington", "Selby",
+        "Skipton", "Goole", "Beverley", "Ripon", "Batley",
+      ],
+      EE: [
+        "Cambridge", "Norwich", "Ipswich", "Peterborough", "Chelmsford",
+        "Colchester", "Watford", "Bedford", "St Albans", "Southend-on-Sea",
+        "Basildon", "Harlow", "Stevenage", "Hemel Hempstead", "King's Lynn",
+        "Bury St Edmunds", "Great Yarmouth", "Lowestoft", "Braintree",
+        "Hertford", "Huntingdon", "Thetford", "Clacton-on-Sea",
+      ],
+      WLS: [
+        "Cardiff", "Swansea", "Newport", "Wrexham", "Mold", "Caernarfon",
+        "Merthyr Tydfil", "Bridgend", "Llanelli", "Bangor", "Aberystwyth",
+        "Haverfordwest", "Carmarthen", "Neath", "Port Talbot", "Pontypridd",
+        "Barry", "Rhyl", "Colwyn Bay", "Welshpool", "Dolgellau",
+      ],
+      SCT: [
+        "Edinburgh", "Glasgow", "Aberdeen", "Dundee", "Inverness",
+        "Stirling", "Perth", "Paisley", "Kilmarnock", "Falkirk",
+        "Ayr", "Dunfermline", "Livingston", "Hamilton", "Dumfries",
+        "Kirkcaldy", "Greenock", "Elgin", "Peterhead", "Fort William",
+        "Oban", "Lerwick", "Stornoway", "Wick", "Selkirk",
+      ],
+      NIR: [
+        "Belfast", "Derry / Londonderry", "Lisburn", "Newry", "Armagh",
+        "Craigavon", "Antrim", "Enniskillen", "Ballymena", "Coleraine",
+        "Omagh", "Newtownards", "Bangor", "Downpatrick", "Larne",
+        "Carrickfergus", "Cookstown", "Dungannon", "Strabane", "Magherafelt",
+      ],
+    };
+    const regionCities = ukRegionCities[cleanCode.toUpperCase()];
+    if (regionCities) {
+      return regionCities.map((name) => ({ name, value: name }));
     }
-    return [
-      "London",
-      "Birmingham",
-      "Manchester",
-      "Leeds",
-      "Liverpool",
-      "Sheffield",
-      "Bristol",
-      "Newcastle",
-      "Nottingham",
-      "Cardiff",
-      "Edinburgh",
-      "Glasgow",
-      "Belfast",
-      "Southampton",
-      "Leicester",
-      "Coventry",
-      "Bradford",
-      "Reading",
-      "Cambridge",
-      "Oxford",
-    ].map((name) => ({ name, value: name }));
+    // Fallback: return all major UK cities if region code unrecognised
+    return (ukRegionCities["EW"] || []).map((name) => ({ name, value: name }));
   }
 
   const countryObj = Country.getAllCountries().find(
